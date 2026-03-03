@@ -8,15 +8,6 @@ class ResponseHandler {
     });
   }
 
-  // error
-  error(res, message = "Something went wrong", status = 500, data = null) {
-    res.status(status).json({
-      success: false,
-      message,
-      data,
-    });
-  }
-
   // paginated data
   paginated(res, data, page = 1, limit = 10, total = 0, message = "Success") {
     res.status(200).json({
