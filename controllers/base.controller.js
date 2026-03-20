@@ -1,46 +1,84 @@
-import ResponseHandler from "../utils/response.handler.js";
-
 export class BaseController {
   constructor(service) {
     this.service = service;
-
-    this.getAll = this.getAll.bind(this);
-    this.getById = this.getById.bind(this);
-    this.create = this.create.bind(this);
-    this.update = this.update.bind(this);
-    this.delete = this.delete.bind(this);
   }
 
-  async getAll(req, res) {
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
+  getAll = async (req, res, next) => {
+    try {
+      const page = Math.max(parseInt(req.query.page) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
 
-    const { rows, count } = await this.service.getAll({ page, limit });
+      const { rows, count } = await this.service.getAll({ page, limit });
 
-    ResponseHandler.paginated(res, rows, page, limit, count);
-  }
+      return res.status(200).json({
+        success: true,
+        data: rows,
+        meta: {
+          page,
+          limit,
+          total: count,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  async getById(req, res) {
-    const record = await this.service.getById(req.params.id);
+  getById = async (req, res, next) => {
+    try {
+      const record = await this.service.getById(req.params.id);
 
-    ResponseHandler.success(res, record);
-  }
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "Record not found",
+        });
+      }
 
-  async create(req, res) {
-    const record = await this.service.create(req.body);
+      return res.status(200).json({
+        success: true,
+        data: record,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-    ResponseHandler.success(res, record, "Created successfully", 201);
-  }
+  create = async (req, res, next) => {
+    try {
+      const record = await this.service.create(req.body);
 
-  async update(req, res) {
-    const record = await this.service.update(req.params.id, req.body);
+      return res.status(201).json({
+        success: true,
+        message: "Created successfully",
+        data: record,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-    ResponseHandler.success(res, record, "Updated successfully");
-  }
+  update = async (req, res, next) => {
+    try {
+      const record = await this.service.update(req.params.id, req.body);
 
-  async delete(req, res) {
-    await this.service.delete(req.params.id);
+      return res.status(200).json({
+        success: true,
+        message: "Updated successfully",
+        data: record,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-    ResponseHandler.success(res, null, "Deleted successfully");
-  }
+  delete = async (req, res, next) => {
+    try {
+      await this.service.delete(req.params.id);
+      
+      return res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
 }

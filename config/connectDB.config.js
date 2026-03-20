@@ -1,15 +1,20 @@
-import sequelize from "./database.config.js";
+import { PrismaClient } from '../generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
 const connectDB = async () => {
   try {
-    // Test database connection
-    await sequelize.authenticate();
+    const adapter = new PrismaPg(new pg.Pool({
+      connectionString: process.env.DATABASE_URL
+    }));
+    
+    const prisma = new PrismaClient({
+      adapter
+    });
+    await prisma.$connect();
     console.log("PostgreSQL connected successfully");
     
-    // Sync database models (create tables automatically)
-    await sequelize.sync({ alter: true });
-    console.log("Database synchronized");
-    
+    return prisma;
   } catch (error) {
     console.error("Unable to connect to PostgreSQL:", error.message);
     process.exit(1);

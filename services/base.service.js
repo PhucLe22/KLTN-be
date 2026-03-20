@@ -1,33 +1,53 @@
-import { NotFoundException } from "../controllers/error.controller.js";
-
 export class BaseService {
-  constructor(repository, entityName = "Resource") {
+  constructor(repository) {
     this.repository = repository;
-    this.entityName = entityName;
   }
 
-  async getAll(options = {}) {
-    return this.repository.findAll(options);
+  async getAll({ page = 1, limit = 10, query = {}, orderBy = {} } = {}) {
+    return await this.repository.findAll({ page, limit, query, orderBy });
   }
 
-  async getById(id, options = {}) {
-    const record = await this.repository.findById(id, options);
-    if (!record) throw new NotFoundException(`${this.entityName} not found`);
+  async getById(id) {
+    const record = await this.repository.findById(id);
+    
+    if (!record) {
+      throw new Error('Record not found');
+    }
+    
     return record;
   }
 
   async create(data) {
-    return this.repository.create(data);
+    return await this.repository.create(data);
   }
 
   async update(id, data) {
-    await this.getById(id);
-    const [, [updated]] = await this.repository.update(id, data);
-    return updated;
+    try {
+      return await this.repository.update(id, data);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new Error('Record not found');
+      }
+      throw error;
+    }
   }
 
   async delete(id) {
-    await this.getById(id);
-    await this.repository.delete(id);
+    try {
+      await this.repository.delete(id);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new Error('Record not found');
+      }
+      throw error;
+    }
+  }
+
+  async findOne(query) {
+    return await this.repository.findOne(query);
+  }
+
+  async findMany(query) {
+    return await this.repository.findMany(query);
   }
 }

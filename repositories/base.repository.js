@@ -3,43 +3,57 @@ export class BaseRepository {
     this.model = model;
   }
 
-  async findAll({ page = 1, limit = 10, where = {}, include, order, attributes } = {}) {
-    const offset = (page - 1) * limit;
+  async findAll({ page = 1, limit = 10, query = {}, orderBy = {} } = {}) {
+    const skip = (page - 1) * limit;
+    
+    const [rows, count] = await Promise.all([
+      this.model.findMany({
+        where: query,
+        skip,
+        take: limit,
+        orderBy
+      }),
+      this.model.count({ where: query })
+    ]);
 
-    return this.model.findAndCountAll({
-      where,
-      limit,
-      offset,
-      ...(include && { include }),
-      ...(order && { order }),
-      ...(attributes && { attributes }),
+    return { rows, count, page, limit };
+  }
+
+  async findById(id) {
+    return await this.model.findUnique({
+      where: { id }
     });
   }
 
-  async findById(id, { include, attributes } = {}) {
-    return this.model.findByPk(id, {
-      ...(include && { include }),
-      ...(attributes && { attributes }),
-    });
-  }
-
-  async findOne(where, { include, attributes } = {}) {
-    return this.model.findOne({
-      where,
-      ...(include && { include }),
-      ...(attributes && { attributes }),
+  async findOne(query) {
+    return await this.model.findFirst({
+      where: query
     });
   }
 
   async create(data) {
-    return this.model.create(data);
+    return await this.model.create({
+      data
+    });
   }
 
   async update(id, data) {
-    return this.model.update(data, { where: { id }, returning: true });
+    return await this.model.update({
+      where: { id },
+      data
+    });
   }
 
   async delete(id) {
-    return this.model.destroy({ where: { id } });
+    await this.model.delete({
+      where: { id }
+    });
+    return 1;
+  }
+
+  async findMany(query) {
+    return await this.model.findMany({
+      where: query
+    });
   }
 }
