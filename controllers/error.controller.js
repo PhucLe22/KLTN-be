@@ -23,6 +23,12 @@ export const ConflictException = createException(409, "Conflict");
 export const InternalServerErrorException = createException(500, "Internal server error");
 
 export function exceptionFilter(err, req, res, next) {
+  console.error('Error in exceptionFilter:', {
+    message: err.message,
+    stack: err.stack,
+    name: err.name,
+    statusCode: err.statusCode
+  });
   const statusCode = err instanceof ZodError ? 400 : err.statusCode || 500;
   const message =
     err instanceof ZodError

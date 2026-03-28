@@ -1,4 +1,16 @@
 import express from "express";
-const mainRouter = express.Router();
+import authRouter from "./auth.router.js";
 
-export default mainRouter;
+const router = express.Router();
+
+
+router.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "FoodApp API is running",
+  });
+});
+
+router.use("/auth", authRouter);
+
+export default router;

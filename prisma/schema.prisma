@@ -1,13 +1,590 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["iam", "catalog", "sales", "store", "audit", "public", "loyalty", "delivery"]
+}
+
+//////////////////////////////////////////////////////
+// ENUMS (GLOBAL - dùng chung nhiều domain)
+//////////////////////////////////////////////////////
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+
+  @@schema("public")
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+
+  @@schema("public")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MOMO
+  VNPAY
+  BANK_TRANSFER
+
+  @@schema("public")
+}
+
+enum PaymentStatus {
+  PENDING // tạo payment record nhưng chưa xác nhận
+  SUCCESS // thanh toán thành công
+  FAILED // thanh toán thất bại
+  REFUNDED // đã hoàn tiền (full hoặc partial)
+
+  @@schema("public")
+}
+
+enum StaffRole {
+  MANAGER
+  CASHIER
+  KITCHEN
+  OWNER
+
+  @@schema("public")
+}
+
+enum DeliveryStatus {
+  PENDING
+  SHIPPER_ASSIGNED
+  PICKED_UP
+  DELIVERED
+  FAILED
+  CANCELLED
+
+  @@schema("public")
+}
+
+enum PointType {
+  EARN
+  REDEEM
+  EXPIRE
+  ADJUST
+
+  @@schema("public")
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+
+  @@schema("public")
+}
+
+enum CustomerTier {
+  BRONZE // Thành viên cơ bản (mặc định)
+  SILVER // Hạng trung
+  GOLD // Hạng cao
+  PLATINUM // Hạng cao nhất
+
+  @@schema("public")
+}
+
+enum AuditAction {
+  CREATE // Tạo mới record
+  UPDATE // Cập nhật dữ liệu (không phải status)
+  DELETE // Xóa (soft/hard)
+  STATUS_CHANGE // Thay đổi trạng thái (OrderStatus, PaymentStatus...)
+  LOGIN // User đăng nhập
+  LOGOUT // User đăng xuất
+  PERMISSION_CHANGE // Thay đổi role / quyền
+
+  @@schema("public")
+}
+
+enum VoucherScope {
+  PUBLIC // Toàn sàn – ai cũng dùng được
+  CUSTOMER // Chỉ khách được gán mới dùng được
+
+  @@schema("public")
+}
+
+enum ProductType {
+  SIMPLE // sản phẩm thường
+  COMBO // combo nhiều sản phẩm
+  SERVICE // phí dịch vụ
+
+  @@schema("public")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: AUDIT (schema: audit)
+//////////////////////////////////////////////////////
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  entity    String // Tên model bị thay đổi (Order, Product...)
+  entityId  String // ID bản ghi bị thay đổi
+  action    AuditAction
+  oldData   Json? // Snapshot trước thay đổi (để trace)
+  newData   Json? // Snapshot sau thay đổi
+  createdBy String? // UserId thực hiện
+  createdAt DateTime    @default(now())
+
+  @@index([entity, entityId])
+  @@schema("audit")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: IAM (schema: iam)
+//////////////////////////////////////////////////////
+
+model User {
+  id String @id @default(uuid())
+
+  email    String? @unique // login bằng email (optional)
+  phone    String? @unique // login bằng phone
+  password String // password đã hash (bcrypt/argon2)
+
+  isActive Boolean @default(true) // soft disable account (không xóa để giữ lịch sử)
+
+  staff    Staff?
+  customer Customer?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@schema("iam")
+}
+
+model Staff {
+  id      String @id @default(uuid())
+  userId  String @unique
+  storeId String
+
+  role StaffRole // Quyền nghiệp vụ dựa theo role
+
+  isActive Boolean @default(true)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@schema("iam")
+}
+
+model Customer {
+  id     String  @id @default(uuid())
+  userId String? @unique
+
+  name  String?
+  phone String       @unique
+  email String?
+  tier  CustomerTier @default(BRONZE)
+
+  points Int @default(0)
+  // Cached balance hiện tại.
+  // SOURCE OF TRUTH = PointTransaction.
+  // Field này chỉ để query nhanh (dashboard, header UI)
+
+  isActive Boolean @default(true)
+
+  user User? @relation(fields: [userId], references: [id])
+
+  orders            Order[]
+  pointTransactions PointTransaction[]
+  vouchers          CustomerVoucher[]
+
+  createdAt DateTime @default(now())
+
+  @@schema("iam")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: CATALOG (schema: catalog)
+//////////////////////////////////////////////////////
+
+// nguyên tắt tính giá theo thứ tự ưu tiên: ProductOptionValue -> ProductOption -> product
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  sortOrder Int? // Thứ tự hiển thị menu
+  isActive  Boolean @default(true)
+ 
+  products Product[]
+
+  @@schema("catalog")
+}
+
+model Product {
+  id String @id @default(uuid())
+
+  sku         String  @unique // Mã nội bộ, không đổi sau khi tạo
+  name        String
+  description String?
+
+  type      ProductType @default(SIMPLE)
+  basePrice Decimal     @db.Decimal(14, 2) // Giá mặc định (VD: size nhỏ nhất)
+  costPrice Decimal?    @db.Decimal(14, 2) // Giá vốn (tính profit)
+  taxRate   Decimal     @db.Decimal(5, 2) // % VAT (VD: 8.00)
+
+  thumbnail String?
+  images    String[]
+
+  isActive  Boolean @default(true)
+  sortOrder Int?
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  optionGroups ProductOptionGroup[]
+  optionValues ProductOptionValue[]
+
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@schema("catalog")
+}
+
+model OptionGroup {
+  id   String @id @default(uuid())
+  name String // Size / Topping / Sugar Level
+
+  isRequired Boolean @default(false) // true = bắt buộc chọn
+  isMultiple Boolean @default(false) // true = được chọn nhiều
+  sortOrder  Int?
+  isActive   Boolean @default(true)
+
+  options  ProductOption[]
+  products ProductOptionGroup[]
+
+  @@schema("catalog")
+}
+
+model ProductOption {
+  id      String @id @default(uuid())
+  groupId String
+
+  name      String // S / M / L / Trân châu...
+  basePrice Decimal @default(0) @db.Decimal(14, 2)
+  // Giá mặc định dùng chung
+
+  sortOrder Int?
+  isActive  Boolean @default(true)
+
+  group OptionGroup @relation(fields: [groupId], references: [id])
+
+  productValues ProductOptionValue[]
+
+  @@schema("catalog")
+}
+
+model ProductOptionGroup {
+  id            String @id @default(uuid())
+  productId     String
+  optionGroupId String
+
+  sortOrder Int? // Thứ tự hiển thị group trong product
+
+  product     Product     @relation(fields: [productId], references: [id])
+  optionGroup OptionGroup @relation(fields: [optionGroupId], references: [id])
+
+  @@unique([productId, optionGroupId])
+  @@schema("catalog")
+}
+
+model ProductOptionValue {
+  id        String @id @default(uuid())
+  productId String
+  optionId  String
+
+  price Decimal @db.Decimal(14, 2)
+  // Giá của option cho riêng product này
+
+  product Product       @relation(fields: [productId], references: [id])
+  option  ProductOption @relation(fields: [optionId], references: [id])
+
+  @@unique([productId, optionId])
+  @@schema("catalog")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: SALES (schema: sales)
+//////////////////////////////////////////////////////
+
+model Store {
+  id   String @id @default(uuid())
+  code String @unique
+  // Ví dụ: HCM01, HN02
+
+  name    String
+  address String
+
+  lat Float?
+  lng Float?
+  // Dùng tính khoảng cách giao hàng hoặc show map view
+
+  hotline String
+
+  isActive Boolean @default(true)
+
+  staff          Staff[]
+  orders         Order[]
+  deliveryOrders DeliveryOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@schema("sales")
+}
+
+model Order {
+  id         String  @id @default(uuid())
+  storeId    String
+  customerId String?
+
+  type   OrderType
+  status OrderStatus @default(NEW)
+
+  subtotal   Decimal @db.Decimal(14, 2) // Tổng tiền item trước discount & tax
+  discount   Decimal @default(0) @db.Decimal(14, 2) // Tổng giảm giá (voucher + manual)
+  tax        Decimal @default(0) @db.Decimal(14, 2)
+  serviceFee Decimal @default(0) @db.Decimal(14, 2)
+  total      Decimal @db.Decimal(14, 2) // total = subtotal - discount + tax + serviceFee
+
+  note String?
+
+  createdByStaffId String? // Lưu ID staff để trace (không cascade delete)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store    Store     @relation(fields: [storeId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  items             OrderItem[]
+  payments          Payment[]
+  delivery          DeliveryOrder?
+  vouchers          VoucherRedemption[]
+  pointTransactions PointTransaction[]
+
+  @@index([storeId, createdAt])
+  @@index([customerId, createdAt])
+  @@schema("sales")
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+
+  name String // Snapshot tên tại thời điểm bán
+
+  sku String? // Snapshot SKU
+
+  price Decimal @db.Decimal(14, 2) // Snapshot giá tại thời điểm bán
+
+  quantity Int
+
+  tax      Decimal @default(0) @db.Decimal(14, 2)
+  discount Decimal @default(0) @db.Decimal(14, 2)
+
+  note String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  options OrderItemOption[]
+
+  @@schema("sales")
+}
+
+model OrderItemOption {
+  id          String @id @default(uuid())
+  orderItemId String
+
+  name  String
+  price Decimal @db.Decimal(14, 2)
+  // Snapshot giá tại thời điểm bán
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@schema("sales")
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  orderId String
+
+  method PaymentMethod
+  status PaymentStatus @default(PENDING)
+
+  amount Decimal @db.Decimal(14, 2) // Cho phép split payment (1 order nhiều payment)
+
+  providerRef String? // Mã giao dịch từ MOMO/VNPAY...
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  refunds Refund[]
+
+  @@index([orderId])
+  @@schema("sales")
+}
+
+model Refund {
+  id        String   @id @default(uuid())
+  paymentId String
+  amount    Decimal  @db.Decimal(14, 2)
+  reason    String?
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@schema("sales")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: DELIVERY (schema: delivery)
+//////////////////////////////////////////////////////
+
+// Full version: hiện đang giao tay, thiết kế sẵn để tích hợp đơn vị vận chuyển sau (GHN/Grab...) + hỗ trợ QR thao tác nhanh
+model DeliveryOrder {
+  id String @id @default(uuid())
+
+  orderId       String         @unique // 1-1 với Order (mỗi order tối đa 1 delivery)
+  storeId       String // Chi nhánh xử lý
+  status        DeliveryStatus @default(PENDING) // Flow: PENDING → SHIPPER_ASSIGNED → PICKED_UP → DELIVERED (FAILED / CANCELLED)
+  // Snapshot 
+  receiverName  String
+  receiverPhone String
+  addressLine   String
+  // Phí & khoảng cách
+  distanceKm    Float? // Có thể null nếu không tính
+  estimatedFee  Decimal?       @db.Decimal(14, 2) // Phí dự kiến
+  actualFee     Decimal?       @db.Decimal(14, 2) // Phí thực tế (dùng khi report)
+
+  // Thông tin shipper (để mở rộng tích hợp API giao hàng sau)
+  shipperName  String?
+  shipperPhone String?
+  trackingCode String? // Mã tracking từ đơn vị vận chuyển
+
+  // Timeline
+  requestedAt DateTime  @default(now())
+  pickedAt    DateTime? // set khi PICKED_UP
+  deliveredAt DateTime? // set khi DELIVERED
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id])
+
+  events DeliveryEvent[] // Log status
+
+  @@index([storeId, requestedAt])
+  @@schema("delivery")
+}
+
+model DeliveryEvent {
+  id         String @id @default(uuid())
+  deliveryId String
+  status     String // Log trạng thái để build timeline
+
+  note      String?
+  createdAt DateTime @default(now())
+
+  delivery DeliveryOrder @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@schema("delivery")
+}
+
+//////////////////////////////////////////////////////
+// DOMAIN: LOYALTY (schema: loyalty)
+//////////////////////////////////////////////////////
+
+model PointTransaction {
+  id         String  @id @default(uuid())
+  customerId String
+  orderId    String?
+
+  type PointType
+
+  points Int // Có thể âm (REDEEM) hoặc dương (EARN)
+
+  balanceSnap Int
+  // Snapshot số dư sau giao dịch này.
+  // Dùng để audit & tránh phải tính lại toàn bộ ledger.
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+
+  @@index([customerId, createdAt])
+  @@schema("loyalty")
+}
+
+model Voucher {
+  id   String @id @default(uuid())
+  code String @unique
+
+  scope VoucherScope @default(PUBLIC)
+
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(14, 2)
+
+  //Phát hành
+  maxUsage  Int?
+  usedCount Int  @default(0)
+
+  //điều kiện
+  minOrderAmount Decimal?  @db.Decimal(14, 2) // Áp dụng khi đơn >= ?
+  maxDiscount    Decimal?  @db.Decimal(14, 2) // Giảm tối đa ?
+  storeId        String? // Chỉ áp dụng 1 chi nhánh?
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+
+  redemptions      VoucherRedemption[] //bắt buộc, thu hồi voucher tránh thất thoát
+  customerVouchers CustomerVoucher[] // scope = CUSTOMER
+
+  @@schema("loyalty")
+}
+
+model CustomerVoucher {
+  id         String @id @default(uuid())
+  customerId String
+  voucherId  String
+
+  isUsed Boolean @default(false)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  voucher  Voucher  @relation(fields: [voucherId], references: [id])
+
+  @@unique([customerId, voucherId])
+  @@schema("loyalty")
+}
+
+model VoucherRedemption {
+  id        String @id @default(uuid())
+  orderId   String
+  voucherId String
+
+  discount Decimal @db.Decimal(14, 2) // Snapshot số tiền giảm thực tế áp dụng cho order này
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  voucher Voucher @relation(fields: [voucherId], references: [id])
+
+  @@index([voucherId])
+  @@schema("loyalty")
 }

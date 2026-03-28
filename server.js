@@ -1,28 +1,32 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from "express";
-import dotenv from "dotenv";
 import morgan from "morgan";
-import connectDB from "./config/connectDB.config.js";
 import mainRouter from "./routes/index.js";
 import { exceptionFilter } from "./controllers/error.controller.js";
+import { prisma } from "./config/di.config.js";
 
-// Load environment variables
-dotenv.config({ path: ".env" });
 const app = express();
-// Logger
+
 app.use(morgan("dev"));
-// Connect to database
-connectDB();
-// Middleware
 app.use(express.json());
 
 // Routes
-
 app.use("/api/v1", mainRouter);
 
-// Global exception filter
+// Global error handler
 app.use(exceptionFilter);
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+prisma.$connect()
+  .then(() => {
+    console.log("Database connected successfully");
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to DB:", err);
+    process.exit(1);
+  });
