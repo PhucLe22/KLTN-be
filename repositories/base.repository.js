@@ -26,9 +26,8 @@ export class BaseRepository {
   }
 
   async findOne(query) {
-    return await this.model.findFirst({
-      where: query
-    });
+    const options = query.where ? query : { where: query };
+    return await this.model.findFirst(options);
   }
 
   async create(data) {

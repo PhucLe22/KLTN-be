@@ -2,8 +2,8 @@ import jwt from "jsonwebtoken";
 
 function buildPayload(user = {}) {
   // payload
-  const { _id, email, role } = user;
-  return { sub: _id, email, role, iss: "foodapp-api" };
+  const { id, email, role } = user;
+  return { sub: id, email, role, iss: "foodapp-api" };
 }
 
 export function generateAccessToken(user = {}) {

@@ -3,6 +3,36 @@ export class BaseController {
     this.service = service;
   }
 
+  ok(res, data, message = "Success") {
+    return res.status(200).json({
+      success: true,
+      message,
+      data,
+    });
+  }
+
+  created(res, data, message = "Created successfully") {
+    return res.status(201).json({
+      success: true,
+      message,
+      data,
+    });
+  }
+
+  notFound(res, message = "Record not found") {
+    return res.status(404).json({
+      success: false,
+      message,
+    });
+  }
+
+  badRequest(res, message = "Bad request") {
+    return res.status(400).json({
+      success: false,
+      message,
+    });
+  }
+
   getAll = async (req, res, next) => {
     try {
       const page = Math.max(parseInt(req.query.page) || 1, 1);
