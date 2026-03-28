@@ -1,0 +1,24 @@
+export const OrderStatus = {
+  NEW: 'NEW',
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  PREPARING: 'PREPARING',
+  READY: 'READY',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED'
+};
+
+export const OrderType = {
+  DINE_IN: 'DINE_IN',
+  TAKEAWAY: 'TAKEAWAY',
+  DELIVERY: 'DELIVERY'
+};
+
+export const PaymentMethod = {
+  CASH: 'CASH',
+  CARD: 'CARD',
+  MOMO: 'MOMO',
+  VNPAY: 'VNPAY',
+  BANK_TRANSFER: 'BANK_TRANSFER'
+};
