@@ -1,7 +1,7 @@
 # Architecture Guidelines
 
 ## Overview
-This document outlines the architectural patterns and conventions for building APIs in this Express.js food application. The goal is to maintain consistency, testability, and scalability through proper dependency injection and interface-based design.
+This document outlines the architectural patterns and conventions for building APIs in this Express.js food application. The goal is to maintain consistency, testability, and scalability through proper dependency injection and repository-based design.
 
 ## Core Principles
 
@@ -35,62 +35,75 @@ export class AnyController {
 }
 ```
 
-### 2. Interface-Based Design
-**All services** must extend their corresponding interfaces
-**All repositories** must extend their corresponding interfaces
-**Interfaces** define contracts and throw errors for unimplemented methods
-
-```javascript
-// Interface definition
-export class IAnyService {
-  async create(dto) {
-    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
-  }
-  
-  async findAll(query) {
-    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
-  }
-  
-  async findById(id) {
-    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
-  }
-  
-  async update(id, dto) {
-    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
-  }
-  
-  async delete(id) {
-    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
-  }
-}
-
-// Implementation
-export class AnyService extends IAnyService {
-  async create(dto) {
-    // Implementation
-  }
-}
-```
+### 2. Repository-Based Design
+**Services** use repositories for data access
+**Repositories** extend BaseRepository for common operations
+**Services extend interfaces** for contract definition
+**Repositories** encapsulate database-specific logic
 
 ## Directory Structure
 
+The application follows a **role-based folder structure** organized by user type:
+
 ```
 ├── controllers/
-│   ├── [entity].controller.js
-│   └── base.controller.js
+│   ├── auth.controller.js (shared)
+│   ├── base.controller.js
+│   ├── customer/
+│   │   ├── customer-order.controller.js
+│   │   └── customer-product.controller.js
+│   ├── staff/
+│   │   ├── staff-order.controller.js
+│   │   ├── staff-product.controller.js
+│   │   └── staff-delivery.controller.js
+│   └── admin/
+│       ├── admin-store.controller.js
+│       ├── admin-staff.controller.js
+│       └── admin-report.controller.js
 ├── services/
+│   ├── base.service.js
 │   ├── Interfaces/
 │   │   └── I[entity].service.js
-│   ├── [entity].service.js
-│   └── base.service.js
+│   ├── auth.service.js
+│   ├── customer/
+│   │   ├── customer-order.service.js
+│   │   └── customer-product.service.js
+│   ├── staff/
+│   │   ├── staff-order.service.js
+│   │   ├── staff-product.service.js
+│   │   └── staff-delivery.service.js
+│   └── admin/
+│       ├── admin-store.service.js
+│       ├── admin-staff.service.js
+│       └── admin-report.service.js
 ├── repositories/
-│   ├── Interfaces/
-│   │   └── I[entity].repository.js
-│   ├── [entity].repository.js
-│   └── base.repository.js
+│   ├── base.repository.js
+│   ├── user.repository.js
+│   ├── customer/
+│   │   ├── customer-order.repository.js
+│   │   └── customer-product.repository.js
+│   ├── staff/
+│   │   ├── staff-order.repository.js
+│   │   └── staff-product.repository.js
+│   └── admin/
+│       ├── admin-store.repository.js
+│       └── admin-staff.repository.js
+├── routes/
+│   ├── index.js (main router)
+│   ├── auth.router.js (shared)
+│   ├── customer/
+│   │   ├── order.router.js
+│   │   └── product.router.js
+│   ├── staff/
+│   │   ├── order.router.js
+│   │   ├── product.router.js
+│   │   └── delivery.router.js
+│   └── admin/
+│       ├── store.router.js
+│       ├── staff.router.js
+│       └── report.router.js
 ├── DTOs/
 │   ├── [entity].dto.js
-│   └── [entity].response.dto.js
 └── models/
     └── [entity].model.js
 ```
@@ -171,11 +184,35 @@ export class AnyController extends BaseController {
 
 ### 2. Service Pattern
 **Services** contain business logic
-**Extend** corresponding interfaces
+**Extend service interfaces** for contract definition
 **Use repositories** for data access
 **Handle transactions** and complex operations
 
 ```javascript
+// Interface definition
+export class IAnyService {
+  async create(dto) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
+  
+  async findAll(query) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
+  
+  async findById(id) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
+  
+  async update(id, dto) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
+  
+  async delete(id) {
+    throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
+  }
+}
+
+// Implementation
 export class AnyService extends IAnyService {
   constructor(prisma, anyRepo) {
     super();
@@ -191,10 +228,7 @@ export class AnyService extends IAnyService {
     if (existing) throw new ConflictException("Entity already exists");
 
     return await this.prisma.$transaction(async (tx) => {
-      const entity = await tx.any.create({
-        data: dto,
-        include: { relations: true }
-      });
+      const entity = await this.anyRepo.create(dto, tx);
       return entity;
     });
   }
@@ -232,9 +266,10 @@ export class AnyService extends IAnyService {
 
 ### 3. Repository Pattern
 **Repositories** handle data access logic
-**Extend** corresponding interfaces
 **Extend BaseRepository** for common CRUD operations
 **Encapsulate** database-specific queries
+**No interface layer** - direct implementation
+**Support transaction clients** for consistency
 
 ```javascript
 export class AnyRepository extends BaseRepository {
@@ -268,10 +303,32 @@ export class AnyRepository extends BaseRepository {
       include: { relations: true }
     });
   }
+
+  // Support transaction clients
+  async create(data, tx = null) {
+    const client = tx || this.model;
+    return await client.create({ data });
+  }
+
+  async createWithItems(orderData, items, tx = null) {
+    const client = tx || this.model;
+    return await client.create({
+      data: {
+        ...orderData,
+        items: {
+          create: items
+        }
+      },
+      include: {
+        items: true,
+        relations: true
+      }
+    });
+  }
 }
 ```
 
-## Interface Contracts
+## Service & Repository Contracts
 
 ### Service Interface Rules
 **All service interfaces** must be in `services/Interfaces/` directory
@@ -281,12 +338,32 @@ export class AnyRepository extends BaseRepository {
 **Standard CRUD methods**: `create`, `findAll`, `findById`, `update`, `delete`
 **Add** custom methods as needed for specific business logic
 
-### Repository Interface Rules
-**All repository interfaces** must be in `repositories/Interfaces/` directory
-**Naming convention**: `I[EntityName].repository.js`
-**Methods** should throw descriptive error messages
-**Include** all custom methods beyond base CRUD operations
+### Repository Implementation Rules
+**All repositories** must be in `repositories/` directory
+**Naming convention**: `[EntityName].repository.js`
+**Extend BaseRepository** for common CRUD operations
+**Add custom methods** for entity-specific queries
+**Support transaction clients** with optional tx parameter
 **Focus** on data access patterns specific to the entity
+**No interface layer** - direct implementation
+
+### Standard BaseRepository Methods
+BaseRepository provides these methods out of the box:
+- `findAll({ page, limit, query, orderBy })`
+- `findById(id)`
+- `findOne(query)`
+- `create(data)`
+- `update(id, data)`
+- `delete(id)`
+- `findMany(query)`
+
+### Custom Repository Methods
+Add entity-specific methods like:
+- `findByUniqueField(value)`
+- `findWithRelations(query)`
+- `findActive(query)`
+- `createWithItems(data, items, tx)`
+- `generateOrderCode(storeId)`
 
 ## DTO (Data Transfer Object) Rules
 **Use DTOs** for input validation and transformation
@@ -356,11 +433,38 @@ async create(data, tx = null) {
 **Handle errors** at appropriate layers (controller for HTTP errors, service for business errors)
 
 ## File Naming Conventions
-**Controllers**: `[entity].controller.js`
-**Services**: `[entity].service.js`
-**Repositories**: `[entity].repository.js`
-**Interfaces**: `I[Entity].service.js` or `I[Entity].repository.js`
+
+**Controllers**: `[role]-[entity].controller.js` (e.g., `customer-order.controller.js`)
+
+**Services**: `[role]-[entity].service.js` (e.g., `admin-store.service.js`)
+
+**Service Interfaces**: `I[Entity].service.js` (e.g., `IOrder.service.js`)
+
+**Repositories**: `[role]-[entity].repository.js` (e.g., `staff-order.repository.js`)
+
+**Routes**: `[entity].router.js` (e.g., `order.router.js`)
+
 **DTOs**: `[entity].dto.js` (contains all DTOs for the entity)
+
+### Role-Based Organization Rules
+
+**Customer**: Public-facing endpoints for customers
+- Controllers: `controllers/customer/customer-[entity].controller.js`
+- Services: `services/customer/customer-[entity].service.js`
+- Repositories: `repositories/customer/customer-[entity].repository.js`
+- Routes: `routes/customer/[entity].router.js`
+
+**Staff**: Internal endpoints for staff members (requires authentication + staff role)
+- Controllers: `controllers/staff/staff-[entity].controller.js`
+- Services: `services/staff/staff-[entity].service.js`
+- Repositories: `repositories/staff/staff-[entity].repository.js`
+- Routes: `routes/staff/[entity].router.js`
+
+**Admin**: Administrative endpoints for administrators (requires authentication + admin role)
+- Controllers: `controllers/admin/admin-[entity].controller.js`
+- Services: `services/admin/admin-[entity].service.js`
+- Repositories: `repositories/admin/admin-[entity].repository.js`
+- Routes: `routes/admin/[entity].router.js`
 
 ## Standard CRUD Operations
 **Every entity API** should implement these standard operations:
@@ -383,21 +487,21 @@ async create(data, tx = null) {
 
 When creating a new API endpoint:
 
-1. **Create Interface First**
+1. **Create Service Interface First**
 **Define service interface** in `services/Interfaces/` following standard CRUD pattern
-**Define repository interface** if needed in `repositories/Interfaces/`
+**Include all custom methods** needed for the service
 
-2. **Implement Repository**
+2. **Create Repository**
 **Create repository class** extending BaseRepository
-**Implement all interface methods**
-**Add custom queries** specific to entity needs
+**Implement custom methods** specific to entity needs
+**Ensure transaction support** with optional tx parameter
 
 3. **Implement Service**
-**Create service class** extending interface
+**Create service class** extending the interface
 **Inject dependencies** via constructor (preferred)
 **Implement business logic** with proper error handling
 **Include validation** and transaction management
-**Ensure repositories support transaction clients**
+**Use repositories** for all data access
 
 4. **Create Controller**
 **Create controller** extending BaseController
@@ -420,13 +524,87 @@ When creating a new API endpoint:
 **In your main app setup**, inject all dependencies
 **Use constructor injection** as the default pattern
 **Handle circular dependencies** with setter injection if needed
-**Ensure proper initialization order**
-**Test the complete flow** including transactions
+
+```javascript
+// WRONG - Building APIs "just in case"
+orderRouter.get("/admin/all-orders", adminController.getAllOrders);
+orderRouter.get("/admin/stats/detailed", adminController.getDetailedStats);
+orderRouter.get("/admin/export/csv", adminController.exportToCSV);
+
+// RIGHT - Only what users need
+orderRouter.post("/", orderController.create);
+orderRouter.get("/staff/orders", orderController.getStaffOrders);
+orderRouter.get("/staff/orders/:id", orderController.getStaffOrderById);
+orderRouter.patch("/staff/orders/:id/status", orderController.updateStaffOrderStatus);
+```
+
+### 2. Single Responsibility Implementation
+**One endpoint = one specific user need**
+**No extra features beyond requirements**
+**No "bonus" endpoints**
+**No future-proofing APIs**
+
+### 3. Clean Code Principle
+**Remove unused code immediately**
+**Keep controllers and routes minimal**
+**Delete unnecessary methods and endpoints**
+**Maintain lean, focused codebases**
+
+### 4. Enum Usage Rule
+**ALWAYS use enums** instead of hardcoded strings for status, types, and constants
+**Place enums** in `/enums/` directory with descriptive names
+**Use consistent naming**: `[category].enum.js` or `[entity].status.enum.js`
+**Import and use enums** in DTOs, services, and controllers
+**Never use magic strings** or hardcoded values
+
+```javascript
+// WRONG - Hardcoded strings
+status: 'PENDING'
+type: 'DINE_IN'
+
+// RIGHT - Using enums
+import { OrderStatus, OrderType } from '../enums/order.status.enum.js';
+
+status: OrderStatus.PENDING
+type: OrderType.DINE_IN
+```
+
+### 5. Implementation Checklist - API Focused
+When creating a new API endpoint:
+
+1. **Verify User Requirement First**
+**Confirm exact user need** before writing any code
+**Document the single requirement** clearly
+**Get approval on scope** before implementation
+
+2. **Implement Only What's Required**
+**Create minimal DTOs** for the specific endpoint
+**Implement only required service methods**
+**Create only the controller method needed**
+**Add only the route requested**
+
+3. **Review and Remove Extras**
+**Check for any extra methods** that weren't requested
+**Remove unused imports and dependencies**
+**Delete any "just in case" code**
+**Keep implementation focused**
+
+4. **Test Only Required Functionality**
+**Test the exact user requirement**
+**No extra test cases** for unrequested features
+**Verify response format** matches user needs
+
+### 6. Golden Rules
+- **If user didn't ask for it, don't build it**
+- **One requirement = one implementation**
+- **Stop when requirement is complete**
+- **No "helpful" extra features**
+- **Always ask: "Did the user request this?"**
 
 ## Example Flow
 
 ```
-Request → Controller (validates DTO) → Service (business logic) → Repository (data access) → Database
+User Requirement → API Design → Minimal Implementation → Testing → Done
 ```
 
 This architecture ensures:
@@ -434,3 +612,6 @@ This architecture ensures:
 **Testability**: Easy to mock dependencies
 **Maintainability**: Clear structure and conventions
 **Scalability**: Easy to add new features following the same patterns
+**Efficiency**: No unnecessary code or endpoints
+**Focus**: Only implement what users actually require
+**Simplicity**: Clean, minimal implementations

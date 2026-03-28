@@ -30,21 +30,24 @@ export class BaseRepository {
     return await this.model.findFirst(options);
   }
 
-  async create(data) {
-    return await this.model.create({
+  async create(data, tx = null) {
+    const client = tx || this.model;
+    return await client.create({
       data
     });
   }
 
-  async update(id, data) {
-    return await this.model.update({
+  async update(id, data, tx = null) {
+    const client = tx || this.model;
+    return await client.update({
       where: { id },
       data
     });
   }
 
-  async delete(id) {
-    await this.model.delete({
+  async delete(id, tx = null) {
+    const client = tx || this.model;
+    await client.delete({
       where: { id }
     });
     return 1;

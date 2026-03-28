@@ -150,6 +150,7 @@ model User {
   email    String? @unique // login bằng email (optional)
   phone    String? @unique // login bằng phone
   password String // password đã hash (bcrypt/argon2)
+  role     String  @default("customer") // customer, staff, admin
 
   isActive Boolean @default(true) // soft disable account (không xóa để giữ lịch sử)
 

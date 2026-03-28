@@ -411,20 +411,81 @@ All endpoints return:
 - `PATCH /staff/orders/:id/status`
 
 Use the template above and document:
-- **staff scope**: “orders at current working store”
-- **status transitions** allowed (e.g. `NEW -> CONFIRMED -> PREPARING -> READY`)
 
 #### Products (branch)
 
-- `PATCH /staff/products/:id/stock`
+##### `PATCH /staff/products/:id/stock`
+- **Name**: Update product stock status (in stock/out of stock)
+- **Auth**: Bearer JWT
+- **Roles**: staff
+- **Description**: Quick stock toggle for products at staff's current branch
 
-Document the stock state field name you’ll use (e.g. `isActive` or `isOutOfStock`) and expected behavior.
+- **Headers**
+  - `Authorization`: `Bearer <jwt>`
+  - `Content-Type`: `application/json`
+
+- **Path params**
+  - `id`: string — Product UUID
+
+- **Request body**
+
+```json
+{
+  "inStock": true
+}
+```
+
+- **Response 200**
+
+```json
+{
+  "statusCode": 200,
+  "message": "OK",
+  "data": {
+    "id": "product-uuid",
+    "name": "Product Name",
+    "sku": "SKU123",
+    "inStock": true,
+    "updatedAt": "2024-03-28T12:00:00Z"
+  },
+  "metadata": {}
+}
+```
+
+- **Response 400** (Product inactive or not found)
+
+```json
+{
+  "statusCode": 400,
+  "message": "Product not found or inactive",
+  "data": null,
+  "metadata": {
+    "errors": [
+      { "field": "id", "message": "Product not found or inactive" }
+    ]
+  }
+}
+```
+
+- **Response 401** (Staff not found)
+
+```json
+{
+  "statusCode": 401,
+  "message": "Staff not found",
+  "data": null,
+  "metadata": {
+    "errors": [
+      { "field": "auth", "message": "Staff not found or inactive" }
+    ]
+  }
+}
+```
 
 #### Delivery tasks (shipper/staff)
 
 - `GET /staff/delivery/tasks`
 - `PATCH /staff/delivery/:id/location`
-
 Document:
 - how route optimization is consumed (order of tasks)
 - location update payload: `lat`, `lng`, `timestamp`
