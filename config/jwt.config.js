@@ -7,7 +7,8 @@ function buildPayload(user = {}) {
 }
 
 export function generateAccessToken(user = {}) {
-  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET have not been configured");
+  if (!process.env.JWT_ACCESS_SECRET)
+    throw new Error("JWT_ACCESS_SECRET have not been configured");
 
   return jwt.sign(buildPayload(user), process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
@@ -15,7 +16,8 @@ export function generateAccessToken(user = {}) {
 }
 
 export function generateRefreshToken(user = {}) {
-  if (!process.env.JWT_REFRESH_SECRET) throw new Error("JWT_REFRESH_SECRET have not been configured");
+  if (!process.env.JWT_REFRESH_SECRET)
+    throw new Error("JWT_REFRESH_SECRET have not been configured");
 
   return jwt.sign(buildPayload(user), process.env.JWT_REFRESH_SECRET, {
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
