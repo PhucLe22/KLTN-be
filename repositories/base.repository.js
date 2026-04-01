@@ -2,65 +2,73 @@ import { prisma } from "../lib/prisma.js";
 
 export class BaseRepository {
   constructor(modelName) {
-    this.model = prisma[modelName];
     this.modelName = modelName;
   }
 
-  async findAll(params = {}) {
-    return await this.model.findMany(params);
+  getModel(tx = null) {
+    return tx ? tx[this.modelName] : prisma[this.modelName];
   }
 
-  async findById(id, include = null) {
-    return await this.model.findUnique({
+  async findAll(params = {}, tx = null) {
+    return await this.getModel(tx).findMany(params);
+  }
+
+  async findById(id, include = null, tx = null) {
+    return await this.getModel(tx).findUnique({
       where: { id },
       include,
     });
   }
 
-  async findOne(where, include = null) {
-    return await this.model.findFirst({
+  async findOne(where, include = null, tx = null) {
+    return await this.getModel(tx).findFirst({
       where,
       include,
     });
   }
 
-  async create(data) {
-    return await this.model.create({
+  async create(data, tx = null) {
+    return await this.getModel(tx).create({
       data,
     });
   }
 
-  async update(id, data) {
-    return await this.model.update({
+  async update(id, data, tx = null) {
+    return await this.getModel(tx).update({
       where: { id },
       data,
     });
   }
 
-  async delete(id) {
-    return await this.model.delete({
+  async delete(id, tx = null) {
+    return await this.getModel(tx).delete({
       where: { id },
     });
   }
 
-  // Hỗ trợ phân trang (Pagination) mặc định
-  async paginate({
-    page = 1,
-    limit = 10,
-    where = {},
-    include = null,
-    orderBy = { createdAt: "desc" },
-  }) {
+  // Phân trang cũng phải hỗ trợ tx nếu cần đếm dữ liệu trong transaction
+  async paginate(
+    {
+      page = 1,
+      limit = 10,
+      where = {},
+      include = null,
+      orderBy = { createdAt: "desc" },
+    },
+    tx = null,
+  ) {
+    const model = this.getModel(tx);
     const skip = (page - 1) * limit;
+
     const [items, total] = await Promise.all([
-      this.model.findMany({
+      model.findMany({
         where,
         include,
         orderBy,
         skip,
         take: Number(limit),
       }),
-      this.model.count({ where }),
+      model.count({ where }),
     ]);
 
     return {
