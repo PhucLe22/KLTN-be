@@ -1,0 +1,123 @@
+
+/*
+tạo user + customer 
+*/
+POST http://localhost:5001/api/v1/auth/register/customer
+Content-Type: application/json
+{
+  "type": "CUSTOMER",
+  "phone": "0909123456",
+  "password": "Password123@",
+  "name": "Nguyễn Văn Khách",
+  "email": "khachhang@gmail.com"
+}
+
+/*
+tạo user + staff
+*/
+POST http://localhost:5001/api/v1/auth/register
+Content-Type: application/json
+{
+  "type": "STAFF",
+  "email": "cashier.hcm01@trasua.com",
+  "phone": "0988111222",
+  "password": "StaffPassword789",
+  "storeId": "uuid-cua-cua-hang-quan-1", 
+  "role": "CASHIER"
+}
+
+/*
+tạo guest
+*/
+POST http://localhost:5001/api/v1/auth/register/guest
+Content-Type: application/json
+{
+  "type": "GUEST",
+  "phone": "0333444555",
+  "name": "Anh Hoàng Mua Lẻ"
+}
+
+
+### Login API
+# @name login
+POST http://localhost:5001/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "0909123456",
+  "password": "Password123@"
+}
+
+{{
+  // 1. Lấy Access Token từ data object trong body
+  if (response.parsedBody && response.parsedBody.data) {
+    exports.accessToken = response.parsedBody.data.accessToken;
+    console.log("✅ Access Token captured");
+  }
+
+  // 2. Lấy Refresh Token thực sự từ Set-Cookie (vì trong body chỉ là "protected")
+  const setCookie = response.headers['set-cookie'];
+  if (setCookie) {
+    // Tìm đúng cookie có tên refreshToken
+    const cookieString = Array.isArray(setCookie) ? setCookie.find(c => c.includes('refreshToken=')) : setCookie;
+    const match = cookieString.match(/refreshToken=([^;]+)/);
+    if (match) {
+      exports.refreshToken = match[1];
+      console.log("✅ Refresh Token captured from Cookie");
+    }
+  }
+}}
+
+###
+
+### Logout API
+# @name logout
+POST http://localhost:5001/api/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refreshToken={{refreshToken}}
+Content-Type: application/json
+
+{
+  "message": "User logout"
+}
+
+### 2. Test Refresh Token (Thành công)
+# @name refreshTokenSuccess
+# @forceIt
+POST http://localhost:5001/api/v1/auth/refresh-token
+Cookie: refreshToken={{refreshToken}}
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+
+{{
+  // Sau khi refresh thành công, chúng ta phải cập nhật lại biến
+  // vì RT cũ đã bị "Revoke" trong DB (Token Rotation)
+  
+  if (response.parsedBody && response.parsedBody.data) {
+    exports.accessToken = response.parsedBody.data.accessToken;
+    console.log("New Access Token captured");
+  }
+
+  const setCookie = response.headers['set-cookie'];
+  if (setCookie) {
+    const match = setCookie[0].match(/refreshToken=([^;]+)/);
+    if (match) {
+      exports.refreshToken = match[1];
+      console.log("New Refresh Token captured (Rotation works!)");
+    }
+  }
+}}
+
+###
+
+### 3. Test Refresh Token (Thất bại - Gửi token cũ đã bị xoay vòng)
+# @name refreshTokenFail
+POST http://localhost:5001/api/v1/auth/refresh-token
+Cookie: refreshToken=this_is_a_fake_or_expired_token
+Content-Type: application/json
+
+###
+
+### 4. Kiểm tra quyền truy cập bằng Access Token mới
+# @name getProfileWithNewToken
+GET http://localhost:5001/api/v1/auth/me
+Authorization: Bearer {{accessToken}}

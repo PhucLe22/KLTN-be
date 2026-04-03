@@ -1,5 +1,5 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { OK, CREATED } from "../utils/successResponse.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
+import { OK, CREATED } from "../lib/successResponse.js";
 
 export class BaseController {
   constructor(service) {

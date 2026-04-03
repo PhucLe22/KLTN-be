@@ -6,6 +6,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from "../lib/httpExceptions.js";
+import { ERROR_MESSAGES } from "../constants/errors.js";
 import logger from "../lib/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
@@ -14,15 +15,35 @@ export const errorHandler = (err, req, res, next) => {
   // 1. Xử lý lỗi từ ZOD (Validation) - Trích xuất chi tiết từng field
   if (err instanceof ZodError) {
     const fieldErrors = {};
-    err.errors.forEach((e) => {
-      // Lấy path (ví dụ: body.email -> email)
-      const path = e.path.length > 1 ? e.path.slice(1).join(".") : e.path[0];
-      fieldErrors[path] = e.message;
+
+    // Zod sử dụng .issues là chuẩn nhất
+    const issues = err.issues || err.errors || [];
+
+    // Log ra bảng cực đẹp trong Terminal khi dev
+    if (process.env.NODE_ENV === "development" && issues.length > 0) {
+      console.log("\n❌ [ZOD VALIDATION ERROR]");
+      console.table(
+        issues.map((i) => ({
+          field: i.path.join("."),
+          message: i.message,
+          code: i.code,
+        })),
+      );
+    }
+
+    issues.forEach((issue) => {
+      const path = issue.path.join(".");
+      fieldErrors[path] = issue.message;
     });
 
-    // Tạo Exception mới kèm theo object chi tiết lỗi các field
-    error = new BadRequestException("Dữ liệu nhập vào không hợp lệ");
-    error.errors = fieldErrors; // Gán thêm property errors vào object error
+    // Tạo object error chuẩn để trả về
+    error = {
+      statusCode: 400,
+      status: "fail",
+      message: ERROR_MESSAGES.VALIDATION_ERROR,
+      errors: fieldErrors,
+      stack: err.stack, // Giữ lại stack gốc để debug nếu cần
+    };
   }
 
   // 2. Xử lý lỗi từ PRISMA (Database)
@@ -59,7 +80,7 @@ export const errorHandler = (err, req, res, next) => {
   if (process.env.NODE_ENV === "development") {
     console.error("🔥 ERROR:", err);
   }
-  logger.error(`${req.method} ${req.url} - ${err.message}`);
+  logger.error(`${req.method} ${req.url} - ${error.message}`);
 
   res.status(statusCode).json({
     status,

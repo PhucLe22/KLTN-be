@@ -4,15 +4,15 @@ import { CustomerTier, StaffRole } from "../constants/enum.js";
 const baseUserInfo = z.object({
   name: z.string(),
   phone: z.string(),
-  email: z.string().email().nullable(),
-  role: z.nativeEnum(StaffRole).or(z.string()), // StaffRole or other roles like ADMIN/CUSTOMER
+  email: z.email().nullable(),
+  role: z.enum(StaffRole).or(z.string()),
 });
 
 const customerSchema = z.object({
   name: z.string().nullable(),
   phone: z.string(),
   email: z.string().nullable(),
-  tier: z.nativeEnum(CustomerTier),
+  tier: z.enum(CustomerTier),
   points: z.number(),
 });
 

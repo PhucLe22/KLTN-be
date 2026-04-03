@@ -171,20 +171,30 @@ model User {
 }
 
 model RefreshToken {
-  id     String @id @default(uuid())
-  token  String @unique
-  userId String
-
-  deviceInfo String? // Ví dụ: "iPhone 15, iOS 17" hoặc "Chrome on Windows"
-  ipAddress  String?
-
-  isRevoked Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
+  id        String   @id @default(uuid())
+  // Token ID (JTI) hoặc Opaque Token string
+  token     String   @unique @db.VarChar(255)
+  userId    String
+  
+  // Tracking & Security
+  deviceInfo String?  // User-Agent string
+  ipAddress  String?  @db.VarChar(45) // Hỗ trợ cả IPv6
+  
+  // Trạng thái & Bảo mật
+  isRevoked  Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  
+  // Token Rotation (Cực kỳ quan trọng để chống tấn công Replay)
+  // Lưu ID của token mới được tạo ra từ token này
+  replacedBy String?  
+  
+  // Quan hệ
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([token]) 
   @@schema("iam")
 }
 

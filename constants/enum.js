@@ -30,6 +30,8 @@ export const PaymentStatus = {
 };
 
 export const StaffRole = {
+  ROOT: "ROOT",
+  ADMIN: "ADMIN",
   MANAGER: "MANAGER",
   CASHIER: "CASHIER",
   KITCHEN: "KITCHEN",
@@ -83,4 +85,9 @@ export const ProductType = {
   SIMPLE: "SIMPLE", // sản phẩm thường
   COMBO: "COMBO", // combo nhiều sản phẩm
   SERVICE: "SERVICE", // phí dịch vụ
+};
+
+export const UserType = {
+  CUSTOMER: "CUSTOMER",
+  STAFF: "STAFF",
 };
