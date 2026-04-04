@@ -26,3 +26,19 @@ export const ERROR_MESSAGES = {
   AUTH_TOKEN_EXPIRED: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.",
   VALIDATION_ERROR: "Dữ liệu không đúng định dạng Schema.",
 };
+
+export const VALIDATION_MESSAGES = {
+  ID_INVALID: "ID không đúng định dạng UUID.",
+  NAME_REQUIRED: "Tên không được để trống.",
+  NAME_MIN: "Tên quá ngắn (tối thiểu 2 ký tự).",
+  NAME_MAX: "Tên quá dài (tối đa 40 ký tự).",
+  EMAIL_INVALID: "Email không đúng định dạng.",
+  PHONE_INVALID: "Số điện thoại phải từ 10-11 chữ số.",
+  PASSWORD_MIN: "Mật khẩu phải có ít nhất 6 ký tự.",
+  TIER_INVALID: "Hạng khách hàng không hợp lệ.",
+  POINTS_INVALID: "Điểm phải là một con số.",
+  POINTS_NON_NEGATIVE: "Điểm không được là số âm.",
+  ROLE_INVALID: "Vai trò nhân viên không hợp lệ.",
+  USER_TYPE_INVALID: "Loại người dùng không hợp lệ.",
+  TOKEN_REQUIRED: "Token không được để trống.",
+};

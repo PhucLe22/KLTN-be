@@ -1,42 +1,47 @@
-import { asyncHandler } from "../lib/asyncHandler.js";
-import { OK, CREATED } from "../lib/successResponse.js";
+import { SUCCESS_STATUS_CODE } from "../constants/success.js";
+import { ERROR_STATUS_CODE, ERROR_MESSAGES } from "../constants/errors.js";
 
 export class BaseController {
   constructor(service) {
     this.service = service;
   }
 
-  getAll = asyncHandler(async (req, res) => {
-    const { page, limit, ...filters } = req.query;
+  success(
+    res,
+    {
+      message = "Thao tác thành công",
+      data = null,
+      statusCode = SUCCESS_STATUS_CODE.OK,
+      meta = null,
+    } = {}, // Default là object rỗng để tránh lỗi nếu không truyền gì
+  ) {
+    const response = {
+      success: true,
+      message,
+      data,
+    };
 
-    // Result từ service trả về: { items, meta }
-    const { items, meta } = await this.service.getPaginated({
-      page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 10,
-      where: filters,
+    if (meta) response.meta = meta;
+
+    return res.status(statusCode).json(response);
+  }
+
+  error(
+    res,
+    {
+      message = ERROR_MESSAGES[ERROR_STATUS_CODE.INTERNAL_SERVER_ERROR],
+      statusCode = ERROR_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      errors = null,
+    } = {},
+  ) {
+    return res.status(statusCode).json({
+      success: false,
+      message,
+      errors,
     });
+  }
 
-    // Trả về kèm metadata phân trang
-    return OK(res, items, meta);
-  });
-
-  getOne = asyncHandler(async (req, res) => {
-    const data = await this.service.getById(req.params.id);
-    return OK(res, data);
-  });
-
-  create = asyncHandler(async (req, res) => {
-    const data = await this.service.create(req.body);
-    return CREATED(res, data);
-  });
-
-  update = asyncHandler(async (req, res) => {
-    const data = await this.service.update(req.params.id, req.body);
-    return OK(res, data);
-  });
-
-  delete = asyncHandler(async (req, res) => {
-    await this.service.delete(req.params.id);
-    return res.status(204).send();
-  });
+  noContent(res) {
+    return res.status(SUCCESS_STATUS_CODE.NO_CONTENT).send();
+  }
 }

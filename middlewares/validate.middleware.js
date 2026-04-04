@@ -1,5 +1,5 @@
 // middlewares/validate.middleware.js
-export const validate =
+export const validateData =
   (schema = {}) =>
   (req, res, next) => {
     try {
@@ -18,11 +18,8 @@ export const validate =
         req.query = schema.query.parse(req.query);
       }
 
-      // Nếu mọi thứ ổn, đi tiếp vào Controller
       next();
     } catch (error) {
-      // Nếu Zod quăng lỗi, chỉ cần next(error)
-      // Thằng Global Error Handler ông vừa viết sẽ tự "tóm" lấy và format lại
       next(error);
     }
   };

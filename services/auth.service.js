@@ -13,7 +13,7 @@ import {
 } from "../lib/httpExceptions.js";
 import { prisma } from "../lib/prisma.js";
 import { JwtHelper } from "../lib/jwt.js";
-import { ERROR_MESSAGES } from "../constants/errors.js";
+import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import { UserType } from "../constants/enum.js";
 class AuthService extends BaseService {
   constructor() {
@@ -33,7 +33,7 @@ class AuthService extends BaseService {
       case "GUEST":
         return await this.#quickCreateCustomer(data);
       default:
-        throw new BadRequestException("Loại người dùng không hợp lệ");
+        throw new BadRequestException(VALIDATION_MESSAGES.USER_TYPE_INVALID);
     }
   }
 
@@ -56,21 +56,18 @@ class AuthService extends BaseService {
     };
   }
 
-  /**
-   * Logout
-   */
+  // Logout
   async logout(refreshToken) {
     if (!refreshToken) return false;
     await this.tokenRepository.revokeToken(refreshToken);
     return true;
   }
 
-  /**
-   * Làm mới Access Token bằng Refresh Token (Token Rotation)
-   */
+  // Làm mới Access Token bằng Refresh Token (Token Rotation)
+
   async refreshToken(oldRefreshTokenStr, reqInfo) {
     if (!oldRefreshTokenStr) {
-      throw new UnauthorizedException("Yêu cầu Refresh Token");
+      throw new UnauthorizedException(VALIDATION_MESSAGES.TOKEN_REQUIRED);
     }
 
     // Kiểm tra token còn hạn và chưa bị revoke trong DB
@@ -86,7 +83,7 @@ class AuthService extends BaseService {
     // Lấy thông tin user để build claims
     const user = await this.userRepo.findByIdWithProfile(savedToken.userId);
     if (!user) {
-      throw new UnauthorizedException("Người dùng không còn tồn tại");
+      throw new UnauthorizedException("Người dùng không tồn tại");
     }
 
     // THU HỒI TOKEN CŨ
@@ -104,9 +101,8 @@ class AuthService extends BaseService {
     };
   }
 
-  /**
-   * Logic tạo Identity chung (Check trùng + Hash + DB Create)
-   */
+  // Logic tạo Identity chung
+
   async #createUserIdentity(data, tx) {
     const { email, phone, password } = data;
 
