@@ -1,10 +1,11 @@
-import { CustomerTier } from "@prisma/client/index-browser.js";
+import pkg from "@prisma/client/index-browser.js";
 import { UserType } from "../constants/enum.js";
 import {
   registerOutputSchema,
   guestOutputSchema,
   loginOutputSchema,
 } from "../contracts/output/auth.output.schema.js";
+const { CustomerTier } = pkg;
 
 export class AuthMapper {
   /**
