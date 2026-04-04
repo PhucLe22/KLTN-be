@@ -1,8 +1,11 @@
+import { CustomerTier } from "@prisma/client/index-browser.js";
+import { UserType } from "../constants/enum.js";
 import {
-  AccountOutputSchema,
-  GuestOutputSchema,
-  LoginOutputSchema,
-} from "../dtos/auth.dto.js";
+  registerOutputSchema,
+  guestOutputSchema,
+  loginOutputSchema,
+} from "../contracts/output/auth.output.schema.js";
+
 export class AuthMapper {
   /**
    * Dùng cho CUSTOMER và STAFF
@@ -14,7 +17,7 @@ export class AuthMapper {
       phone: user.phone,
     };
 
-    return AccountOutputSchema.parse(data);
+    return registerOutputSchema.parse(data);
   }
 
   /**
@@ -25,37 +28,11 @@ export class AuthMapper {
       customerId: customer.id,
       name: customer.name,
       phone: customer.phone,
-      tier: customer.tier || "BRONZE",
+      tier: customer.tier || CustomerTier.BRONZE,
     };
 
-    return GuestOutputSchema.parse(data);
+    return guestOutputSchema.parse(data);
   }
-  /**
-   * Trả về thông tin User kèm Token sau Login
-   *
-   */
-  // static toAccountWithTokensResponse(user, tokens) {
-  //   const response = {
-  //     accessToken: tokens.accessToken,
-  //     refreshToken: tokens.refreshToken,
-  //     id: user.id,
-  //     email: user.email,
-  //   };
-
-  //   if (user.staff) {
-  //     response.name = user.staff.name;
-  //     response.role = user.staff.role;
-  //     response.type = "STAFF";
-  //     response.storeName = user.staff.store?.name || "N/A";
-  //   } else if (user.customer) {
-  //     response.name = user.customer.name;
-  //     response.tier = user.customer.tier;
-  //     response.points = user.customer.points;
-  //     response.type = "CUSTOMER";
-  //   }
-
-  //   return LoginOutputSchema.parse(response);
-  // }
 
   static toAccountWithTokensResponse(user, tokens) {
     const builder = new _LoginResponseBuilder(user, tokens);
@@ -87,7 +64,7 @@ class _LoginResponseBuilder {
   asStaff(staffData) {
     this.result.name = staffData.name;
     this.result.role = staffData.role;
-    this.result.type = "STAFF";
+    this.result.type = UserType.STAFF;
     this.result.storeName = staffData.store?.name || "N/A";
     return this;
   }
@@ -96,11 +73,11 @@ class _LoginResponseBuilder {
     this.result.name = customerData.name;
     this.result.tier = customerData.tier;
     this.result.points = customerData.points;
-    this.result.type = "CUSTOMER";
+    this.result.type = UserType.CUSTOMER;
     return this;
   }
 
   build() {
-    return LoginOutputSchema.parse(this.result);
+    return loginOutputSchema.parse(this.result);
   }
 }

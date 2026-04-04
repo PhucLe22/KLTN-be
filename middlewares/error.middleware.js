@@ -54,7 +54,8 @@ export const errorHandler = (err, req, res, next) => {
         error = new ConflictException(`${target} đã tồn tại trên hệ thống.`);
         break;
       case "P2025":
-        error = new NotFoundException("Không tìm thấy bản ghi yêu cầu.");
+        error = new NotFoundException();
+
         break;
       case "P2003":
         error = new BadRequestException(

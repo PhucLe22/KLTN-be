@@ -9,8 +9,7 @@ export const SUCCESS_STATUS_CODE = {
 };
 
 export const SUCCESS_MESSAGES = {
-  [SUCCESS_STATUS_CODE.OK]:
-    "The request is OK (standard response for successful HTTP requests)",
+  [SUCCESS_STATUS_CODE.OK]: "The request is OK",
   [SUCCESS_STATUS_CODE.CREATED]:
     "The request has been fulfilled, and a new resource is created",
   [SUCCESS_STATUS_CODE.ACCEPTED]:
@@ -23,4 +22,7 @@ export const SUCCESS_MESSAGES = {
     "The request has been processed, requires requester to reset document view",
   [SUCCESS_STATUS_CODE.PARTIAL_CONTENT]:
     "The server is delivering only part of the resource due to a range header",
+  LOGIN_SUCCES: "Đăng nhập thành công",
+  LOUGOUT: "Đăng xuất thành công",
+  RENEW_TOKEN: "Làm mới token thành công",
 };

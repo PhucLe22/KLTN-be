@@ -90,4 +90,5 @@ export const ProductType = {
 export const UserType = {
   CUSTOMER: "CUSTOMER",
   STAFF: "STAFF",
+  GUEST: "GUEST",
 };

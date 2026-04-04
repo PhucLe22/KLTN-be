@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { StaffRole } from "../../constants/enum.js";
+import { StaffRole } from "../../../constants/enum.js";
 
 // POST /api/v1/admin/stores
 export const adminCreateStoreSchema = {

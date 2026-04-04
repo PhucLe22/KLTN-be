@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OrderStatus, OrderType } from "../constants/enum.js";
+import { OrderType } from "../../constants/enum.js";
 
 // POST /api/v1/orders
 export const createOrderSchema = {

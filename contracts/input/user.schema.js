@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CustomerTier, StaffRole } from "../constants/enum.js";
+import { CustomerTier, StaffRole } from "../../constants/enum.js";
 
 const baseUserInfo = z.object({
   name: z.string(),
