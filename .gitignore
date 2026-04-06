@@ -103,3 +103,6 @@ temp/
 
 /generated/prisma
 /generated/prisma
+
+# HTTP test files
+*.http

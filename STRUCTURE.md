@@ -65,3 +65,10 @@ Tài liệu này mô tả chi tiết nhiệm vụ và trách nhiệm của từn
 - `server.js`: Điểm khởi đầu của ứng dụng (Entry point).
 - `.env`: Lưu trữ biến môi trường (Secrets, DB URL).
 - `prisma.config.ts`: Cấu hình bổ sung cho Prisma.
+
+
+### Cách chạy:
+- `pnpm install`
+- `pnpm prisma generate`
+- `pnpm prisma migrate dev`
+- `pnpm dev`
