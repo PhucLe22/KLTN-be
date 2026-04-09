@@ -1,9 +1,8 @@
-const MODEL_NAME = "user";
 import { BaseRepository } from "./base.repository.js";
 
 class UserRepository extends BaseRepository {
   constructor() {
-    super(MODEL_NAME); // Tên model trong schema.prisma
+    super("user");
   }
   /**
    * Tìm User bằng Email HOẶC Số điện thoại
