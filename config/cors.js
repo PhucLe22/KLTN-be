@@ -1,6 +1,7 @@
-import { ForbiddenException } from "../lib/httpExceptions";
+import { ForbiddenException } from "../lib/httpExceptions.js";
 
-const whitelist = ["http://localhost:3000", ,];
+const whitelist = ["http://localhost:3000"];
+
 export const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || whitelist.indexOf(origin) !== -1) {
