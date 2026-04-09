@@ -5,7 +5,15 @@ export const getProductsSchema = {
   query: z.object({
     categoryId: z.string().uuid().optional(),
     search: z.string().optional(),
-    limit: z.string().transform(Number).optional(),
-    page: z.string().transform(Number).optional(),
+    limit: z.string().transform(Number).optional().default("10"),
+    page: z.string().transform(Number).optional().default("1"),
   }),
+  
+  response: z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    price: z.any().transform(v => Number(v)), // basePrice -> price
+    thumbnail: z.string().nullable()
+  })
 };

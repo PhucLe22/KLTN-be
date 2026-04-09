@@ -1,9 +1,9 @@
 import { BaseService } from "./base.service.js";
-import { productRepository } from "../repositories/product.repository.js";
+import { storeRepository } from "../repositories/store.repository.js";
 
-class ProductService extends BaseService {
+class StoreService extends BaseService {
     constructor() {
-        super(productRepository);
+        super(storeRepository);
     }
 
     async findAll(query) {
@@ -13,7 +13,7 @@ class ProductService extends BaseService {
         if (search) {
             where.name = { contains: search, mode: 'insensitive' };
         }
-        
+
         return await this.repository.findAll({
             page,
             limit,
@@ -21,13 +21,15 @@ class ProductService extends BaseService {
             select: {
                 id: true,
                 name: true,
-                description: true,
-                basePrice: true,
-                thumbnail: true
+                address: true,
+                hotline: true,
+                lat: true,
+                lng: true,
+                isActive: true
             },
             orderBy: { createdAt: 'desc' }
         });
     }
 }
 
-export const productService = new ProductService();
+export const storeService = new StoreService();
