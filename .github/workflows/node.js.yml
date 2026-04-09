@@ -34,5 +34,4 @@ jobs:
 
       # 2. Thay đổi các lệnh npm sang pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build --if-present
       - run: pnpm test
