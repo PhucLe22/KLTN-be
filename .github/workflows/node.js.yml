@@ -12,19 +12,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Thêm bước cài đặt pnpm
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 9 # Hoặc version bạn đang dùng ở máy local
+          version: 9
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
@@ -32,6 +26,8 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
-      # 2. Thay đổi các lệnh npm sang pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
