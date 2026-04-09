@@ -7,6 +7,8 @@ import mainRouter from "./routes/index.js";
 import connectToDB from "./config/connectToDB.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import logger from "./lib/logger.js";
+import { corsOptions } from "./config/cors.js";
+
 dotenv.config();
 
 const app = express();
@@ -15,7 +17,7 @@ const PORT = process.env.PORT || 5001;
 connectToDB();
 
 app.use(cookieParser());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms"),
