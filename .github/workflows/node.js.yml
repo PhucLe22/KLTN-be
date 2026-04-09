@@ -26,11 +26,11 @@ jobs:
         with:
           version: 9 # Hoặc version bạn đang dùng ở máy local
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm" # Thay đổi từ 'npm' sang 'pnpm' để cache hiệu quả hơn
+          node-version: 22
+          cache: "pnpm"
 
       # 2. Thay đổi các lệnh npm sang pnpm
       - run: pnpm install --frozen-lockfile
