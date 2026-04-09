@@ -1,9 +1,8 @@
-// repositories/user.repository.js
 import { BaseRepository } from "./base.repository.js";
 
 class UserRepository extends BaseRepository {
   constructor() {
-    super("user"); // Tên model trong schema.prisma
+    super("user");
   }
   /**
    * Tìm User bằng Email HOẶC Số điện thoại

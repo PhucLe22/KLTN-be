@@ -33,3 +33,4 @@ export const guestOutputSchema = z.object({
   phone: f.phone,
   tier: f.tier,
 });
+

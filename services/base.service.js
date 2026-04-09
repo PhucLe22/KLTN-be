@@ -11,7 +11,7 @@ export class BaseService {
   // Lấy danh sách phân trang (ủy quyền cho Repo)
   async getPaginated(query) {
     try {
-      return await this.repository.paginate(query);
+      return await this.repository.findAll(query);
     } catch (error) {
       throw new InternalServerErrorException(
         "Lỗi khi lấy danh sách: " + error.message,
