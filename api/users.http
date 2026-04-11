@@ -1,0 +1,25 @@
+### Get Users List (Admin/Manager only)
+GET http://localhost:5001/api/v1/users
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+### Get User by ID
+GET http://localhost:5001/api/v1/users/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+###
+
+### Update User
+PUT http://localhost:5001/api/v1/users/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Nguyễn Văn A",
+  "phone": "0909123456",
+  "email": "updated@gmail.com"
+}
+

@@ -7,12 +7,14 @@ Dựa trên pattern hiện tại của hệ thống (Auth, Product, Store module
 
 ## Quy trình 7 bước
 
-### Bước 1: Định nghĩa Route (`routes/`)
+### Bước 1: Định nghĩa Route + Validation Middleware (`routes/`)
 
 ```javascript
 // routes/example.routes.js
 import express from "express";
 import { exampleController } from "../controllers/example.controller.js";
+import { validateData } from "../middlewares/validate.middleware.js";
+import { createExampleSchema } from "../contracts/input/example.schema.js";
 
 const exampleRouter = express.Router();
 
@@ -21,10 +23,22 @@ const exampleRouter = express.Router();
  * @desc    Mô tả API
  * @access  Public/Private
  */
-exampleRouter.post("/:type", exampleController.create);
+exampleRouter.post(
+  "/:type",
+  validateData({
+    params: createExampleSchema.params,
+    body: createExampleSchema.body,
+  }),
+  exampleController.create,
+);
 
 export default exampleRouter;
 ```
+
+**Lưu ý:**
+- Sử dụng `validateData` middleware để validate `req.params`, `req.query`, `req.body`
+- Controller sẽ nhận data đã được validate, không cần validate lại
+- Validation middleware throw error tự động nếu data không hợp lệ
 
 ### Bước 2: Tạo Contract Validation (`contracts/`)
 
@@ -154,7 +168,6 @@ export class ExampleMapper {
 import { BaseController } from "./base.controller.js";
 import { exampleService } from "../services/example.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { createExampleSchema } from "../contracts/input/example.schema.js";
 import { ExampleMapper } from "../mappers/example.mapper.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
 
@@ -164,17 +177,17 @@ class ExampleController extends BaseController {
   }
 
   create = asyncHandler(async (req, res) => {
-    // 1. Validate input
-    const { type } = createExampleSchema.params.parse(req.params);
-    const body = createExampleSchema.body.parse(req.body);
-    
-    // 2. Gọi service
+    // Data đã được validate bởi middleware ở route
+    const { type } = req.params;
+    const body = req.body;
+
+    // 1. Gọi service
     const result = await this.service.create(type, body);
-    
-    // 3. Transform output (nếu có Mapper)
+
+    // 2. Transform output (nếu có Mapper)
     const formatted = ExampleMapper.toResponse(result);
-    
-    // 4. Trả response
+
+    // 3. Trả response
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.CREATED,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
@@ -183,17 +196,15 @@ class ExampleController extends BaseController {
   });
 
   getAll = asyncHandler(async (req, res) => {
-    // Validate query
-    const query = createExampleSchema.query.parse(req.query);
-    
+    // Query đã được validate bởi middleware ở route
+    const query = req.query;
+
     // Gọi service
     const result = await this.service.findAll(query);
-    
-    // Transform output (hoặc dùng trực tiếp output schema)
-    const formattedItems = result.items.map(item => 
-      exampleOutputSchema.parse(item)
-    );
-    
+
+    // Transform output (nếu có Mapper)
+    const formattedItems = ExampleMapper.toGetAllResponse(result.items);
+
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.OK,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
@@ -208,6 +219,8 @@ export const exampleController = new ExampleController();
 
 **Lưu ý:**
 - Controller nên **mỏng** - chỉ điều phối, không chứa logic phức tạp
+- **KHÔNG validate data** - validation đã được làm ở route bằng middleware
+- Controller chỉ lấy data từ `req.body`, `req.params`, `req.query` (đã validate)
 - Sử dụng `asyncHandler` để wrap async function
 - Sử dụng `this.success()` từ BaseController để trả response chuẩn
 
@@ -227,37 +240,49 @@ mainRouter.use("/examples", exampleRouter);
 
 | Layer | File | Nhiệm vụ |
 |-------|------|----------|
-| **Route** | `routes/` | Định nghĩa endpoint + HTTP method |
+| **Route** | `routes/` | Định nghĩa endpoint + HTTP method + Validation middleware |
 | **Contract (Input)** | `contracts/input/` | Validate `req.params`, `req.query`, `req.body` |
 | **Contract (Output)** | `contracts/output/` | Định nghĩa format response |
 | **Repository** | `repositories/` | Truy vấn DB (kế thừa BaseRepository) |
 | **Service** | `services/` | Logic nghiệp vụ (kế thừa BaseService) |
 | **Mapper** | `mappers/` | Transform data trước khi trả về (optional) |
-| **Controller** | `controllers/` | Điều phối: validate → service → mapper → response |
+| **Controller** | `controllers/` | Điều phối: service → mapper → response (KHÔNG validate) |
 
 ---
 
 ## Best Practices
 
-### 1. Controller nên mỏng
+### 1. Controller KHÔNG validate data
 ```javascript
-// ❌ BAD - Logic trong Controller
-getAll = async (req, res) => {
-  const items = await this.repository.findMany();
-  const formatted = items.map(x => ({ ...x, price: Number(x.price) }));
-  return res.json(formatted);
-};
-
-// ✅ GOOD - Chỉ điều phối
+// ❌ BAD - Validate trong Controller
 getAll = asyncHandler(async (req, res) => {
-  const query = inputSchema.query.parse(req.query);
+  const query = inputSchema.query.parse(req.query); // KHÔNG validate ở đây
   const result = await this.service.findAll(query);
-  const formatted = result.items.map(item => outputSchema.parse(item));
+  return this.success(res, { data: result.items, meta: result.meta });
+});
+
+// ✅ GOOD - Chỉ lấy data đã validate
+getAll = asyncHandler(async (req, res) => {
+  const result = await this.service.findAll(req.query); // req.query đã được middleware validate
+  const formatted = ExampleMapper.toGetAllResponse(result.items);
   return this.success(res, { data: formatted, meta: result.meta });
 });
 ```
 
-### 2. Service không biết về HTTP
+### 2. Validation phải được làm ở Route
+```javascript
+// ❌ BAD - Không có validation middleware
+exampleRouter.get("/", exampleController.getAll);
+
+// ✅ GOOD - Có validation middleware
+exampleRouter.get(
+  "/",
+  validateData({ query: getProductsSchema.query }),
+  exampleController.getAll,
+);
+```
+
+### 3. Service không biết về HTTP
 Service không nên nhận `req` hay `res`, chỉ nhận data đã được validate:
 
 ```javascript
@@ -272,7 +297,7 @@ async create(type, data) {
 }
 ```
 
-### 3. Repository chỉ data access
+### 4. Repository chỉ data access
 Repository không chứa business logic, chỉ truy vấn DB:
 
 ```javascript
@@ -289,24 +314,28 @@ async create(data, tx) {
 }
 ```
 
-### 4. Sử dụng Middleware để validate (Optional)
-Nếu muốn Controller sạch hơn, có thể tạo validation middleware:
+### 5. Sử dụng Mapper cho output validation
+Output validation nên được làm trong Mapper, không phải trong Controller:
 
 ```javascript
-// middlewares/validate.js
-export const validate = (schema) => (req, res, next) => {
-  req.validated = schema.parse(req.body); // hoặc req.query, req.params
-  next();
-};
+// ❌ BAD - Validate output trong Controller
+getAll = asyncHandler(async (req, res) => {
+  const result = await this.service.findAll(req.query);
+  const formatted = result.items.map(item => outputSchema.parse(item));
+  return this.success(res, { data: formatted, meta: result.meta });
+});
 
-// routes/example.routes.js
-import { validate } from "../middlewares/validate.js";
-import { createExampleSchema } from "../contracts/input/example.schema.js";
+// ✅ GOOD - Validate output trong Mapper
+getAll = asyncHandler(async (req, res) => {
+  const result = await this.service.findAll(req.query);
+  const formatted = ExampleMapper.toGetAllResponse(result.items);
+  return this.success(res, { data: formatted, meta: result.meta });
+});
 
-exampleRouter.post("/", 
-  validate(createExampleSchema.body),
-  exampleController.create
-);
+// mappers/example.mapper.js
+static toGetAllResponse(items) {
+  return items.map(item => outputSchema.parse(item));
+}
 ```
 
 ---
@@ -326,12 +355,14 @@ exampleRouter.post("/",
 ## Checklist trước khi commit
 
 - [ ] Route đã được định nghĩa và mounted
-- [ ] Contract input schema đã được tạo và validate trong Controller
+- [ ] **Validation middleware đã được thêm vào route** (validateData + schema)
+- [ ] Contract input schema đã được tạo
 - [ ] Contract output schema đã được tạo (nếu cần)
 - [ ] Repository kế thừa BaseRepository
 - [ ] Service kế thừa BaseService
-- [ ] Mapper đã được tạo (nếu cần transform phức tạp)
-- [ ] Controller chỉ điều phối, không chứa logic phức tạp
+- [ ] Mapper đã được tạo (nếu cần transform phức tạp hoặc output validation)
+- [ ] **Controller KHÔNG validate data** - chỉ lấy từ req.body/req.params/req.query
+- [ ] **Controller chỉ điều phối** - không chứa logic phức tạp
 - [ ] Response format thống nhất với BaseController.success()
 - [ ] Error handling sử dụng httpExceptions
 - [ ] JSDoc comment đã được thêm cho route

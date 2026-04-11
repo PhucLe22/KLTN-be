@@ -4,7 +4,8 @@ import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
-import { BadRequestException } from "../lib/httpExceptions.js";
+import { BadRequestException, NotFoundException } from "../lib/httpExceptions.js";
+import { ERROR_MESSAGES } from "../constants/errors.js";
 
 class OrderService extends BaseService {
   constructor() {
@@ -62,6 +63,22 @@ class OrderService extends BaseService {
         createdBy,
       };
     });
+  }
+
+  async findByOrderCode(orderCode) {
+    const order = await this.repository.findByOrderCode(orderCode);
+
+    if (!order) {
+      throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
+    }
+
+    // Get staff info for createdBy
+    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+
+    return {
+      ...order,
+      createdBy,
+    };
   }
 
   async #validateStore(storeId, tx) {
@@ -133,6 +150,22 @@ class OrderService extends BaseService {
     if (!staffId) return null;
 
     const staff = await this.staffRepo.getModel(tx).findUnique({
+      where: { id: staffId },
+      include: { user: true },
+    });
+
+    if (!staff) return null;
+
+    return {
+      id: staff.id,
+      name: staff.user.email,
+    };
+  }
+
+  async #getStaffInfoById(staffId) {
+    if (!staffId) return null;
+
+    const staff = await this.staffRepo.getModel().findUnique({
       where: { id: staffId },
       include: { user: true },
     });

@@ -1,0 +1,8 @@
+### Get All Products
+GET http://localhost:5001/api/v1/products
+Content-Type: application/json
+
+### Get product by slug
+GET http://localhost:5001/api/v1/products/nuoc-ep-cam
+Content-Type: application/json
+

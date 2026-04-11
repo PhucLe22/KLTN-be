@@ -1,0 +1,3 @@
+### Get All Stores
+GET http://localhost:5001/api/v1/stores
+Content-Type: application/json
