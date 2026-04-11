@@ -104,5 +104,5 @@ temp/
 /generated/prisma
 /generated/prisma
 
-# # HTTP test files
-# /api
+# HTTP test files
+/api
