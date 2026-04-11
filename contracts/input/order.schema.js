@@ -5,6 +5,7 @@ import { OrderType } from "../../constants/enum.js";
 export const createOrderSchema = {
   body: z.object({
     storeId: z.string().uuid("Store ID không hợp lệ"),
+    customerId: z.string().uuid().optional(), // Optional for guest orders
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có

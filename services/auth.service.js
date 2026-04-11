@@ -244,6 +244,18 @@ class AuthService extends BaseService {
     expiresAt.setDate(expiresAt.getDate() + days);
     return expiresAt;
   }
+
+  async getProfile(userId) {
+    const user = await this.userRepo.findByIdWithProfile(userId);
+
+    if (!user) {
+      throw new UnauthorizedException("Người dùng không tồn tại");
+    }
+
+    // Service chỉ trả về raw data + role info
+    // Mapper sẽ handle data transformation
+    return user;
+  }
 }
 
 export const authService = new AuthService();

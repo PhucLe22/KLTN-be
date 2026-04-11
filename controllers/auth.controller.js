@@ -82,6 +82,19 @@ class AuthController extends BaseController {
       data: AuthMapper.toAccountWithTokensResponse(result.user, result.tokens),
     });
   });
+
+  /**
+   * Lấy profile của user đang đăng nhập
+   */
+  getProfile = asyncHandler(async (req, res) => {
+    const user = await this.service.getProfile(req.user.id);
+
+    const profileData = AuthMapper.toProfileResponse(user);
+
+    return this.success(res, {
+      data: profileData,
+    });
+  });
 }
 
 export const authController = new AuthController();
