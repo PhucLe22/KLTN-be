@@ -1,4 +1,4 @@
-import { JwtHelper } from "../lib/jwt.helper.js";
+import { JwtHelper } from "../lib/jwt.js";
 import {
   UnauthorizedException,
   ForbiddenException,
@@ -25,7 +25,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   const decoded = JwtHelper.verifyAccessToken(token);
 
   // 3. Kiểm tra User còn tồn tại trong Database không
-  const currentUser = await userRepository.findById(decoded.userId);
+  const currentUser = await userRepository.findById(decoded.sub);
   if (!currentUser) {
     throw new UnauthorizedException(
       "Người dùng sở hữu token này không còn tồn tại.",

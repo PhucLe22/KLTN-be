@@ -2,8 +2,7 @@ import { BaseController } from "./base.controller.js";
 import { storeService } from "../services/store.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { getStoresSchema as outputGetStoresSchema } from "../contracts/output/store.output.schema.js";
-import { getStoresSchema as inputGetStoresSchema } from "../contracts/input/store.schema.js";
+import { StoreMapper } from "../mappers/store.mapper.js";
 
 class StoreController extends BaseController {
     constructor() {
@@ -11,12 +10,8 @@ class StoreController extends BaseController {
     }
 
     getAllStores = asyncHandler(async (req, res) => {
-        const query = inputGetStoresSchema.query.parse(req.query);
-        const result = await this.service.findAll(query);
-
-        const formattedItems = result.items.map(item => 
-            outputGetStoresSchema.response.parse(item)
-        );
+        const result = await this.service.findAll(req.query);
+        const formattedItems = StoreMapper.toGetAllStoresResponse(result.items);
 
         return this.success(res, {
             statusCode: SUCCESS_STATUS_CODE.OK,

@@ -1,65 +1,66 @@
 import { z } from "zod";
-import { OrderType } from "../../constants/enum.js";
 
-// POST /api/v1/orders
+// POST /api/v1/orders - Response format
 export const createOrderSchema = {
-  body: z.object({
-    storeId: z.string().uuid("Store ID không hợp lệ"),
-    type: z.enum(OrderType),
-    note: z.string().max(255).optional(),
-    voucherCode: z.string().optional(), // Mã giảm giá nếu có
-
-    // Danh sách món ăn
-    items: z
-      .array(
-        z.object({
-          productId: z.string().uuid(),
-          quantity: z.number().int().min(1),
-          note: z.string().optional(),
-          // Nếu có option (Size/Topping)
-          options: z
-            .array(
-              z.object({
-                name: z.string(),
-                price: z.number(),
-              }),
-            )
-            .optional(),
-        }),
-      )
-      .min(1, "Đơn hàng phải có ít nhất 1 sản phẩm"),
-
-    // Nếu type là DELIVERY thì cần thông tin nhận hàng
-    deliveryInfo: z
-      .object({
-        receiverName: z.string(),
-        receiverPhone: z.string(),
-        addressLine: z.string(),
-      })
-      .optional(),
-  }),
+  response: z.object({
+    store: z.object({
+      name: z.string(),
+      address: z.string()
+    }),
+    customer: z.object({
+      name: z.string().nullable(),
+      phone: z.string(),
+      address: z.string().nullable()
+    }),
+    status: z.string(),
+    type: z.string(),
+    subtotal: z.number(),
+    serviceFee: z.number(),
+    tax: z.number(),
+    discount: z.number(),
+    total: z.number(),
+    note: z.string().nullable(),
+    createdBy: z.object({
+      name: z.string()
+    }),
+    createdAt: z.date(),
+    orderCode: z.string()
+  })
 };
 
-// GET /api/v1/orders/history
-export const getOrderHistorySchema = {
-  query: z.object({
-    status: z
-      .enum([
-        "NEW",
-        "CONFIRMED",
-        "PREPARING",
-        "READY",
-        "COMPLETED",
-        "CANCELLED",
-        "REFUNDED",
-      ])
-      .optional(),
-  }),
-};
-
-// GET /api/v1/orders/:id
-export const getOrderDetailSchema = {
-  params: z.object({
-    id: z.string().uuid("Mã đơn hàng không hợp lệ"),
-  }),
+// GET /api/v1/orders/code/:orderCode - Response format
+export const getOrderCodeSchema = {
+  response: z.object({
+    id: z.string(),
+    store: z.object({
+      name: z.string(),
+      address: z.string()
+    }),
+    customer: z.object({
+      name: z.string().nullable(),
+      phone: z.string(),
+      address: z.string().nullable()
+    }),
+    status: z.string(),
+    type: z.string(),
+    subtotal: z.number(),
+    serviceFee: z.number(),
+    tax: z.number(),
+    discount: z.number(),
+    total: z.number(),
+    note: z.string().nullable(),
+    createdBy: z.object({
+      name: z.string()
+    }),
+    createdAt: z.date(),
+    orderCode: z.string(),
+    orderItems: z.array(z.object({
+      name: z.string(),
+      price: z.number(),
+      quantity: z.number(),
+      discount: z.number(),
+      tax: z.number(),
+      note: z.string().nullable()
+    }))
+  })
 };

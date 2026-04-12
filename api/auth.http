@@ -44,8 +44,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "0909123456",
-  "password": "Password123@"
+  "identifier": "manager@foodapp.com",
+  "password": "manager123"
 }
 
 {{
@@ -117,7 +117,7 @@ Content-Type: application/json
 
 ###
 
-### 4. Kiểm tra quyền truy cập bằng Access Token mới
+### 4. Lấy thông tin cá nhân
 # @name getProfileWithNewToken
-GET http://localhost:5001/api/v1/auth/me
-Authorization: Bearer {{accessToken}}
+GET http://localhost:5001/api/v1/auth/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMzk4YTQzOC01MDdlLTRmOTYtYmFlMy0yNWE1NTE5MTMwZTgiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImNjYjc2YWRmLWYxMGUtNDQyYi1iNThlLTJmZWEwZDRkNWVhMyIsInN0b3JlSWQiOiI4MjM4ZGY1ZS1jMTdlLTQ1ZGEtYmFlYi0zMmFmMGNmYzQyOGYiLCJpYXQiOjE3NzU4MzgwOTEsImV4cCI6MTc3NTg0MTY5MX0.Yq_I9ZCmLN7hW8rBiN8PDyoJE7h_yWBy398kGA3RJ_s

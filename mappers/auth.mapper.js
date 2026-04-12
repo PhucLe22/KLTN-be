@@ -4,6 +4,7 @@ import {
   registerOutputSchema,
   guestOutputSchema,
   loginOutputSchema,
+  profileOutputSchema,
 } from "../contracts/output/auth.output.schema.js";
 const { CustomerTier } = pkg;
 
@@ -39,7 +40,7 @@ export class AuthMapper {
     const builder = new _LoginResponseBuilder(user, tokens);
 
     if (user.staff) {
-      return builder.asStaff(user.staff).build();
+      return builder.asStaff(user.staff, user.email || user.phone).build();
     }
 
     if (user.customer) {
@@ -47,6 +48,75 @@ export class AuthMapper {
     }
 
     return builder.build();
+  }
+
+  static toProfileResponse(user) {
+    const data = {
+      type: "CUSTOMER",
+    };
+
+    if (user.customer) {
+      data.type = "CUSTOMER";
+      data.customer = {
+        name: user.customer.name,
+        phone: user.customer.phone,
+        email: user.customer.email,
+        tier: user.customer.tier,
+        points: user.customer.points,
+      };
+    } else if (user.staff) {
+      const role = user.staff.role;
+
+      if (role === "MANAGER") {
+        data.type = "MANAGER";
+        data.manager = {
+          storeInfo: {
+            id: user.staff.store.id,
+            name: user.staff.store.name,
+            address: user.staff.store.address,
+          },
+          userInfo: {
+            email: user.email,
+            phone: user.phone,
+            name: user.email || user.phone || "Manager",
+            role: user.staff.role,
+          },
+        };
+      } else if (role === "OWNER") {
+        data.type = "ADMIN";
+        data.admin = {
+          userInfo: {
+            email: user.email,
+            phone: user.phone,
+            name: user.email || user.phone || "Admin",
+            role: user.staff.role,
+          },
+        };
+      } else {
+        data.type = "STAFF";
+        data.staff = {
+          storeInfo: {
+            id: user.staff.store.id,
+            name: user.staff.store.name,
+            address: user.staff.store.address,
+          },
+          userInfo: {
+            email: user.email,
+            phone: user.phone,
+            name: user.email || user.phone || "Staff",
+            role: user.staff.role,
+          },
+          managerInfo: {
+            id: user.staff.store.id,
+            name: "Store Manager",
+            email: "manager@foodapp.com",
+            phone: "0901234567",
+          },
+        };
+      }
+    }
+
+    return profileOutputSchema.parse(data);
   }
 }
 
@@ -62,8 +132,8 @@ class _LoginResponseBuilder {
     };
   }
 
-  asStaff(staffData) {
-    this.result.name = staffData.name;
+  asStaff(staffData, email) {
+    this.result.name = email;
     this.result.role = staffData.role;
     this.result.type = UserType.STAFF;
     this.result.storeName = staffData.store?.name || "N/A";

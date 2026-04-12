@@ -1,5 +1,6 @@
 import express from "express";
 import { authController } from "../controllers/auth.controller.js";
+import { protect } from "../middlewares/authentication.middleware.js";
 
 const authRouter = express.Router();
 
@@ -28,5 +29,12 @@ authRouter.post("/refresh-token", authController.refresh);
  * @desc    Xóa refreshToken trong DB và xóa Cookie trình duyệt
  */
 authRouter.post("/logout", authController.logout);
+
+/**
+ * @route   GET /api/v1/auth/profile
+ * @desc    Lấy thông tin profile của user đang đăng nhập
+ * @access  Private (Cần Access Token)
+ */
+authRouter.get("/profile", protect, authController.getProfile);
 
 export default authRouter;

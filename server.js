@@ -9,7 +9,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import logger from "./lib/logger.js";
 import { corsOptions } from "./config/cors.js";
 
-dotenv.config();
+dotenv.config({ path: ".env" });
 
 const app = express();
 const PORT = process.env.PORT || 5001;
