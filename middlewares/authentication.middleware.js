@@ -41,5 +41,14 @@ export const protect = asyncHandler(async (req, res, next) => {
   // Ông có thể gán toàn bộ user hoặc chỉ id/role tùy nhu cầu
   req.user = currentUser;
 
+  // 6. Gán staff info từ JWT claims để restrictTo middleware có thể kiểm tra role
+  if (decoded.role && decoded.sid) {
+    req.user.staff = {
+      id: decoded.sid,
+      role: decoded.role,
+      storeId: decoded.storeId,
+    };
+  }
+
   next();
 });

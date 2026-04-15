@@ -34,6 +34,8 @@ class AuthController extends BaseController {
    */
   login = asyncHandler(async (req, res) => {
     const { identifier, password } = req.body;
+    console.log("identifier", identifier);
+    console.log("password", password);
 
     const reqInfo = {
       deviceInfo: req.headers["user-agent"],
@@ -41,6 +43,7 @@ class AuthController extends BaseController {
     };
 
     const result = await this.service.login({ identifier, password }, reqInfo);
+    console.log(result);
 
     CookieHelper.setRefreshToken(res, result.tokens.refreshToken);
 

@@ -1,4 +1,4 @@
-import { createOrderSchema, getOrderCodeSchema } from "../contracts/output/order.output.schema.js";
+import { createOrderSchema, getOrderCodeSchema, getOrderHistorySchema } from "../contracts/output/order.output.schema.js";
 
 export class OrderMapper {
   static toCreateResponse(result) {
@@ -62,5 +62,38 @@ export class OrderMapper {
         note: item.note
       }))
     });
+  }
+
+  static toGetOrderHistoryResponse(result) {
+    return {
+      items: result.items.map(item =>
+        getOrderHistorySchema.response.parse({
+          id: item.id,
+          orderCode: item.orderCode || null,
+          status: item.status,
+          type: item.type,
+          subtotal: Number(item.subtotal),
+          discount: Number(item.discount),
+          tax: Number(item.tax),
+          serviceFee: Number(item.serviceFee),
+          total: Number(item.total),
+          note: item.note,
+          createdAt: item.createdAt,
+          store: {
+            id: item.store.id,
+            name: item.store.name,
+            address: item.store.address,
+          },
+          customer: item.customer ? {
+            id: item.customer.id,
+            name: item.customer.name,
+            phone: item.customer.phone,
+            tier: item.customer.tier,
+          } : null,
+          createdByStaffId: item.createdByStaffId,
+        })
+      ),
+      meta: result.meta,
+    };
   }
 }

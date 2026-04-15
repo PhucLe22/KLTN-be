@@ -41,4 +41,12 @@ export const VALIDATION_MESSAGES = {
   ROLE_INVALID: "Vai trò nhân viên không hợp lệ.",
   USER_TYPE_INVALID: "Loại người dùng không hợp lệ.",
   TOKEN_REQUIRED: "Token không được để trống.",
+  ITEMS_MIN: "Đơn hàng phải có ít nhất 1 sản phẩm.",
+  ORDER_ITEMS_REQUIRED: "Đơn hàng phải có sản phẩm.",
+  STAFF_STORE_REQUIRED: "Phải gán nhân viên vào một chi nhánh",
+  HOTLINE_INVALID: "Hotline phải là 10 số",
+  LOCATIONS_REQUIRED: "Phải cung cấp danh sách tọa độ",
+  DATE_FORMAT_INVALID: "Định dạng ngày phải là YYYY-MM-DD",
+  ORDERS_REQUIRED: "Danh sách đơn hàng không được trống",
+  PIN_INVALID: "Mã PIN phải có 6 số",
 };

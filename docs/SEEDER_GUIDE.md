@@ -4,7 +4,29 @@ This guide explains how to seed the database with initial data for the FoodApp p
 
 ## Available Seeders
 
-### 1. Manager Seeder
+### 1. Admin Seeder
+
+Creates an admin account with system-level access.
+
+**File:** `prisma/seed-admin.js`
+
+**What it creates:**
+- System Store (code: "SYSTEM", name: "System Store")
+- User account (email: "admin@foodapp.com", password: "admin123")
+- Staff profile with ADMIN role
+
+**How to run:**
+```bash
+node prisma/seed-admin.js
+```
+
+**Login credentials:**
+- Email: `admin@foodapp.com`
+- Password: `admin123`
+
+---
+
+### 2. Manager Seeder
 
 Creates a manager account with a store for testing purposes.
 

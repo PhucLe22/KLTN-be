@@ -4,7 +4,7 @@ import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
-import { BadRequestException, NotFoundException } from "../lib/httpExceptions.js";
+import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES } from "../constants/errors.js";
 
 class OrderService extends BaseService {
@@ -81,6 +81,20 @@ class OrderService extends BaseService {
     };
   }
 
+  async getOrderHistory(storeId, query, requesterStaff) {
+    // Check if requester is admin or manager of this store
+    if (!requesterStaff) {
+      throw new ForbiddenException("Bạn không có quyền truy cập");
+    }
+
+    // Admin can access all stores, Manager can only access their own store
+    if (requesterStaff.role !== "ADMIN" && requesterStaff.storeId !== storeId) {
+      throw new ForbiddenException("Bạn chỉ có thể xem orders của cửa hàng mình");
+    }
+
+    return await this.repository.findByStore(storeId, query);
+  }
+
   async #validateStore(storeId, tx) {
     const store = await tx.store.findUnique({
       where: { id: storeId },
@@ -149,10 +163,7 @@ class OrderService extends BaseService {
   async #getStaffInfo(staffId, tx) {
     if (!staffId) return null;
 
-    const staff = await this.staffRepo.getModel(tx).findUnique({
-      where: { id: staffId },
-      include: { user: true },
-    });
+    const staff = await this.staffRepo.findWithUser(staffId, tx);
 
     if (!staff) return null;
 
@@ -165,10 +176,7 @@ class OrderService extends BaseService {
   async #getStaffInfoById(staffId) {
     if (!staffId) return null;
 
-    const staff = await this.staffRepo.getModel().findUnique({
-      where: { id: staffId },
-      include: { user: true },
-    });
+    const staff = await this.staffRepo.findWithUser(staffId);
 
     if (!staff) return null;
 

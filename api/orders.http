@@ -1,8 +1,6 @@
-### Get All Orders
-GET http://localhost:5001/api/v1/orders
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
+### Get All Order history
+GET http://localhost:5001/api/v1/orders/history?storeId=8238df5e-c17e-45da-baeb-32af0cfc428f
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGVhMDY0ZS02NzVmLTQ5OGUtYmE0ZC01ZWE5MjQ1NjUzNmIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZDFmZjUxZi0wZDc3LTQ2OTgtYmYwOC1hOGUwNDlhY2E1YTUiLCJzdG9yZUlkIjoiMDM0MmMyNTQtOTFhNy00YTM4LThjYTEtYmUxNThhYjQ1MGMzIiwiaWF0IjoxNzc2MjUxNDg2LCJleHAiOjE3NzYyNTUwODZ9.dpv7qsAdszWQ-amVy43ypCu67-sKy1bdiPRhaDo2YOw
 ###
 
 ### Get Order by ID

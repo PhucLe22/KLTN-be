@@ -23,6 +23,13 @@ class StaffRepository extends BaseRepository {
       },
     });
   }
+
+  async findWithUser(staffId, tx = null) {
+    return await this.getModel(tx).findUnique({
+      where: { id: staffId },
+      include: { user: true },
+    });
+  }
 }
 
 export const staffRepository = new StaffRepository();

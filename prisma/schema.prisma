@@ -58,6 +58,8 @@ enum PaymentStatus {
 }
 
 enum StaffRole {
+  ROOT
+  ADMIN
   MANAGER
   CASHIER
   KITCHEN

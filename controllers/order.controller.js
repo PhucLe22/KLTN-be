@@ -31,6 +31,20 @@ class OrderController extends BaseController {
       data: formatted,
     });
   });
+
+  getOrderHistory = asyncHandler(async (req, res) => {
+    const { storeId } = req.query;
+    const query = req.query;
+    const result = await this.service.getOrderHistory(storeId, query, req.user.staff);
+    const formatted = OrderMapper.toGetOrderHistoryResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+      data: formatted.items,
+      meta: formatted.meta,
+    });
+  });
 }
 
 export const orderController = new OrderController();

@@ -64,3 +64,32 @@ export const getOrderCodeSchema = {
     }))
   })
 };
+
+// GET /api/v1/orders/history - Response format
+export const getOrderHistorySchema = {
+  response: z.object({
+    id: z.string(),
+    // orderCode: z.string().nullable(),
+    status: z.string(),
+    type: z.string(),
+    subtotal: z.number(),
+    discount: z.number(),
+    tax: z.number(),
+    serviceFee: z.number(),
+    total: z.number(),
+    note: z.string().nullable(),
+    createdAt: z.date(),
+    store: z.object({
+      id: z.string(),
+      name: z.string(),
+      address: z.string(),
+    }),
+    customer: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+      phone: z.string(),
+      tier: z.string(),
+    }).nullable(),
+    createdByStaffId: z.string().nullable(),
+  })
+};

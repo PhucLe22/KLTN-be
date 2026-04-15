@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { OrderType } from "../../constants/enum.js";
+import { VALIDATION_MESSAGES } from "../../constants/errors.js";
 
 // POST /api/v1/orders
 export const createOrderSchema = {
   body: z.object({
-    storeId: z.string().uuid("Store ID không hợp lệ"),
-    customerId: z.string().uuid().optional(), // Optional for guest orders
+    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    customerId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID).optional(), // Optional for guest orders
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
@@ -14,7 +15,7 @@ export const createOrderSchema = {
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(),
+          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
           quantity: z.number().int().min(1),
           note: z.string().optional(),
           // Nếu có option (Size/Topping)
@@ -28,7 +29,7 @@ export const createOrderSchema = {
             .optional(),
         }),
       )
-      .min(1, "Đơn hàng phải có ít nhất 1 sản phẩm"),
+      .min(1, VALIDATION_MESSAGES.ITEMS_MIN),
 
     // Nếu type là DELIVERY thì cần thông tin nhận hàng
     deliveryInfo: z
@@ -44,6 +45,9 @@ export const createOrderSchema = {
 // GET /api/v1/orders/history
 export const getOrderHistorySchema = {
   query: z.object({
+    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    page: z.string().transform(Number).optional(),
+    limit: z.string().transform(Number).optional(),
     status: z
       .enum([
         "NEW",
@@ -61,7 +65,7 @@ export const getOrderHistorySchema = {
 // GET /api/v1/orders/:id
 export const getOrderDetailSchema = {
   params: z.object({
-    id: z.string().uuid("Mã đơn hàng không hợp lệ"),
+    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
   }),
 };
 
