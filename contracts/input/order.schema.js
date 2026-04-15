@@ -64,3 +64,10 @@ export const getOrderDetailSchema = {
     id: z.string().uuid("Mã đơn hàng không hợp lệ"),
   }),
 };
+
+// GET /api/v1/orders/code/:orderCode
+export const getOrderCodeSchema = {
+  params: z.object({
+    orderCode: z.string(),
+  }),
+};

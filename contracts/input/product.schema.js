@@ -9,3 +9,10 @@ export const getProductsSchema = {
     page: z.string().transform(Number).optional(),
   }),
 };
+
+// GET /api/v1/products/:slug
+export const getProductBySlugSchema = {
+  params: z.object({
+    slug: z.string(),
+  }),
+};

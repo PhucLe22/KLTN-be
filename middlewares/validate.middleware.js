@@ -3,19 +3,19 @@ export const validateData =
   (schema = {}) =>
   (req, res, next) => {
     try {
-      // 1. Kiểm tra Body
+      // 1. Validate Body
       if (schema.body) {
-        req.body = schema.body.parse(req.body);
+        schema.body.parse(req.body);
       }
 
-      // 2. Kiểm tra Params (VD: /users/:id)
+      // 2. Validate Params (VD: /users/:id)
       if (schema.params) {
-        req.params = schema.params.parse(req.params);
+        schema.params.parse(req.params);
       }
 
-      // 3. Kiểm tra Query (VD: ?page=1)
+      // 3. Validate Query (VD: ?page=1)
       if (schema.query) {
-        req.query = schema.query.parse(req.query);
+        schema.query.parse(req.query);
       }
 
       next();

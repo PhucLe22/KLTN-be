@@ -8,7 +8,18 @@ export const getProductsSchema = {
     limit: z.string().transform(Number).optional().default("10"),
     page: z.string().transform(Number).optional().default("1"),
   }),
-  
+
+  response: z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    price: z.any().transform(v => Number(v)), // basePrice -> price
+    thumbnail: z.string().nullable()
+  })
+};
+
+// GET /api/v1/products/:slug
+export const getProductBySlugSchema = {
   response: z.object({
     id: z.string(),
     name: z.string(),

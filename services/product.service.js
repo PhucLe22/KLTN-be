@@ -1,19 +1,31 @@
 import { BaseService } from "./base.service.js";
 import { productRepository } from "../repositories/product.repository.js";
+import { NotFoundException } from "../lib/httpExceptions.js";
+import { ERROR_MESSAGES } from "../constants/errors.js";
 
 class ProductService extends BaseService {
     constructor() {
         super(productRepository);
     }
 
+    #convertToSlug(name) {
+        return name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+    }
+
     async findAll(query) {
         const { page = 1, limit = 10, search } = query;
-        
+
         const where = {};
         if (search) {
             where.name = { contains: search, mode: 'insensitive' };
         }
-        
+
         return await this.repository.findAll({
             page,
             limit,
@@ -27,6 +39,32 @@ class ProductService extends BaseService {
             },
             orderBy: { createdAt: 'desc' }
         });
+    }
+
+    async findBySlug(slug) {
+        const allProducts = await this.repository.findAll({
+            page: 1,
+            limit: 1000,
+            where: { isActive: true },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                basePrice: true,
+                thumbnail: true
+            }
+        });
+
+        const product = allProducts.items.find(item => {
+            const itemSlug = this.#convertToSlug(item.name);
+            return itemSlug === slug;
+        });
+
+        if (!product) {
+            throw new NotFoundException(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+        }
+
+        return product;
     }
 }
 
