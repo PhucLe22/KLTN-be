@@ -6,6 +6,38 @@ import {
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { userRepository } from "../repositories/user.repository.js";
 
+export const optionalProtect = asyncHandler(async (req, res, next) => {
+  let token;
+
+  // 1. Kiểm tra Token có trong Header Authorization không
+  if (req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    // No token provided - continue without setting req.user
+    return next();
+  }
+
+  try {
+    // 2. Verify Token (Kiểm tra chữ ký và hạn sử dụng)
+    const decoded = JwtHelper.verifyAccessToken(token);
+
+    // 3. Kiểm tra User còn tồn tại trong Database không
+    const currentUser = await userRepository.findById(decoded.sub);
+    if (!currentUser) {
+      return next(); // Token invalid but continue without auth
+    }
+
+    // 4. Gán thông tin user vào req.user
+    req.user = currentUser;
+    next();
+  } catch (error) {
+    // Token invalid but continue without auth
+    next();
+  }
+});
+
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
 

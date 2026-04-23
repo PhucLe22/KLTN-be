@@ -268,6 +268,7 @@ model Product {
 
   sku         String  @unique // Mã nội bộ, không đổi sau khi tạo
   name        String
+  slug        String @unique
   description String?
 
   type      ProductType @default(SIMPLE)
@@ -293,6 +294,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@schema("catalog")
+
 }
 
 model OptionGroup {

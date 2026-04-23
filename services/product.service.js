@@ -42,23 +42,7 @@ class ProductService extends BaseService {
     }
 
     async findBySlug(slug) {
-        const allProducts = await this.repository.findAll({
-            page: 1,
-            limit: 1000,
-            where: { isActive: true },
-            select: {
-                id: true,
-                name: true,
-                description: true,
-                basePrice: true,
-                thumbnail: true
-            }
-        });
-
-        const product = allProducts.items.find(item => {
-            const itemSlug = this.#convertToSlug(item.name);
-            return itemSlug === slug;
-        });
+        const product = await this.repository.findBySlug(slug);
 
         if (!product) {
             throw new NotFoundException(ERROR_MESSAGES.PRODUCT_NOT_FOUND);

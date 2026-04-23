@@ -49,4 +49,5 @@ export const VALIDATION_MESSAGES = {
   DATE_FORMAT_INVALID: "Định dạng ngày phải là YYYY-MM-DD",
   ORDERS_REQUIRED: "Danh sách đơn hàng không được trống",
   PIN_INVALID: "Mã PIN phải có 6 số",
+  CUSTOMER_LOGIN_REQUIRED: "Bạn cần đăng nhập để xem lịch sử đơn hàng",
 };

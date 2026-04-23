@@ -40,6 +40,7 @@ class AuthService extends BaseService {
   async login({ identifier, password }, reqInfo) {
     // Kiểm tra đăng nhập
     const user = await this.#validateUserCredentials(identifier, password);
+    console.log("validUser:", user);
 
     // Cấp Token
     const { accessToken, refreshToken } = await this.#issueTokens(
@@ -191,6 +192,7 @@ class AuthService extends BaseService {
     if (!user) {
       throw new UnauthorizedException(ERROR_MESSAGES.AUTH_INVALID);
     }
+    console.log("inputPassword:", password, "userPassword:", user.password);
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {

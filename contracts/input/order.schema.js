@@ -6,10 +6,15 @@ import { VALIDATION_MESSAGES } from "../../constants/errors.js";
 export const createOrderSchema = {
   body: z.object({
     storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
-    customerId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID).optional(), // Optional for guest orders
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
+
+    // Customer information for orders without account
+    customerInfo: z.object({
+      name: z.string(),
+      phone: z.string(),
+    }).optional(),
 
     // Danh sách món ăn
     items: z
@@ -49,7 +54,7 @@ export const getOrderHistorySchema = {
     page: z.string().transform(Number).optional(),
     limit: z.string().transform(Number).optional(),
     status: z
-      .enum([
+      .enum([ 
         "NEW",
         "CONFIRMED",
         "PREPARING",

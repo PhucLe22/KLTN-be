@@ -17,6 +17,33 @@ class CustomerRepository extends BaseRepository {
       },
     });
   }
+
+  async findCustomerByUserId(userId, tx = null) {
+    return await this.getModel(tx).findUnique({
+      where: { userId: userId },
+    });
+  }
+
+  // Find or create customer by phone for guest orders
+  async findOrCreateGuestCustomer(phone, name, tx = null) {
+    let customer = await this.getModel(tx).findFirst({
+      where: { phone: phone },
+    });
+
+    if (!customer) {
+      customer = await this.getModel(tx).create({
+        data: {
+          name: name,
+          phone: phone,
+          tier: "BRONZE",
+          points: 0,
+          isActive: true,
+        },
+      });
+    }
+
+    return customer;
+  }
 }
 
 export const customerRepository = new CustomerRepository();

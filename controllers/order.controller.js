@@ -10,7 +10,8 @@ class OrderController extends BaseController {
   }
 
   create = asyncHandler(async (req, res) => {
-    const result = await this.service.create(req.body);
+    const userId = req.user?.id || null; // Get userId if authenticated
+    const result = await this.service.create(req.body, null, userId);
     const formatted = OrderMapper.toCreateResponse(result);
 
     return this.success(res, {
@@ -33,9 +34,10 @@ class OrderController extends BaseController {
   });
 
   getOrderHistory = asyncHandler(async (req, res) => {
-    const { storeId } = req.query;
     const query = req.query;
-    const result = await this.service.getOrderHistory(storeId, query, req.user.staff);
+    const userId = req.user.id;
+    
+    const result = await this.service.getOrderHistory(userId, query);
     const formatted = OrderMapper.toGetOrderHistoryResponse(result);
 
     return this.success(res, {
@@ -43,6 +45,18 @@ class OrderController extends BaseController {
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
       data: formatted.items,
       meta: formatted.meta,
+    });
+  });
+  
+  getOrderById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const result = await this.service.getOrderById(id);
+    const formatted = OrderMapper.toGetOrderByIdResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+      data: formatted,
     });
   });
 }

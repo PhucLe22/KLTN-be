@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma.js";
 
 async function seedProducts() {
   try {
-    console.log("🌱 Starting product seed...");
+    console.log("Starting product seed...");
 
     // 1. Create Categories
     const coffeeCategory = await prisma.category.upsert({
@@ -28,7 +28,7 @@ async function seedProducts() {
       },
     });
 
-    console.log("✅ Categories created");
+    console.log("Categories created");
 
     // 2. Create OptionGroup (Size)
     const sizeGroup = await prisma.optionGroup.upsert({
@@ -84,7 +84,7 @@ async function seedProducts() {
       }),
     ]);
 
-    console.log("✅ Size options created");
+    console.log("Size options created");
 
     // 3. Create Products (10 items)
     const products = [
@@ -92,6 +92,7 @@ async function seedProducts() {
       {
         sku: "CF001",
         name: "Espresso",
+        slug: "espresso",
         description: "Cà phê đậm vị truyền thống",
         categoryId: coffeeCategory.id,
         basePrice: 25000,
@@ -101,6 +102,7 @@ async function seedProducts() {
       {
         sku: "CF002",
         name: "Americano",
+        slug: "americano",
         description: "Cà phê pha máy với nước nóng",
         categoryId: coffeeCategory.id,
         basePrice: 30000,
@@ -110,6 +112,7 @@ async function seedProducts() {
       {
         sku: "CF003",
         name: "Cappuccino",
+        slug: "cappuccino",
         description: "Cà phê với bọt sữa dày",
         categoryId: coffeeCategory.id,
         basePrice: 45000,
@@ -119,6 +122,7 @@ async function seedProducts() {
       {
         sku: "CF004",
         name: "Latte",
+        slug: "latte",
         description: "Cà phê với sữa nhiều",
         categoryId: coffeeCategory.id,
         basePrice: 40000,
@@ -128,6 +132,7 @@ async function seedProducts() {
       {
         sku: "CF005",
         name: "Mocha",
+        slug: "mocha",
         description: "Cà phê với chocolate",
         categoryId: coffeeCategory.id,
         basePrice: 48000,
@@ -137,6 +142,7 @@ async function seedProducts() {
       {
         sku: "CF006",
         name: "Cold Brew",
+        slug: "cold-brew",
         description: "Cà phê ngâm lạnh 12h",
         categoryId: coffeeCategory.id,
         basePrice: 35000,
@@ -147,6 +153,7 @@ async function seedProducts() {
       {
         sku: "DR001",
         name: "Trà Đào Cam Sả",
+        slug: "tra-dao-cam-sa",
         description: "Trà tươi với đào và cam sả",
         categoryId: drinksCategory.id,
         basePrice: 35000,
@@ -156,6 +163,7 @@ async function seedProducts() {
       {
         sku: "DR002",
         name: "Sinh Tố Bơ",
+        slug: "sinh-to-bo",
         description: "Sinh tố bơ creamy",
         categoryId: drinksCategory.id,
         basePrice: 45000,
@@ -165,6 +173,7 @@ async function seedProducts() {
       {
         sku: "DR003",
         name: "Nước Ép Cam",
+        slug: "nuoc-ep-cam",
         description: "Nước ép cam tươi",
         categoryId: drinksCategory.id,
         basePrice: 30000,
@@ -173,11 +182,12 @@ async function seedProducts() {
       },
       {
         sku: "DR004",
-        name: "Yogurt Trái Cây",
-        description: "Yogurt với trái cây tươi",
+        name: "Trà Sữa",
+        slug: "tra-sua",
+        description: "Trà sữa truyền thống",
         categoryId: drinksCategory.id,
-        basePrice: 40000,
-        costPrice: 12000,
+        basePrice: 35000,
+        costPrice: 10000,
         taxRate: 8.00,
       },
     ];
@@ -233,16 +243,8 @@ async function seedProducts() {
         });
       }
     }
-
-    console.log("✅ Products linked to size options");
-
-    console.log("🎉 Products seeded successfully!");
-    console.log(`\n📋 Summary:`);
-    console.log(`   - Categories: 2 (Coffee, Drinks)`);
-    console.log(`   - Products: ${createdProducts.length}`);
-    console.log(`   - Size Options: 3 (S, M, L)`);
   } catch (error) {
-    console.error("❌ Error seeding products:", error);
+    console.error("Error seeding products:", error);
     throw error;
   } finally {
     await prisma.$disconnect();

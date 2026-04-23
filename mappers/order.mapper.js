@@ -22,9 +22,11 @@ export class OrderMapper {
       note: result.note,
       createdBy: result.createdBy
         ? { name: result.createdBy.name }
-        : { name: "Guest" },
+        : result.customer
+          ? { name: result.customer.name }
+          : { name: "Guest" },
       createdAt: result.createdAt,
-      orderCode: result.orderCode,
+      // orderCode: result.orderCode || null,
     });
   }
 
@@ -52,7 +54,7 @@ export class OrderMapper {
         ? { name: result.createdBy.name }
         : { name: "Guest" },
       createdAt: result.createdAt,
-      orderCode: result.orderCode,
+      orderCode: result.orderCode || null,
       orderItems: result.items.map(item => ({
         name: item.name,
         price: Number(item.price),
@@ -94,6 +96,41 @@ export class OrderMapper {
         })
       ),
       meta: result.meta,
+    };
+  }
+
+  static toGetOrderByIdResponse(result) {
+    return {
+      store: {
+        name: result.store.name,
+        address: result.store.address
+      },
+      customer: {
+        name: result.customer?.name || null,
+        phone: result.customer?.phone || "",
+        address: result.customer?.address || null
+      },
+      status: result.status,
+      type: result.type,
+      subtotal: Number(result.subtotal),
+      serviceFee: Number(result.serviceFee),
+      tax: Number(result.tax),
+      discount: Number(result.discount),
+      total: Number(result.total),
+      note: result.note,
+      createdBy: result.createdBy
+        ? { name: result.createdBy.name }
+        : { name: "Guest" },
+      createdAt: result.createdAt,
+      orderCode: result.orderCode || null,
+      orderItems: result.items.map(item => ({
+        name: item.name,
+        price: Number(item.price),
+        quantity: item.quantity,
+        discount: Number(item.discount),
+        tax: Number(item.tax),
+        note: item.note
+      }))
     };
   }
 }

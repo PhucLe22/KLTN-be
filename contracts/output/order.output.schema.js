@@ -24,7 +24,7 @@ export const createOrderSchema = {
       name: z.string()
     }),
     createdAt: z.date(),
-    orderCode: z.string()
+    // orderCode: z.string()
   })
 };
 

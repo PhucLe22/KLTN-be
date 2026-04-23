@@ -1,32 +1,126 @@
+@baseUrl = http://localhost:5001
+
 ### Get All Order history
-GET http://localhost:5001/api/v1/orders/history?storeId=8238df5e-c17e-45da-baeb-32af0cfc428f
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGVhMDY0ZS02NzVmLTQ5OGUtYmE0ZC01ZWE5MjQ1NjUzNmIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZDFmZjUxZi0wZDc3LTQ2OTgtYmYwOC1hOGUwNDlhY2E1YTUiLCJzdG9yZUlkIjoiMDM0MmMyNTQtOTFhNy00YTM4LThjYTEtYmUxNThhYjQ1MGMzIiwiaWF0IjoxNzc2MjUxNDg2LCJleHAiOjE3NzYyNTUwODZ9.dpv7qsAdszWQ-amVy43ypCu67-sKy1bdiPRhaDo2YOw
+GET {{baseUrl}}/api/v1/orders/history
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYjNjNWQ4ZS1hNWY5LTRlYTgtOTdkMi1iZjBhYjkzYmMxOWQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI0NDk0OTU4ZC04MWIzLTQ0NzItOTE2Ny04NDZhOGVhN2Y1OTkiLCJpYXQiOjE3NzY4MTg3NTAsImV4cCI6MTc3NjgyMjM1MH0.1IBpjjNYWP_9m6WzMljLIyNNKjwkuZeXUCIFv6nnkaU
 ###
 
 ### Get Order by ID
-GET http://localhost:5001/api/v1/orders/550e8400-e29b-41d4-a716-446655440010
-Authorization: Bearer {{accessToken}}
+GET {{baseUrl}}/api/v1/orders/82f80d36-2c3e-486f-a708-748179b43eeb
 Content-Type: application/json
 
 ###
 
-POST http://localhost:5001/api/v1/orders
+
+### Test Order Creation API
+
+### 1. Order WITHOUT Account (Guest)
+POST {{baseUrl}}/api/v1/orders
 Content-Type: application/json
 
 {
-  "storeId": "8238df5e-c17e-45da-baeb-32af0cfc428f",
-  "type": "DINE_IN",
+  "storeId": "f6088716-ca5e-4ed0-bef4-3dfe3abb51b8",
+  "type": "DELIVERY",
+  "customerInfo": {
+    "name": "John Guest",
+    "phone": "0901234567"
+  },
+  "note": "Guest order - no account",
   "items": [
     {
-      "productId": "7febddab-563c-4c03-bd24-bd62d3b9b68d",
-      "quantity": 1,
-      "note": "Espresso nóng"
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 2,
+      "note": "Less ice"
     },
     {
-      "productId": "da6eae2b-40b8-4b5a-95ea-d0c833b6025c",
-      "quantity": 2,
-      "note": "2 ly Latte"
+      "productId": "f96eb57d-4044-4a4a-99fa-44efca636b7f",
+      "quantity": 1
     }
-  ],
-  "note": "Bàn số 6"
+  ]
+}
+
+###
+
+### 2. Order WITH Account (Authenticated)
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYjNjNWQ4ZS1hNWY5LTRlYTgtOTdkMi1iZjBhYjkzYmMxOWQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI0NDk0OTU4ZC04MWIzLTQ0NzItOTE2Ny04NDZhOGVhN2Y1OTkiLCJpYXQiOjE3NzY5NjE5MTgsImV4cCI6MTc3Njk2NTUxOH0.yMiLeV7F9A3tu6_2PLaTAIUBozOyHJ2m3w_HpOHLNy4
+
+{
+  "storeId": "f6088716-ca5e-4ed0-bef4-3dfe3abb51b8",
+  "type": "DINE_IN",
+  "note": "Account order - authenticated user",
+  "items": [
+    {
+      "productId": "2de105d6-85c6-4463-adce-7cf07a5873f3",
+      "quantity": 1,
+      "note": "Extra avocado"
+    },
+    {
+      "productId": "a900a94d-fb13-4bec-a90f-0f3bee13b478",
+      "quantity": 2
+    }
+  ]
+}
+
+###
+
+### 3. Order WITH Account - TAKEAWAY
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYjNjNWQ4ZS1hNWY5LTRlYTgtOTdkMi1iZjBhYjkzYmMxOWQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI0NDk0OTU4ZC04MWIzLTQ0NzItOTE2Ny04NDZhOGVhN2Y1OTkiLCJpYXQiOjE3NzY5NjE5MTgsImV4cCI6MTc3Njk2NTUxOH0.yMiLeV7F9A3tu6_2PLaTAIUBozOyHJ2m3w_HpOHLNy4
+
+{
+  "storeId": "f6088716-ca5e-4ed0-bef4-3dfe3abb51b8",
+  "type": "TAKEAWAY",
+  "note": "Takeaway order with account",
+  "items": [
+    {
+      "productId": "d419708f-b6d4-4551-8044-3b9ab43e4381",
+      "quantity": 1
+    },
+    {
+      "productId": "ef0e3d0b-0314-4eca-ab74-b99e6c21df56",
+      "quantity": 1,
+      "note": "Less sugar"
+    }
+  ]
+}
+
+###
+
+### 4. Test Error - Guest without required info
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+
+{
+  "storeId": "f6088716-ca5e-4ed0-bef4-3dfe3abb51b8",
+  "type": "DELIVERY",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+### 5. Test Error - Invalid product ID
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+
+{
+  "storeId": "bb3c5d8e-a5f9-4ea8-97d2-bf0ab93bc19d",
+  "type": "DELIVERY",
+  "customerInfo": {
+    "name": "Test User",
+    "phone": "0901234567"
+  },
+  "items": [
+    {
+      "productId": "invalid-product-id",
+      "quantity": 1
+    }
+  ]
 }

@@ -60,6 +60,42 @@ class OrderRepository extends BaseRepository {
       },
     };
   }
+
+  async findOrdersByCustomerId(customerId, query = {}, tx = null) {
+    const { page = 1, limit = 10, status } = query;
+
+    const where = {
+      customerId: customerId,
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [orders, total] = await Promise.all([
+      this.getModel(tx).findMany({
+        where,
+        include: {
+          store: true,
+          customer: true,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.getModel(tx).count({ where }),
+    ]);
+
+    return {
+      items: orders,
+      meta: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }
 
 export const orderRepository = new OrderRepository();

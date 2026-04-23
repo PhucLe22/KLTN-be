@@ -1,8 +1,10 @@
 
+@baseUrl = http://localhost:5001
+
 /*
 tạo user + customer 
 */
-POST http://localhost:5001/api/v1/auth/register/customer
+POST {{baseUrl}}/api/v1/auth/register/customer
 Content-Type: application/json
 {
   "type": "CUSTOMER",
@@ -15,7 +17,7 @@ Content-Type: application/json
 /*
 tạo user + staff
 */
-POST http://localhost:5001/api/v1/auth/register
+POST {{baseUrl}}/api/v1/auth/register
 Content-Type: application/json
 {
   "type": "STAFF",
@@ -26,21 +28,20 @@ Content-Type: application/json
   "role": "CASHIER"
 }
 
-/*
-tạo guest
-*/
-POST http://localhost:5001/api/v1/auth/register/guest
+### Login API
+# @name login
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
+
 {
-  "type": "GUEST",
-  "phone": "0333444555",
-  "name": "Anh Hoàng Mua Lẻ"
+  "identifier": "customer@foodapp.com",
+  "password": "customer123"
 }
 
 
 ### Login API
 # @name login
-POST http://localhost:5001/api/v1/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -68,7 +69,7 @@ Content-Type: application/json
   }
 }}
 
-POST http://localhost:5001/api/v1/auth/login
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 {
   "identifier": "admin@foodapp.com",
@@ -79,7 +80,7 @@ Content-Type: application/json
 
 ### Logout API
 # @name logout
-POST http://localhost:5001/api/v1/auth/logout
+POST {{baseUrl}}/api/v1/auth/logout
 Authorization: Bearer {{accessToken}}
 Cookie: refreshToken={{refreshToken}}
 Content-Type: application/json
@@ -91,7 +92,7 @@ Content-Type: application/json
 ### 2. Test Refresh Token (Thành công)
 # @name refreshTokenSuccess
 # @forceIt
-POST http://localhost:5001/api/v1/auth/refresh-token
+POST {{baseUrl}}/api/v1/auth/refresh-token
 Cookie: refreshToken={{refreshToken}}
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 
@@ -118,7 +119,7 @@ User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
 
 ### 3. Test Refresh Token (Thất bại - Gửi token cũ đã bị xoay vòng)
 # @name refreshTokenFail
-POST http://localhost:5001/api/v1/auth/refresh-token
+POST {{baseUrl}}/api/v1/auth/refresh-token
 Cookie: refreshToken=this_is_a_fake_or_expired_token
 Content-Type: application/json
 
@@ -126,5 +127,5 @@ Content-Type: application/json
 
 ### 4. Lấy thông tin cá nhân
 # @name getProfileWithNewToken
-GET http://localhost:5001/api/v1/auth/profile
+GET {{baseUrl}}/api/v1/auth/profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMzk4YTQzOC01MDdlLTRmOTYtYmFlMy0yNWE1NTE5MTMwZTgiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImNjYjc2YWRmLWYxMGUtNDQyYi1iNThlLTJmZWEwZDRkNWVhMyIsInN0b3JlSWQiOiI4MjM4ZGY1ZS1jMTdlLTQ1ZGEtYmFlYi0zMmFmMGNmYzQyOGYiLCJpYXQiOjE3NzU4MzgwOTEsImV4cCI6MTc3NTg0MTY5MX0.Yq_I9ZCmLN7hW8rBiN8PDyoJE7h_yWBy398kGA3RJ_s

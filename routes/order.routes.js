@@ -1,9 +1,7 @@
 import express from "express";
 import { orderController } from "../controllers/order.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
-import { protect } from "../middlewares/authentication.middleware.js";
-import { restrictTo } from "../middlewares/authorize.middleware.js";
-import { StaffRole } from "../constants/enum.js";
+import { protect, optionalProtect } from "../middlewares/authentication.middleware.js";
 import { createOrderSchema as inputCreateOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema, getOrderHistorySchema as inputGetOrderHistorySchema } from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
@@ -11,10 +9,11 @@ const orderRouter = express.Router();
 /**
  * @route   POST /api/v1/orders
  * @desc    Tạo đơn hàng mới
- * @access  Public (có thể thêm auth middleware sau)
+ * @access  Public (supports both authenticated and guest orders)
  */
 orderRouter.post(
   "/",
+  optionalProtect, // Optional auth - sets req.user if token provided
   validateData({ body: inputCreateOrderSchema.body }),
   orderController.create,
 );
@@ -32,15 +31,21 @@ orderRouter.get(
 
 /**
  * @route   GET /api/v1/orders/history
- * @desc    Lấy lịch sử đơn hàng theo store (chỉ Admin/Manager)
- * @access  Private (Admin/Manager)
+ * @desc    Lấy lịch sử đơn hàng của khách hàng
+ * @access  Private (Customer)
  */
 orderRouter.get(
   "/history",
   protect,
-  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
   validateData({ query: inputGetOrderHistorySchema.query }),
   orderController.getOrderHistory,
 );
 
+orderRouter.get(
+  "/:id",
+  orderController.getOrderById,
+);
+
 export default orderRouter;
+
+// /order

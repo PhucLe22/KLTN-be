@@ -15,18 +15,18 @@ class OrderService extends BaseService {
     this.staffRepo = staffRepository;
   }
 
-  async create(data, staffId = null) {
+  async create(data, staffId = null, userId = null) {
     return await prisma.$transaction(async (tx) => {
-      const { storeId, customerId, type, items, note, deliveryInfo } = data;
+      const { storeId, type, customerInfo, items, note, deliveryInfo } = data;
 
       const store = await this.#validateStore(storeId, tx);
-      const customer = await this.#getCustomer(customerId, tx);
+      const customer = await this.#handleCustomerCreation(userId, customerInfo, tx);
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
       const { serviceFee, tax, discount, total } = this.#calculateTotals(
         subtotal,
         type,
       );
-      const orderCode = this.#generateOrderCode(store.code);
+      // const orderCode = this.#generateOrderCode(store.code);
       const createdBy = await this.#getStaffInfo(staffId, tx);
 
       const order = await this.repository.create(
@@ -59,14 +59,61 @@ class OrderService extends BaseService {
 
       return {
         ...orderWithRelations,
-        orderCode,
+        // orderCode,
         createdBy,
       };
     });
   }
 
+  async #handleCustomerCreation(userId, customerInfo, tx) {
+    // Check bearer token first - if authenticated, use account
+    if (userId) {
+      // Order with account - customer has user_id saved
+      return await this.customerRepo.findCustomerByUserId(userId, tx);
+    }
+    
+    // Order without account - require phone and name
+    if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
+      throw new BadRequestException("Name and phone are required for orders without account");
+    }
+    
+    return await this.customerRepo.findOrCreateGuestCustomer(
+      customerInfo.phone,
+      customerInfo.name,
+      tx
+    );
+  }
+
   async findByOrderCode(orderCode) {
     const order = await this.repository.findByOrderCode(orderCode);
+
+    // if (!order) {
+    //   throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
+    // }
+
+    // Get staff info for createdBy
+    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+
+    return {
+      ...order,
+      createdBy,
+    };
+  }
+
+  async getOrderHistory(userId, query) {
+    const customer = await this.customerRepo.findCustomerByUserId(userId);
+    if (!customer) {
+      throw new NotFoundException("Không tìm thấy thông tin khách hàng");
+    }
+    return await this.repository.findOrdersByCustomerId(customer.id, query);
+  }
+
+  async getOrderById(id) {
+    const order = await this.repository.findById(id, {
+      store: true,
+      customer: true,
+      items: true,
+    });
 
     if (!order) {
       throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
@@ -79,20 +126,6 @@ class OrderService extends BaseService {
       ...order,
       createdBy,
     };
-  }
-
-  async getOrderHistory(storeId, query, requesterStaff) {
-    // Check if requester is admin or manager of this store
-    if (!requesterStaff) {
-      throw new ForbiddenException("Bạn không có quyền truy cập");
-    }
-
-    // Admin can access all stores, Manager can only access their own store
-    if (requesterStaff.role !== "ADMIN" && requesterStaff.storeId !== storeId) {
-      throw new ForbiddenException("Bạn chỉ có thể xem orders của cửa hàng mình");
-    }
-
-    return await this.repository.findByStore(storeId, query);
   }
 
   async #validateStore(storeId, tx) {
