@@ -1,5 +1,0 @@
-@baseUrl = http://localhost:5001
-
-### Get All Stores
-GET {{baseUrl}}/api/v1/stores
-Content-Type: application/json
