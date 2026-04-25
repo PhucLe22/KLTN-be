@@ -2,7 +2,7 @@ import express from "express";
 import { orderController } from "../controllers/order.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
 import { protect, optionalProtect } from "../middlewares/authentication.middleware.js";
-import { createOrderSchema as inputCreateOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema, getOrderHistorySchema as inputGetOrderHistorySchema } from "../contracts/input/order.schema.js";
+import { createOrderInputSchema, getOrderCodeInputSchema, getOrderHistoryInputSchema } from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
 
@@ -14,7 +14,7 @@ const orderRouter = express.Router();
 orderRouter.post(
   "/",
   optionalProtect, // Optional auth - sets req.user if token provided
-  validateData({ body: inputCreateOrderSchema.body }),
+  validateData({ body: createOrderInputSchema.body }),
   orderController.create,
 );
 
@@ -25,21 +25,10 @@ orderRouter.post(
  */
 orderRouter.get(
   "/code/:orderCode",
-  validateData({ params: inputGetOrderCodeSchema.params }),
+  validateData({ params: getOrderCodeInputSchema.params }),
   orderController.getOrderCode,
 );
 
-/**
- * @route   GET /api/v1/orders/history
- * @desc    Lấy lịch sử đơn hàng của khách hàng
- * @access  Private (Customer)
- */
-orderRouter.get(
-  "/history",
-  protect,
-  validateData({ query: inputGetOrderHistorySchema.query }),
-  orderController.getOrderHistory,
-);
 
 orderRouter.get(
   "/:id",

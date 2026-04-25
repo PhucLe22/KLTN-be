@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // POST /api/v1/orders - Response format
-export const createOrderSchema = {
+export const createOrderOutputSchema = {
   response: z.object({
     store: z.object({
       name: z.string(),
@@ -29,7 +29,7 @@ export const createOrderSchema = {
 };
 
 // GET /api/v1/orders/code/:orderCode - Response format
-export const getOrderCodeSchema = {
+export const getOrderCodeOutputSchema = {
   response: z.object({
     id: z.string(),
     store: z.object({
@@ -66,30 +66,12 @@ export const getOrderCodeSchema = {
 };
 
 // GET /api/v1/orders/history - Response format
-export const getOrderHistorySchema = {
+export const getOrderHistoryOutputSchema = {
   response: z.object({
     id: z.string(),
-    // orderCode: z.string().nullable(),
-    status: z.string(),
-    type: z.string(),
-    subtotal: z.number(),
-    discount: z.number(),
-    tax: z.number(),
-    serviceFee: z.number(),
     total: z.number(),
-    note: z.string().nullable(),
-    createdAt: z.date(),
-    store: z.object({
-      id: z.string(),
-      name: z.string(),
-      address: z.string(),
-    }),
-    customer: z.object({
-      id: z.string(),
-      name: z.string().nullable(),
-      phone: z.string(),
-      tier: z.string(),
-    }).nullable(),
-    createdByStaffId: z.string().nullable(),
+    address: z.string(),
+    updatedAt: z.date(),
+    status: z.string(),
   })
 };

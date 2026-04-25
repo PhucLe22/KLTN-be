@@ -6,6 +6,7 @@ import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES } from "../constants/errors.js";
+import { StaffRole } from "../constants/enum.js";
 
 class OrderService extends BaseService {
   constructor() {
@@ -13,6 +14,55 @@ class OrderService extends BaseService {
     this.customerRepo = customerRepository;
     this.productRepo = productRepository;
     this.staffRepo = staffRepository;
+  }
+
+  async getOrdersWithFilters(filters, pagination = {}) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const where = {};
+    
+    // Apply filters
+    if (filters.storeId) {
+      where.storeId = filters.storeId;
+    }
+    
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    const [orders, total] = await Promise.all([
+      this.repository.findMany({
+        where,
+        select: {
+          id: true,
+          status: true,
+          total: true,
+          updatedAt: true,
+          store: {
+            select: {
+              address: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        skip,
+        take: limit
+      }),
+      this.repository.count({ where })
+    ]);
+
+    return {
+      items: orders,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 
   async create(data, staffId = null, userId = null) {
@@ -74,7 +124,7 @@ class OrderService extends BaseService {
     
     // Order without account - require phone and name
     if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
-      throw new BadRequestException("Name and phone are required for orders without account");
+      throw new BadRequestException(ERROR_MESSAGES.CUSTOMER_INFO_REQUIRED);
     }
     
     return await this.customerRepo.findOrCreateGuestCustomer(
@@ -92,7 +142,7 @@ class OrderService extends BaseService {
     // }
 
     // Get staff info for createdBy
-    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+    const createdBy = await this.#getStaffInfo(order.createdByStaffId);
 
     return {
       ...order,
@@ -103,7 +153,7 @@ class OrderService extends BaseService {
   async getOrderHistory(userId, query) {
     const customer = await this.customerRepo.findCustomerByUserId(userId);
     if (!customer) {
-      throw new NotFoundException("Không tìm thấy thông tin khách hàng");
+      throw new NotFoundException(ERROR_MESSAGES.CUSTOMER_NOT_FOUND);
     }
     return await this.repository.findOrdersByCustomerId(customer.id, query);
   }
@@ -120,7 +170,7 @@ class OrderService extends BaseService {
     }
 
     // Get staff info for createdBy
-    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+    const createdBy = await this.#getStaffInfo(order.createdByStaffId);
 
     return {
       ...order,
@@ -133,7 +183,7 @@ class OrderService extends BaseService {
       where: { id: storeId },
     });
     if (!store) {
-      throw new BadRequestException("Cửa hàng không tồn tại");
+      throw new BadRequestException(ERROR_MESSAGES.STORE_NOT_FOUND);
     }
     return store;
   }
@@ -151,7 +201,7 @@ class OrderService extends BaseService {
       const product = await this.productRepo.findById(item.productId, null, tx);
 
       if (!product) {
-        throw new BadRequestException(`Sản phẩm ${item.productId} không tồn tại`);
+        throw new BadRequestException(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
       }
 
       const itemPrice = Number(product.basePrice);
@@ -193,23 +243,10 @@ class OrderService extends BaseService {
     return { serviceFee, tax, discount, total };
   }
 
-  async #getStaffInfo(staffId, tx) {
+  async #getStaffInfo(staffId, tx = null) {
     if (!staffId) return null;
 
     const staff = await this.staffRepo.findWithUser(staffId, tx);
-
-    if (!staff) return null;
-
-    return {
-      id: staff.id,
-      name: staff.user.email,
-    };
-  }
-
-  async #getStaffInfoById(staffId) {
-    if (!staffId) return null;
-
-    const staff = await this.staffRepo.findWithUser(staffId);
 
     if (!staff) return null;
 
@@ -227,6 +264,40 @@ class OrderService extends BaseService {
       .padStart(4, "0");
     return `${storeCode}-${dateStr}-${random}`;
   }
+
+  async getOrderHistory(user, query = {}) {
+    const { page = 1, limit = 10, storeId, status } = query;
+
+    let filters = {};
+    
+    // Apply role-based filtering
+    if (user.role === StaffRole.ADMIN || user.role === StaffRole.ROOT) {
+      // Admin/Root can view all orders, optional store filter
+      if (storeId) {
+        filters.storeId = storeId;
+      }
+    } else if (user.role === StaffRole.MANAGER || user.role === StaffRole.OWNER) {
+      // Manager and Owner can only view orders from their store
+      filters.storeId = user.storeId;
+    } else if (user.role === StaffRole.CASHIER || user.role === StaffRole.KITCHEN) {
+      // Cashier and Kitchen staff can only view orders from their store
+      filters.storeId = user.storeId;
+    } else {
+      // Customer can only view their own orders
+      filters.customerId = user.customerId;
+    }
+
+    // Apply status filter if provided
+    if (status) {
+      filters.status = status;
+    }
+
+    return await this.getOrdersWithFilters(filters, {
+      page: parseInt(page),
+      limit: parseInt(limit)
+    });
+  }
+
 }
 
 export const orderService = new OrderService();

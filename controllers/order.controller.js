@@ -35,15 +35,15 @@ class OrderController extends BaseController {
 
   getOrderHistory = asyncHandler(async (req, res) => {
     const query = req.query;
-    const userId = req.user.id;
+    const user = req.user;
     
-    const result = await this.service.getOrderHistory(userId, query);
+    const result = await this.service.getOrderHistory(user, query);
     const formatted = OrderMapper.toGetOrderHistoryResponse(result);
 
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.OK,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-      data: formatted.items,
+      data: formatted.orders,
       meta: formatted.meta,
     });
   });

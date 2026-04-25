@@ -2,7 +2,7 @@ import { z } from "zod";
 import { OrderType, OrderStatus } from "../../constants/enum.js";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
 
-export const staffCreateOrderSchema = {
+export const staffCreateOrderInputSchema = {
   body: z.object({
     // StoreId sẽ lấy từ JWT, không cần client gửi
     customerId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID).optional(),
@@ -28,7 +28,7 @@ export const staffCreateOrderSchema = {
   }),
 };
 
-export const updateOrderStatusSchema = {
+export const updateOrderStatusInputSchema = {
   params: z.object({
     id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
   }),

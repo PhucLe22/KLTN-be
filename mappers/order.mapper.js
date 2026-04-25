@@ -1,8 +1,8 @@
-import { createOrderSchema, getOrderCodeSchema, getOrderHistorySchema } from "../contracts/output/order.output.schema.js";
+import { createOrderOutputSchema, getOrderCodeOutputSchema, getOrderHistoryOutputSchema } from "../contracts/output/order.output.schema.js";
 
 export class OrderMapper {
   static toCreateResponse(result) {
-    return createOrderSchema.response.parse({
+    return createOrderOutputSchema.response.parse({
       store: {
         name: result.store.name,
         address: result.store.address,
@@ -31,7 +31,7 @@ export class OrderMapper {
   }
 
   static toGetOrderCodeResponse(result) {
-    return getOrderCodeSchema.response.parse({
+    return getOrderCodeOutputSchema.response.parse({
       id: result.id,
       store: {
         name: result.store.name,
@@ -68,31 +68,13 @@ export class OrderMapper {
 
   static toGetOrderHistoryResponse(result) {
     return {
-      items: result.items.map(item =>
-        getOrderHistorySchema.response.parse({
+      orders: result.items.map(item =>
+        getOrderHistoryOutputSchema.response.parse({
           id: item.id,
-          orderCode: item.orderCode || null,
-          status: item.status,
-          type: item.type,
-          subtotal: Number(item.subtotal),
-          discount: Number(item.discount),
-          tax: Number(item.tax),
-          serviceFee: Number(item.serviceFee),
           total: Number(item.total),
-          note: item.note,
-          createdAt: item.createdAt,
-          store: {
-            id: item.store.id,
-            name: item.store.name,
-            address: item.store.address,
-          },
-          customer: item.customer ? {
-            id: item.customer.id,
-            name: item.customer.name,
-            phone: item.customer.phone,
-            tier: item.customer.tier,
-          } : null,
-          createdByStaffId: item.createdByStaffId,
+          address: item.store?.address || '',
+          updatedAt: item.updatedAt,
+          status: item.status,
         })
       ),
       meta: result.meta,

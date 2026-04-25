@@ -9,6 +9,14 @@ export class BaseRepository {
     return tx ? tx[this.modelName] : prisma[this.modelName];
   }
 
+  async findMany(args, tx = null) {
+    return await this.getModel(tx).findMany(args);
+  }
+
+  async count(args, tx = null) {
+    return await this.getModel(tx).count(args);
+  }
+
   async findAll(
     {
       page = 1,

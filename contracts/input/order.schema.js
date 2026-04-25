@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { OrderType } from "../../constants/enum.js";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import { name, phone, address } from "../../contracts/common.schema.js";
 
 // POST /api/v1/orders
-export const createOrderSchema = {
+export const createOrderInputSchema = {
   body: z.object({
     storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
     type: z.nativeEnum(OrderType),
@@ -12,8 +13,8 @@ export const createOrderSchema = {
 
     // Customer information for orders without account
     customerInfo: z.object({
-      name: z.string(),
-      phone: z.string(),
+      name,
+      phone,
     }).optional(),
 
     // Danh sách món ăn
@@ -39,16 +40,16 @@ export const createOrderSchema = {
     // Nếu type là DELIVERY thì cần thông tin nhận hàng
     deliveryInfo: z
       .object({
-        receiverName: z.string(),
-        receiverPhone: z.string(),
-        addressLine: z.string(),
+        receiverName: name,
+        receiverPhone: phone,
+        addressLine: address,
       })
       .optional(),
   }),
 };
 
 // GET /api/v1/orders/history
-export const getOrderHistorySchema = {
+export const getOrderHistoryInputSchema = {
   query: z.object({
     storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
     page: z.string().transform(Number).optional(),
@@ -68,14 +69,14 @@ export const getOrderHistorySchema = {
 };
 
 // GET /api/v1/orders/:id
-export const getOrderDetailSchema = {
+export const getOrderDetailInputSchema = {
   params: z.object({
     id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
   }),
 };
 
 // GET /api/v1/orders/code/:orderCode
-export const getOrderCodeSchema = {
+export const getOrderCodeInputSchema = {
   params: z.object({
     orderCode: z.string(),
   }),

@@ -187,7 +187,9 @@ class AuthService extends BaseService {
   }
 
   async #validateUserCredentials(identifier, password) {
+    console.log("Looking for user with identifier:", identifier);
     const user = await this.userRepo.findByIdentifier(identifier);
+    console.log("user:", user);
 
     if (!user) {
       throw new UnauthorizedException(ERROR_MESSAGES.AUTH_INVALID);
@@ -195,6 +197,7 @@ class AuthService extends BaseService {
     console.log("inputPassword:", password, "userPassword:", user.password);
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
+    console.log("isPasswordMatch:", isPasswordMatch);
     if (!isPasswordMatch) {
       throw new UnauthorizedException(ERROR_MESSAGES.AUTH_INVALID);
     }

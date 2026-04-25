@@ -1,0 +1,10 @@
+@baseUrl = http://localhost:5001
+
+### Get All Products
+GET {{baseUrl}}/api/v1/products
+Content-Type: application/json
+
+### Get product by slug
+GET {{baseUrl}}/api/v1/products/nuoc-ep-cam
+Content-Type: application/json
+
