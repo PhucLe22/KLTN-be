@@ -5,11 +5,24 @@ class ProductRepository extends BaseRepository {
         super("product");
     }
 
+    async findById(id, tx = null) {
+        const model = this.getModel(tx);
+        return await model.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                basePrice: true,
+                sku: true,
+                thumbnail: true
+            }
+        });
+    }
+
     async findBySlug(slug, tx = null) {
         const model = this.getModel(tx);
 
-        // Convert slug to search pattern (handle Vietnamese characters)
-        // For now, simple search by name containing the slug parts
         const searchName = slug.replace(/-/g, ' ');
 
         const product = await model.findFirst({

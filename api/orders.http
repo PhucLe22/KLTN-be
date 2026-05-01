@@ -1,32 +1,118 @@
-### Get All Order history
-GET http://localhost:5001/api/v1/orders/history?storeId=8238df5e-c17e-45da-baeb-32af0cfc428f
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGVhMDY0ZS02NzVmLTQ5OGUtYmE0ZC01ZWE5MjQ1NjUzNmIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZDFmZjUxZi0wZDc3LTQ2OTgtYmYwOC1hOGUwNDlhY2E1YTUiLCJzdG9yZUlkIjoiMDM0MmMyNTQtOTFhNy00YTM4LThjYTEtYmUxNThhYjQ1MGMzIiwiaWF0IjoxNzc2MjUxNDg2LCJleHAiOjE3NzYyNTUwODZ9.dpv7qsAdszWQ-amVy43ypCu67-sKy1bdiPRhaDo2YOw
-###
-
+### Get All Order
+GET http://localhost:5001/api/v1/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1NjQ2ODAsImV4cCI6MTc3NzU2ODI4MH0.EqPYQZsY6cVWqs9KBOD69imNf9cDUfRxLu1Cl6VfFD4
 ### Get Order by ID
 GET http://localhost:5001/api/v1/orders/550e8400-e29b-41d4-a716-446655440010
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-###
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1MjY4MDcsImV4cCI6MTc3NzUzMDQwN30.vC8iQHWzEMhn5xmffhgl-vFRi03zgokAVQeXAs04FH0
+Content-Type: application/json
+{
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "TAKEAWAY",
+  "note": "optional note",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 2,
+      "note": "optional item note"
+    }
+  ]
+}
+
+# Create guest order
+POST http://localhost:5001/api/v1/orders/guest
+Content-Type: application/json
+{
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "DINE_IN",
+  "note": "Guest order without email",
+  "customerInfo": {
+    "phone": "0987654321",
+    "name": "Tran Thi D"
+  },
+  "tableNumber": "A12",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 1,
+      "note": "Table order"
+    }
+  ]
+}
 
 POST http://localhost:5001/api/v1/orders
 Content-Type: application/json
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmZiNWVhOC01MDA5LTRjZjgtOTlhOS1lZjQ3Njg4NzQ5NzgiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI2YjY1ZDM1Yy0wNWQ2LTQ5NTAtYjkzOC02ZDQ4ODI4MzRjNzAiLCJpYXQiOjE3Nzc2NTIyMzcsImV4cCI6MTc3NzY1NTgzN30.dOCzbLaFRA2_VfLU3Edbk_mBEKohMGBebIEuBqkCIIk
 {
-  "storeId": "8238df5e-c17e-45da-baeb-32af0cfc428f",
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
   "type": "DINE_IN",
+  "note": "Order with email",
   "items": [
     {
-      "productId": "7febddab-563c-4c03-bd24-bd62d3b9b68d",
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
       "quantity": 1,
-      "note": "Espresso nóng"
-    },
-    {
-      "productId": "da6eae2b-40b8-4b5a-95ea-d0c833b6025c",
-      "quantity": 2,
-      "note": "2 ly Latte"
+      "note": "Table order"
     }
-  ],
-  "note": "Bàn số 6"
+  ]
 }
+
+// can remove this endpoint
+# POST http://localhost:5001/api/v1/internal/orders/guest
+# Content-Type: application/json
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc2NTA4NDIsImV4cCI6MTc3NzY1NDQ0Mn0.qVx_7haynubnmGhWQpQ32PVbzolEP5fwGJbwwrgO-3k
+# {
+#   "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+#   "type": "DINE_IN",
+#   "note": "Guest order without email",
+#   "customerInfo": {
+#     "phone": "0211221122",
+#     "name": "Tran Thi D"
+#   },
+#   "tableNumber": "A12",
+#   "items": [
+#     {
+#       "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+#       "quantity": 1,
+#       "note": "Table order"
+#     }
+#   ]
+# }
+
+
+POST http://localhost:5001/api/v1/internal/orders
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc2NTA4NDIsImV4cCI6MTc3NzY1NDQ0Mn0.qVx_7haynubnmGhWQpQ32PVbzolEP5fwGJbwwrgO-3k
+{
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "DINE_IN",
+  "note": "Staff order",
+  "customerInfo": {
+    "phone": "",
+    "name": "",
+    "email": "phuclnt22@gmail.com"
+  },
+  "tableNumber": "A10",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 1,
+      "note": "Table order"
+    }
+  ]
+}
+
+### Get orders for staff (filter by store)
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=2&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+
+
+### Get orders for staff with filters (status + price range + store)
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&store_id=58660bb9-cfd8-41f3-9cc6-989485b26d10&minPrice=10000&maxPrice=500000&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+
+### Get orders by type (TAKEAWAY)
+GET http://localhost:5001/api/v1/internal/orders?type=TAKEAWAY&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY

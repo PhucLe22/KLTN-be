@@ -3,14 +3,19 @@ import { orderService } from "../services/order.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
 import { OrderMapper } from "../mappers/order.mapper.js";
-
 class OrderController extends BaseController {
   constructor() {
     super(orderService);
   }
-
-  create = asyncHandler(async (req, res) => {
-    const result = await this.service.create(req.body);
+  /**
+   * Unified order creation - handles 4 cases:
+   * 1. Guest (req.user = null)
+   * 2. Customer (req.user exists, no staff property)
+   * 3. Staff creating guest order (req.user.staff exists, no customerInfo)
+   * 4. Staff creating order for existing customer (req.user.staff exists, has customerInfo)
+   */
+  createOrder = asyncHandler(async (req, res) => {
+    const result = await this.service.createOrder(req.body, req.user);
     const formatted = OrderMapper.toCreateResponse(result);
 
     return this.success(res, {
@@ -32,11 +37,27 @@ class OrderController extends BaseController {
     });
   });
 
-  getOrderHistory = asyncHandler(async (req, res) => {
-    const { storeId } = req.query;
-    const query = req.query;
-    const result = await this.service.getOrderHistory(storeId, query, req.user.staff);
-    const formatted = OrderMapper.toGetOrderHistoryResponse(result);
+  getOrders = asyncHandler(async (req, res) => {
+    const userId = req.user?.id;
+    const result = await this.service.getOrders(userId, req.query);
+    const formatted = OrderMapper.toGetOrderResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+      data: formatted.items,
+      meta: formatted.meta,
+    });
+  });
+
+  /**
+   * Get orders for staff (filter by store)
+   * Query params: status, type, page, limit
+   */
+  getOrderForStaff = asyncHandler(async (req, res) => {
+    const staffStoreId = req.user?.staff?.storeId;
+    const result = await this.service.getOrdersForStaff(staffStoreId, req.query);
+    const formatted = OrderMapper.toGetOrderResponse(result);
 
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.OK,

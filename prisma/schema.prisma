@@ -402,7 +402,7 @@ model Order {
   total      Decimal @db.Decimal(14, 2) // total = subtotal - discount + tax + serviceFee
 
   note String?
-
+  tableNumber String?
   createdByStaffId String? // Lưu ID staff để trace (không cascade delete)
 
   createdAt DateTime @default(now())

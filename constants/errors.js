@@ -49,4 +49,21 @@ export const VALIDATION_MESSAGES = {
   DATE_FORMAT_INVALID: "Định dạng ngày phải là YYYY-MM-DD",
   ORDERS_REQUIRED: "Danh sách đơn hàng không được trống",
   PIN_INVALID: "Mã PIN phải có 6 số",
+  TABLE_NUMBER_REQUIRED: "Số bàn là bắt buộc cho đơn hàng của nhân viên.",
+  CUSTOMER_NOT_FOUND: "Không tìm thấy thông tin khách hàng cho người dùng này.",
+  STORE_NOT_FOUND: "Cửa hàng không tồn tại.",
+  PRODUCT_NOT_FOUND: "Sản phẩm không tồn tại.",
+  RECORD_NOT_FOUND: "Không tìm thấy bản ghi với ID:",
+  LIST_FETCH_ERROR: "Lỗi khi lấy danh sách:",
+};
+
+export const DEFAULT_NAMES = {
+  MANAGER: "Manager",
+  ADMIN: "Admin",
+  STAFF: "Staff",
+  N_A: "N/A",
+};
+
+export const TOKEN_CONSTANTS = {
+  PROTECTED_REFRESH_TOKEN: "protected",
 };

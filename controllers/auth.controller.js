@@ -4,6 +4,7 @@ import { asyncHandler } from "../lib/asyncHandler.js";
 import { AuthMapper } from "../mappers/auth.mapper.js";
 import { CookieHelper } from "../lib/cookieHelper.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
+import { UserType } from "../constants/enum.js";
 
 class AuthController extends BaseController {
   constructor() {
@@ -23,7 +24,7 @@ class AuthController extends BaseController {
       statusCode: SUCCESS_STATUS_CODE.CREATED,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
       data:
-        result.type === "GUEST"
+        result.type === UserType.GUEST
           ? AuthMapper.toGuestResponse(result)
           : AuthMapper.toAccountResponse(result.user),
     });
@@ -34,9 +35,6 @@ class AuthController extends BaseController {
    */
   login = asyncHandler(async (req, res) => {
     const { identifier, password } = req.body;
-    console.log("identifier", identifier);
-    console.log("password", password);
-
     const reqInfo = {
       deviceInfo: req.headers["user-agent"],
       ipAddress: req.ip || req.headers["x-forwarded-for"],

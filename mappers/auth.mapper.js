@@ -1,5 +1,6 @@
 import pkg from "@prisma/client/index-browser.js";
-import { UserType } from "../constants/enum.js";
+import { UserType, StaffRole } from "../constants/enum.js";
+import { DEFAULT_NAMES, TOKEN_CONSTANTS } from "../constants/errors.js";
 import {
   registerOutputSchema,
   guestOutputSchema,
@@ -52,11 +53,11 @@ export class AuthMapper {
 
   static toProfileResponse(user) {
     const data = {
-      type: "CUSTOMER",
+      type: UserType.CUSTOMER,
     };
 
     if (user.customer) {
-      data.type = "CUSTOMER";
+      data.type = UserType.CUSTOMER;
       data.customer = {
         name: user.customer.name,
         phone: user.customer.phone,
@@ -67,8 +68,8 @@ export class AuthMapper {
     } else if (user.staff) {
       const role = user.staff.role;
 
-      if (role === "MANAGER") {
-        data.type = "MANAGER";
+      if (role === StaffRole.MANAGER) {
+        data.type = StaffRole.MANAGER;
         data.manager = {
           storeInfo: {
             id: user.staff.store.id,
@@ -78,22 +79,22 @@ export class AuthMapper {
           userInfo: {
             email: user.email,
             phone: user.phone,
-            name: user.email || user.phone || "Manager",
+            name: user.email || user.phone || DEFAULT_NAMES.MANAGER,
             role: user.staff.role,
           },
         };
-      } else if (role === "OWNER") {
-        data.type = "ADMIN";
+      } else if (role === StaffRole.OWNER) {
+        data.type = StaffRole.OWNER;
         data.admin = {
           userInfo: {
             email: user.email,
             phone: user.phone,
-            name: user.email || user.phone || "Admin",
+            name: user.email || user.phone || DEFAULT_NAMES.ADMIN,
             role: user.staff.role,
           },
         };
       } else {
-        data.type = "STAFF";
+        data.type = UserType.STAFF;
         data.staff = {
           storeInfo: {
             id: user.staff.store.id,
@@ -103,14 +104,8 @@ export class AuthMapper {
           userInfo: {
             email: user.email,
             phone: user.phone,
-            name: user.email || user.phone || "Staff",
+            name: user.email || user.phone || DEFAULT_NAMES.STAFF,
             role: user.staff.role,
-          },
-          managerInfo: {
-            id: user.staff.store.id,
-            name: "Store Manager",
-            email: "manager@foodapp.com",
-            phone: "0901234567",
           },
         };
       }
@@ -126,7 +121,7 @@ class _LoginResponseBuilder {
     this.result = {
       accessToken: tokens.accessToken,
       // refreshToken: tokens.refreshToken,
-      refreshToken: "protected",
+      refreshToken: TOKEN_CONSTANTS.PROTECTED_REFRESH_TOKEN,
       id: user.id,
       email: user.email,
     };
@@ -136,7 +131,7 @@ class _LoginResponseBuilder {
     this.result.name = email;
     this.result.role = staffData.role;
     this.result.type = UserType.STAFF;
-    this.result.storeName = staffData.store?.name || "N/A";
+    this.result.storeName = staffData.store?.name || DEFAULT_NAMES.N_A;
     return this;
   }
 

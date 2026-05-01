@@ -8,7 +8,7 @@ export class ProductMapper {
     return items.map(item =>
       outputGetProductsSchema.response.parse({
         ...item,
-        price: item.basePrice, // Map basePrice -> price
+        price: item.basePrice,
       })
     );
   }
@@ -16,7 +16,7 @@ export class ProductMapper {
   static toGetProductBySlugResponse(item) {
     return outputGetProductBySlugSchema.response.parse({
       ...item,
-      price: item.basePrice, // Map basePrice -> price
+      price: item.basePrice,
     });
   }
 }

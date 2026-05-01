@@ -2,21 +2,31 @@ import express from "express";
 import { orderController } from "../controllers/order.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
 import { protect } from "../middlewares/authentication.middleware.js";
-import { restrictTo } from "../middlewares/authorize.middleware.js";
-import { StaffRole } from "../constants/enum.js";
-import { createOrderSchema as inputCreateOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema, getOrderHistorySchema as inputGetOrderHistorySchema } from "../contracts/input/order.schema.js";
+import { createOrderSchema as inputCreateOrderSchema, createGuestOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema } from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
 
 /**
  * @route   POST /api/v1/orders
- * @desc    Tạo đơn hàng mới
- * @access  Public (có thể thêm auth middleware sau)
+ * @desc    Táo don hàng mowi
+ * @access  Private (Customer authentication required)
  */
 orderRouter.post(
   "/",
+  protect,
   validateData({ body: inputCreateOrderSchema.body }),
-  orderController.create,
+  orderController.createOrder,
+);
+
+/**
+ * @route   POST /api/v1/orders/guest
+ * @desc    Tạo đơn hàng cho khách vãng lai (không cần đăng nhập)
+ * @access  Public
+ */
+orderRouter.post(
+  "/guest",
+  validateData({ body: createGuestOrderSchema.body }),
+  orderController.createOrder,
 );
 
 /**
@@ -31,16 +41,14 @@ orderRouter.get(
 );
 
 /**
- * @route   GET /api/v1/orders/history
- * @desc    Lấy lịch sử đơn hàng theo store (chỉ Admin/Manager)
- * @access  Private (Admin/Manager)
+ * @route   GET /api/v1/orders
+ * @desc    Lấy danh sách đơn hàng theo store
+ * @access  Private (Customer authentication required)
  */
 orderRouter.get(
-  "/history",
+  "/",
   protect,
-  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
-  validateData({ query: inputGetOrderHistorySchema.query }),
-  orderController.getOrderHistory,
+  orderController.getOrders,
 );
 
 export default orderRouter;

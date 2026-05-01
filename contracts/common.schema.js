@@ -25,5 +25,11 @@ export const points = z
 export const role = z.enum(StaffRole);
 export const userType = z.enum(UserType);
 
+// Location & Contact fields (common across system)
+export const address = z.string().min(10, VALIDATION_MESSAGES.ADDRESS_MIN);
+export const lat = z.number().optional();
+export const lng = z.number().optional();
+export const hotline = z.string().regex(/^[0-9]{10}$/, VALIDATION_MESSAGES.HOTLINE_INVALID);
+
 // Tokens
 export const token = z.string(VALIDATION_MESSAGES.TOKEN_REQUIRED);
