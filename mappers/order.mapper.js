@@ -57,9 +57,7 @@ export class OrderMapper {
       total: Number(result.total),
       note: result.note || null,
       tableNumber: result.tableNumber || null,
-      createdBy: result.createdBy
-        ? { staff_id: result.createdBy.id }
-        : null,
+      createdBy: result.createdBy ? { staff_id: result.createdBy } : null,
       createdAt: result.createdAt,
       orderCode: result.orderCode || null,
     });
@@ -86,9 +84,7 @@ export class OrderMapper {
       total: Number(result.total),
       note: result.note || null,
       tableNumber: result.tableNumber || null,
-      createdBy: result.createdBy
-        ? { name: result.createdBy.name }
-        : null,
+      createdBy: result.createdBy ? { staff_id: result.createdBy } : null,
       createdAt: result.createdAt,
       orderCode: result.orderCode,
       orderItems: result.items.map(item => ({
@@ -128,9 +124,7 @@ export class OrderMapper {
             phone: item.customer.phone || null,
             tier: item.customer.tier,
           } : null,
-          createdBy: item.createdBy
-            ? { staff_id: item.createdBy.staff_id }
-            : null,
+          createdBy: item.createdBy ? { staff_id: item.createdBy } : null,
         })
       ),
       meta: result.meta,

@@ -6,8 +6,7 @@ import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { OrderType, OrderStatus } from "../constants/enum.js";
-import { OrderCreateMapper, OrderMapper } from "../mappers/order.mapper.js";
+import { OrderType, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
 
 class OrderService extends BaseService {
@@ -18,51 +17,66 @@ class OrderService extends BaseService {
     this.staffRepo = staffRepository;
   }
 
-  /**
-   * Unified order creation - handles 4 cases:
-   * Case 1: Guest (user = null) - no auth required
-   * Case 2: Customer (user exists, no staff) - use stored customer info
-   * Case 3: Staff creating guest order (user.staff exists, no customerInfo)
-   * Case 4: Staff creating order for existing customer? (user.staff exists, has customerInfo or null)
-   */
-  async createOrder(body, user = null) {
+  // Customer (Auth) 
+  // Staff (Auth) create order for Guest (user_id?)/ Customer
+
+  // body
+  // findByNameOrPhone
+  // If true return createOrder 
+  // else return error (add enum for error message)
+
+  async createOrder(body, user) {
+    console.log("Test user", user);
     return await prisma.$transaction(async (tx) => {
-      const { storeId, type, items, note, tableNumber } = body;
-
-      // ===== Validate =====
-      await this.#validateStore(storeId, tx);
-      if (!items?.length) throw new BadRequestException(VALIDATION_MESSAGES.ORDER_ITEMS_REQUIRED);
-
-      // ===== Resolve customer & staff attribution =====
-      const { customer, createdByStaffId } = this.#resolveCustomer(body, user, tx);
-
-      if (createdByStaffId && !tableNumber) {
-        throw new BadRequestException(VALIDATION_MESSAGES.TABLE_NUMBER_REQUIRED);
-      }
-
-      // ===== Build items & calculate =====
+      const { storeId, type, items, note} = body;
+      
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
       const totals = this.#calculateTotals(subtotal, type);
 
-      // ===== Create order =====
+      const customer = await this.customerRepo.findCustomerByUserId(user.id, tx);
+      const customerId = customer.id;
+
       const order = await this.repository.create({
         storeId,
-        customerId: customer?.id ?? null,
+        type,
+        subtotal,
+        ...totals,
+        note,
+        customerId,
+        items: { create: orderItems },
+        createdBy: ROOT_USER_ID,
+      }, tx);
+
+      return await this.repository.findByIdWithRelations(order.id, tx);
+    });
+  }
+
+  async createOrderForStaff(storeId, body, user) {
+    return await prisma.$transaction(async (tx) => {
+      const { type, items, note, tableNumber, phone } = body;
+      
+      const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
+      const totals = this.#calculateTotals(subtotal, type);
+
+      const customer = await this.customerRepo.findByPhone(phone, tx);
+      const customerId = customer.id;
+
+      const order = await this.repository.create({
+        storeId,
         type,
         subtotal,
         ...totals,
         note,
         tableNumber,
-        createdByStaffId,
+        customerId,
         items: { create: orderItems },
+        createdBy: user?.id,
       }, tx);
 
-      // ===== Return order with relations & createdBy staff info =====
-      const orderWithRelations = await this.repository.findByIdWithRelations(order.id, tx);
-      const createdBy = await this.#getStaffInfoById(orderWithRelations.createdByStaffId);
-      return { ...orderWithRelations, createdBy };
+      return await this.repository.findByIdWithRelations(order.id, tx);
     });
   }
+
   async findByOrderCode(orderCode) {
     const order = await this.repository.findByOrderCode(orderCode);
 
@@ -71,7 +85,7 @@ class OrderService extends BaseService {
     }
 
     // Get staff info for createdBy
-    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+    const createdBy = await this.#getStaffInfoById(order.createdBy);
 
     return {
       ...order,
@@ -86,16 +100,6 @@ class OrderService extends BaseService {
   async getOrdersForStaff(storeId, query = {}) {
     const filters = buildOrderFilters({ storeId, query });
     return await this.repository.getOrdersByFilters(filters);
-  }
-
-  async #validateStore(storeId, tx) {
-    const store = await tx.store.findUnique({
-      where: { id: storeId },
-    });
-    if (!store) {
-      throw new BadRequestException(VALIDATION_MESSAGES.STORE_NOT_FOUND);
-    }
-    return store;
   }
 
   async #buildOrderItems(items, tx) {
@@ -158,78 +162,6 @@ class OrderService extends BaseService {
       id: staff.id,
       name: staff.user.email,
     };
-  }
-
-  /**
-   * Resolve customer & staff attribution for all 4 order creation cases
-   * @returns {Object} { customer, createdByStaffId }
-   */
-  async #resolveCustomer(body, user, tx) {
-    const { customerInfo } = body;
-    const isStaff = user?.staff !== undefined;
-    const isAuthenticated = user !== null;
-    const hasCustomerInfo = customerInfo?.phone || customerInfo?.email || customerInfo?.name;
-
-    let customer = null;
-    let createdByStaffId = null;
-
-    if (isStaff) {
-      // Case 3 & 4: Staff creating order
-      createdByStaffId = user.staff.id;
-
-      if (hasCustomerInfo) {
-        // Case 4: Staff creating order for existing/new customer
-        customer = await this.#resolveCustomerByInfo(customerInfo, tx);
-      }
-      // Case 3: Staff creating guest order - customer remains null
-    } else if (isAuthenticated) {
-      // Case 2: Authenticated customer
-      customer = await this.customerRepo.findCustomerByUserId(user.id, tx);
-      if (!customer) {
-        throw new BadRequestException(VALIDATION_MESSAGES.CUSTOMER_NOT_FOUND);
-      }
-    } else {
-      // Case 1: Guest order (no authentication)
-      if (hasCustomerInfo) {
-        customer = await this.customerRepo.findOrCreateGuestCustomer(
-          customerInfo.phone ?? null,
-          customerInfo.name ?? "Guest",
-          customerInfo.email ?? null,
-          tx
-        );
-      }
-    }
-
-    return { customer, createdByStaffId };
-  }
-
-  /**
-   * Find or create customer by phone/email for staff orders
-   * Priority: find by phone → find by email → create new guest
-   */
-  async #resolveCustomerByInfo(customerInfo, tx) {
-    const { phone, email, name } = customerInfo;
-    let customer = null;
-
-    if (phone) {
-      customer = await this.customerRepo.findByPhone(phone, tx);
-    }
-
-    if (!customer && email) {
-      const customerByEmail = await this.customerRepo.findByEmail(email, tx);
-      if (customerByEmail) customer = customerByEmail;
-    }
-
-    if (!customer && (phone || email || name)) {
-      customer = await this.customerRepo.findOrCreateGuestCustomer(
-        phone ?? null,
-        name ?? "Guest",
-        email ?? null,
-        tx
-      );
-    }
-
-    return customer;
   }
 }
 

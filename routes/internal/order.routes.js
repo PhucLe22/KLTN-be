@@ -18,15 +18,8 @@ orderRouter.post(
   protect,
   restrictTo(StaffRole.CASHIER, StaffRole.MANAGER),
   validateData({ body: createStaffOrderSchema.body }),
-  orderController.createOrder,
+  orderController.createOrderForStaff,
 );
-
-/**
- * @route   POST /internal/orders/guest
- * @desc    Tạo đơn hàng cho khách vãng lai (cashier/manager)
- * @access  Private (Staff authentication required)
- */
-// orderRouter.post("/guest", protect, orderController.createOrder);
 
 orderRouter.get("/", protect, orderController.getOrderForStaff);
 

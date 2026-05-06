@@ -289,6 +289,7 @@ model Product {
 
   orderItems OrderItem[]
 
+  preparationTime Int? // Time to prepare product (in minutes)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -403,7 +404,7 @@ model Order {
 
   note String?
   tableNumber String?
-  createdByStaffId String? // Lưu ID staff để trace (không cascade delete)
+  createdBy String? // Simple string field to store creator info
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

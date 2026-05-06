@@ -38,6 +38,16 @@ class CustomerRepository extends BaseRepository {
     });
   }
 
+  // Tìm khách hàng theo tên
+  async findByName(name, tx = null) {
+    return await this.getModel(tx).findFirst({
+      where: { name },
+      include: {
+        user: true,
+      },
+    });
+  }
+
   // Tìm khách hàng theo userId
   async findCustomerByUserId(userId, tx = null) {
     return await this.getModel(tx).findUnique({

@@ -9,6 +9,7 @@ export class ProductMapper {
       outputGetProductsSchema.response.parse({
         ...item,
         price: item.basePrice,
+        preparationTime: item.preparationTime || 15,
       })
     );
   }
@@ -17,6 +18,7 @@ export class ProductMapper {
     return outputGetProductBySlugSchema.response.parse({
       ...item,
       price: item.basePrice,
+      preparationTime: item.preparationTime || 15,
     });
   }
 }

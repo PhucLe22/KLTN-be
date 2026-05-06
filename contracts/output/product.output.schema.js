@@ -14,7 +14,8 @@ export const getProductsSchema = {
     name: z.string(),
     description: z.string().nullable(),
     price: z.any().transform(v => Number(v)), // basePrice -> price
-    thumbnail: z.string().nullable()
+    thumbnail: z.string().nullable(),
+    preparationTime: z.number().nullable(),
   })
 };
 
@@ -25,6 +26,7 @@ export const getProductBySlugSchema = {
     name: z.string(),
     description: z.string().nullable(),
     price: z.any().transform(v => Number(v)), // basePrice -> price
-    thumbnail: z.string().nullable()
+    thumbnail: z.string().nullable(),
+    preparationTime: z.number().nullable(),
   })
 };

@@ -7,15 +7,21 @@ class OrderController extends BaseController {
   constructor() {
     super(orderService);
   }
-  /**
-   * Unified order creation - handles 4 cases:
-   * 1. Guest (req.user = null)
-   * 2. Customer (req.user exists, no staff property)
-   * 3. Staff creating guest order (req.user.staff exists, no customerInfo)
-   * 4. Staff creating order for existing customer (req.user.staff exists, has customerInfo)
-   */
   createOrder = asyncHandler(async (req, res) => {
     const result = await this.service.createOrder(req.body, req.user);
+    console.log("Result", result);
+    const formatted = OrderMapper.toCreateResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.CREATED,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
+      data: formatted,
+    });
+  });
+
+  createOrderForStaff = asyncHandler(async (req, res) => {
+    const staffStoreId = req.user?.staff?.storeId;
+    const result = await this.service.createOrderForStaff(staffStoreId, req.body, req.user);
     const formatted = OrderMapper.toCreateResponse(result);
 
     return this.success(res, {

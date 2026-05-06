@@ -21,19 +21,14 @@ Content-Type: application/json
     }
   ]
 }
-
-# Create guest order
-POST http://localhost:5001/api/v1/orders/guest
+// order as customer
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmZiNWVhOC01MDA5LTRjZjgtOTlhOS1lZjQ3Njg4NzQ5NzgiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI2YjY1ZDM1Yy0wNWQ2LTQ5NTAtYjkzOC02ZDQ4ODI4MzRjNzAiLCJpYXQiOjE3NzgwMDE3NjUsImV4cCI6MTc3ODAwNTM2NX0.RtyvtiMdZcUQvkUD2Fo_15C96_yrfgOwj9PFOAaXpGY
 Content-Type: application/json
 {
   "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
   "type": "DINE_IN",
-  "note": "Guest order without email",
-  "customerInfo": {
-    "phone": "0987654321",
-    "name": "Tran Thi D"
-  },
-  "tableNumber": "A12",
+  "note": "Order from authenticated user",
   "items": [
     {
       "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
@@ -43,58 +38,15 @@ Content-Type: application/json
   ]
 }
 
-POST http://localhost:5001/api/v1/orders
+// order as staff
+POST http://localhost:5001/api/v1/internal/orders
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmZiNWVhOC01MDA5LTRjZjgtOTlhOS1lZjQ3Njg4NzQ5NzgiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI2YjY1ZDM1Yy0wNWQ2LTQ5NTAtYjkzOC02ZDQ4ODI4MzRjNzAiLCJpYXQiOjE3Nzc2NTIyMzcsImV4cCI6MTc3NzY1NTgzN30.dOCzbLaFRA2_VfLU3Edbk_mBEKohMGBebIEuBqkCIIk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3NzgwNTQxOTUsImV4cCI6MTc3ODA1Nzc5NX0.TIUsPRzdp5j2WuZRYBrt9jkWd9Ppy3wQDaNE1nkzMOo
 {
   "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
   "type": "DINE_IN",
   "note": "Order with email",
-  "items": [
-    {
-      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
-      "quantity": 1,
-      "note": "Table order"
-    }
-  ]
-}
-
-// can remove this endpoint
-# POST http://localhost:5001/api/v1/internal/orders/guest
-# Content-Type: application/json
-# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc2NTA4NDIsImV4cCI6MTc3NzY1NDQ0Mn0.qVx_7haynubnmGhWQpQ32PVbzolEP5fwGJbwwrgO-3k
-# {
-#   "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-#   "type": "DINE_IN",
-#   "note": "Guest order without email",
-#   "customerInfo": {
-#     "phone": "0211221122",
-#     "name": "Tran Thi D"
-#   },
-#   "tableNumber": "A12",
-#   "items": [
-#     {
-#       "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
-#       "quantity": 1,
-#       "note": "Table order"
-#     }
-#   ]
-# }
-
-
-POST http://localhost:5001/api/v1/internal/orders
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc2NTA4NDIsImV4cCI6MTc3NzY1NDQ0Mn0.qVx_7haynubnmGhWQpQ32PVbzolEP5fwGJbwwrgO-3k
-{
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-  "type": "DINE_IN",
-  "note": "Staff order",
-  "customerInfo": {
-    "phone": "",
-    "name": "",
-    "email": "phuclnt22@gmail.com"
-  },
-  "tableNumber": "A10",
+  "phone": "09337104446",
   "items": [
     {
       "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",

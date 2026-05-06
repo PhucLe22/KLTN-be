@@ -2,7 +2,8 @@ import express from "express";
 import { orderController } from "../controllers/order.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
 import { protect } from "../middlewares/authentication.middleware.js";
-import { createOrderSchema as inputCreateOrderSchema, createGuestOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema } from "../contracts/input/order.schema.js";
+import { restrictTo } from "../middlewares/authorize.middleware.js";
+import { createOrderSchema as inputCreateOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema } from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
 
@@ -11,21 +12,20 @@ const orderRouter = express.Router();
  * @desc    Táo don hàng mowi
  * @access  Private (Customer authentication required)
  */
+
+// customer --> customer has data --> error
+
+// staff --> customer has data --> ok / no
+
+// FE auth --> customer has data --> ok 
+
+// domain --> basic calculation
+
+// api name
 orderRouter.post(
   "/",
   protect,
   validateData({ body: inputCreateOrderSchema.body }),
-  orderController.createOrder,
-);
-
-/**
- * @route   POST /api/v1/orders/guest
- * @desc    Tạo đơn hàng cho khách vãng lai (không cần đăng nhập)
- * @access  Public
- */
-orderRouter.post(
-  "/guest",
-  validateData({ body: createGuestOrderSchema.body }),
   orderController.createOrder,
 );
 
@@ -52,3 +52,6 @@ orderRouter.get(
 );
 
 export default orderRouter;
+
+
+

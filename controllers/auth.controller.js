@@ -20,15 +20,17 @@ class AuthController extends BaseController {
 
     const result = await this.service.register(type.toUpperCase(), data);
 
+    console.log("result", result);
+
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.CREATED,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
       data:
         result.type === UserType.GUEST
-          ? AuthMapper.toGuestResponse(result)
+          ? AuthMapper.toGuestResponse(result.customer)
           : AuthMapper.toAccountResponse(result.user),
     });
-  });
+  }); 
 
   /**
    * Đăng nhập
@@ -41,7 +43,7 @@ class AuthController extends BaseController {
     };
 
     const result = await this.service.login({ identifier, password }, reqInfo);
-    console.log(result);
+    console.log("result", result);
 
     CookieHelper.setRefreshToken(res, result.tokens.refreshToken);
 

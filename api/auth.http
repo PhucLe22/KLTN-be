@@ -12,27 +12,25 @@ Content-Type: application/json
   "email": "phuclnt22@gmail.com"
 }
 
-POST http://localhost:5001/api/v1/auth/register/customer
+POST http://localhost:5001/api/v1/internal/auth/register/guest
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3Nzc5OTgzNzEsImV4cCI6MTc3ODAwMTk3MX0.vSQuqTmnuvvKCYErmu9nEdE5jszX_l5yagh2vIV9BZw
 Content-Type: application/json
 {
-  "type": "CUSTOMER",
-  "phone": "0337104446",
-  "password": "Password123@",
-  "name": "Nguyen Van A",
-  "email": "nguyenvana@gmail.com"
+  "phone": "0988888888",
+  "name": "Nguyen Van Guest"
 }
 
 /*
 tạo user + staff
 */
-POST http://localhost:5001/api/v1/auth/register
+POST http://localhost:5001/api/v1/internal/auth/register/staff
 Content-Type: application/json
 {
   "type": "STAFF",
-  "email": "cashier.hcm01@trasua.com",
-  "phone": "0988111222",
+  "email": "cashier2.hcm01@trasua.com",
+  "phone": "0988111223",
   "password": "StaffPassword789",
-  "storeId": "uuid-cua-cua-hang-quan-1", 
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10", 
   "role": "CASHIER"
 }
 
@@ -42,7 +40,7 @@ login as customer
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 {
-  "identifier": "phuclnt22@gmail.com",
+  "identifier": "09337104446",
   "password": "Password123@"
 }
 
@@ -52,7 +50,7 @@ login as staff
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 {
-  "identifier": "cashier.hcm01@trasua.com",
+  "identifier": "cashier2.hcm01@trasua.com",
   "password": "StaffPassword789"
 }
 
