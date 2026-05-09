@@ -1,34 +1,70 @@
-### Get All Orders
+### Get All Order
 GET http://localhost:5001/api/v1/orders
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-###
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1NjQ2ODAsImV4cCI6MTc3NzU2ODI4MH0.EqPYQZsY6cVWqs9KBOD69imNf9cDUfRxLu1Cl6VfFD4
 ### Get Order by ID
 GET http://localhost:5001/api/v1/orders/550e8400-e29b-41d4-a716-446655440010
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
-###
-
 POST http://localhost:5001/api/v1/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1MjY4MDcsImV4cCI6MTc3NzUzMDQwN30.vC8iQHWzEMhn5xmffhgl-vFRi03zgokAVQeXAs04FH0
 Content-Type: application/json
-
 {
-  "storeId": "8238df5e-c17e-45da-baeb-32af0cfc428f",
-  "type": "DINE_IN",
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "TAKEAWAY",
+  "note": "optional note",
   "items": [
     {
-      "productId": "7febddab-563c-4c03-bd24-bd62d3b9b68d",
-      "quantity": 1,
-      "note": "Espresso nóng"
-    },
-    {
-      "productId": "da6eae2b-40b8-4b5a-95ea-d0c833b6025c",
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
       "quantity": 2,
-      "note": "2 ly Latte"
+      "note": "optional item note"
     }
-  ],
-  "note": "Bàn số 6"
+  ]
 }
+// order as customer
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmZiNWVhOC01MDA5LTRjZjgtOTlhOS1lZjQ3Njg4NzQ5NzgiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI2YjY1ZDM1Yy0wNWQ2LTQ5NTAtYjkzOC02ZDQ4ODI4MzRjNzAiLCJpYXQiOjE3NzgwMDE3NjUsImV4cCI6MTc3ODAwNTM2NX0.RtyvtiMdZcUQvkUD2Fo_15C96_yrfgOwj9PFOAaXpGY
+Content-Type: application/json
+{
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "DINE_IN",
+  "note": "Order from authenticated user",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 1,
+      "note": "Table order"
+    }
+  ]
+}
+
+// order as staff
+POST http://localhost:5001/api/v1/internal/orders
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3NzgwNTQxOTUsImV4cCI6MTc3ODA1Nzc5NX0.TIUsPRzdp5j2WuZRYBrt9jkWd9Ppy3wQDaNE1nkzMOo
+{
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "type": "DINE_IN",
+  "note": "Order with email",
+  "phone": "09337104446",
+  "items": [
+    {
+      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "quantity": 1,
+      "note": "Table order"
+    }
+  ]
+}
+
+### Get orders for staff (filter by store)
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=2&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+
+
+### Get orders for staff with filters (status + price range + store)
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&store_id=58660bb9-cfd8-41f3-9cc6-989485b26d10&minPrice=10000&maxPrice=500000&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+
+### Get orders by type (TAKEAWAY)
+GET http://localhost:5001/api/v1/internal/orders?type=TAKEAWAY&limit=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY

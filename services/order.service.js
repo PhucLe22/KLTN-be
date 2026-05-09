@@ -4,8 +4,10 @@ import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
-import { BadRequestException, NotFoundException } from "../lib/httpExceptions.js";
-import { ERROR_MESSAGES } from "../constants/errors.js";
+import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
+import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
+import { OrderType, ROOT_USER_ID } from "../constants/enum.js";
+import { buildOrderFilters } from "../lib/buildOrderFilters.js";
 
 class OrderService extends BaseService {
   constructor() {
@@ -15,53 +17,63 @@ class OrderService extends BaseService {
     this.staffRepo = staffRepository;
   }
 
-  async create(data, staffId = null) {
+  // Customer (Auth) 
+  // Staff (Auth) create order for Guest (user_id?)/ Customer
+
+  // body
+  // findByNameOrPhone
+  // If true return createOrder 
+  // else return error (add enum for error message)
+
+  async createOrder(body, user) {
+    console.log("Test user", user);
     return await prisma.$transaction(async (tx) => {
-      const { storeId, customerId, type, items, note, deliveryInfo } = data;
-
-      const store = await this.#validateStore(storeId, tx);
-      const customer = await this.#getCustomer(customerId, tx);
+      const { storeId, type, items, note} = body;
+      
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
-      const { serviceFee, tax, discount, total } = this.#calculateTotals(
-        subtotal,
+      const totals = this.#calculateTotals(subtotal, type);
+
+      const customer = await this.customerRepo.findCustomerByUserId(user.id, tx);
+      const customerId = customer.id;
+
+      const order = await this.repository.create({
+        storeId,
         type,
-      );
-      const orderCode = this.#generateOrderCode(store.code);
-      const createdBy = await this.#getStaffInfo(staffId, tx);
+        subtotal,
+        ...totals,
+        note,
+        customerId,
+        items: { create: orderItems },
+        createdBy: ROOT_USER_ID,
+      }, tx);
 
-      const order = await this.repository.create(
-        {
-          storeId,
-          customerId: customer?.id || null,
-          type,
-          status: "NEW",
-          subtotal,
-          discount,
-          tax,
-          serviceFee,
-          total,
-          note: note || null,
-          createdByStaffId: staffId || null,
-          items: {
-            create: orderItems,
-          },
-        },
-        tx,
-      );
+      return await this.repository.findByIdWithRelations(order.id, tx);
+    });
+  }
 
-      const orderWithRelations = await tx.order.findUnique({
-        where: { id: order.id },
-        include: {
-          store: true,
-          customer: true,
-        },
-      });
+  async createOrderForStaff(storeId, body, user) {
+    return await prisma.$transaction(async (tx) => {
+      const { type, items, note, tableNumber, phone } = body;
+      
+      const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
+      const totals = this.#calculateTotals(subtotal, type);
 
-      return {
-        ...orderWithRelations,
-        orderCode,
-        createdBy,
-      };
+      const customer = await this.customerRepo.findByPhone(phone, tx);
+      const customerId = customer.id;
+
+      const order = await this.repository.create({
+        storeId,
+        type,
+        subtotal,
+        ...totals,
+        note,
+        tableNumber,
+        customerId,
+        items: { create: orderItems },
+        createdBy: user?.id,
+      }, tx);
+
+      return await this.repository.findByIdWithRelations(order.id, tx);
     });
   }
 
@@ -73,7 +85,7 @@ class OrderService extends BaseService {
     }
 
     // Get staff info for createdBy
-    const createdBy = await this.#getStaffInfoById(order.createdByStaffId);
+    const createdBy = await this.#getStaffInfoById(order.createdBy);
 
     return {
       ...order,
@@ -81,19 +93,13 @@ class OrderService extends BaseService {
     };
   }
 
-  async #validateStore(storeId, tx) {
-    const store = await tx.store.findUnique({
-      where: { id: storeId },
-    });
-    if (!store) {
-      throw new BadRequestException("Cửa hàng không tồn tại");
-    }
-    return store;
+  async getOrders(userId, query = {}) {
+    return await this.repository.getOrdersByUser(userId, query);
   }
 
-  async #getCustomer(customerId, tx) {
-    if (!customerId) return null;
-    return await this.customerRepo.findById(customerId, null, tx);
+  async getOrdersForStaff(storeId, query = {}) {
+    const filters = buildOrderFilters({ storeId, query });
+    return await this.repository.getOrdersByFilters(filters);
   }
 
   async #buildOrderItems(items, tx) {
@@ -104,7 +110,7 @@ class OrderService extends BaseService {
       const product = await this.productRepo.findById(item.productId, null, tx);
 
       if (!product) {
-        throw new BadRequestException(`Sản phẩm ${item.productId} không tồn tại`);
+        throw new BadRequestException(`${VALIDATION_MESSAGES.PRODUCT_NOT_FOUND} (${item.productId})`);
       }
 
       const itemPrice = Number(product.basePrice);
@@ -114,7 +120,6 @@ class OrderService extends BaseService {
       const orderItemData = {
         productId: item.productId,
         name: product.name,
-        sku: product.sku,
         price: itemPrice,
         quantity: item.quantity,
         note: item.note || null,
@@ -138,7 +143,7 @@ class OrderService extends BaseService {
   }
 
   #calculateTotals(subtotal, type) {
-    const serviceFee = type === "DELIVERY" ? 15000 : 0;
+    const serviceFee = type === OrderType.DELIVERY ? 15000 : 0;
     const tax = subtotal * 0.08; // 8% VAT
     const discount = 0;
     const total = subtotal - discount + tax + serviceFee;
@@ -146,29 +151,10 @@ class OrderService extends BaseService {
     return { serviceFee, tax, discount, total };
   }
 
-  async #getStaffInfo(staffId, tx) {
-    if (!staffId) return null;
-
-    const staff = await this.staffRepo.getModel(tx).findUnique({
-      where: { id: staffId },
-      include: { user: true },
-    });
-
-    if (!staff) return null;
-
-    return {
-      id: staff.id,
-      name: staff.user.email,
-    };
-  }
-
   async #getStaffInfoById(staffId) {
     if (!staffId) return null;
 
-    const staff = await this.staffRepo.getModel().findUnique({
-      where: { id: staffId },
-      include: { user: true },
-    });
+    const staff = await this.staffRepo.findWithUser(staffId);
 
     if (!staff) return null;
 
@@ -176,15 +162,6 @@ class OrderService extends BaseService {
       id: staff.id,
       name: staff.user.email,
     };
-  }
-
-  #generateOrderCode(storeCode) {
-    const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-    const random = Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0");
-    return `${storeCode}-${dateStr}-${random}`;
   }
 }
 

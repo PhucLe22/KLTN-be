@@ -9,9 +9,9 @@ export const createOrderSchema = {
     }),
     customer: z.object({
       name: z.string().nullable(),
-      phone: z.string(),
+      phone: z.string().nullable(),
       address: z.string().nullable()
-    }),
+    }).nullable(),
     status: z.string(),
     type: z.string(),
     subtotal: z.number(),
@@ -20,11 +20,12 @@ export const createOrderSchema = {
     discount: z.number(),
     total: z.number(),
     note: z.string().nullable(),
+    tableNumber: z.string().nullable(),
     createdBy: z.object({
-      name: z.string()
-    }),
+      staff_id: z.string()
+    }).nullable(),
     createdAt: z.date(),
-    orderCode: z.string()
+    orderCode: z.string().nullable()
   })
 };
 
@@ -38,9 +39,9 @@ export const getOrderCodeSchema = {
     }),
     customer: z.object({
       name: z.string().nullable(),
-      phone: z.string(),
+      phone: z.string().nullable(),
       address: z.string().nullable()
-    }),
+    }).nullable(),
     status: z.string(),
     type: z.string(),
     subtotal: z.number(),
@@ -49,11 +50,12 @@ export const getOrderCodeSchema = {
     discount: z.number(),
     total: z.number(),
     note: z.string().nullable(),
+    tableNumber: z.string().nullable(),
     createdBy: z.object({
-      name: z.string()
-    }),
+      staff_id: z.string()
+    }).nullable(),
     createdAt: z.date(),
-    orderCode: z.string(),
+    orderCode: z.string().nullable(),
     orderItems: z.array(z.object({
       name: z.string(),
       price: z.number(),
@@ -62,5 +64,36 @@ export const getOrderCodeSchema = {
       tax: z.number(),
       note: z.string().nullable()
     }))
+  })
+};
+
+// GET /api/v1/orders - Response format
+export const getOrderSchema = {
+  response: z.object({
+    id: z.string(),
+    status: z.string(),
+    type: z.string(),
+    subtotal: z.number(),
+    discount: z.number(),
+    tax: z.number(),
+    serviceFee: z.number(),
+    total: z.number(),
+    note: z.string().nullable(),
+    tableNumber: z.string().nullable(),
+    createdAt: z.date(),
+    store: z.object({
+      id: z.string(),
+      name: z.string(),
+      address: z.string(),
+    }),
+    customer: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+      phone: z.string().nullable(),
+      tier: z.string(),
+    }).nullable(),
+    createdBy: z.object({
+      staff_id: z.string()
+    }).nullable(),
   })
 };

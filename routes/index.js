@@ -3,6 +3,7 @@ import authRouter from "./auth.routes.js";
 import productRouter from "./product.routes.js";
 import storeRouter from "./store.routes.js";
 import orderRouter from "./order.routes.js";
+import internalRouter from "./internal/index.js";
 
 const mainRouter = express.Router();
 
@@ -25,5 +26,6 @@ mainRouter.use("/auth", authRouter);
 mainRouter.use("/products", productRouter);
 mainRouter.use("/stores", storeRouter);
 mainRouter.use("/orders", orderRouter);
+mainRouter.use("/internal", internalRouter);
 
 export default mainRouter;

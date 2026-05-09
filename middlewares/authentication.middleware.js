@@ -41,5 +41,46 @@ export const protect = asyncHandler(async (req, res, next) => {
   // Ông có thể gán toàn bộ user hoặc chỉ id/role tùy nhu cầu
   req.user = currentUser;
 
+  // 6. Gán staff info từ JWT claims để restrictTo middleware có thể kiểm tra role
+  if (decoded.role && decoded.sid) {
+    req.user.staff = {
+      id: decoded.sid,
+      role: decoded.role,
+      storeId: decoded.storeId,
+    };
+  }
+
+  next();
+});
+
+// Optional auth: extract user info if token present, but don't fail if absent
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = JwtHelper.verifyAccessToken(token);
+    const currentUser = await userRepository.findById(decoded.sub);
+    if (currentUser && currentUser.isActive) {
+      req.user = currentUser;
+      if (decoded.role && decoded.sid) {
+        req.user.staff = {
+          id: decoded.sid,
+          role: decoded.role,
+          storeId: decoded.storeId,
+        };
+      }
+    }
+  } catch {
+    // Token invalid/expired - continue without user
+  }
+
   next();
 });

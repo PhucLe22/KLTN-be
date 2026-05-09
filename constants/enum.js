@@ -92,3 +92,5 @@ export const UserType = {
   STAFF: "STAFF",
   GUEST: "GUEST",
 };
+
+export const ROOT_USER_ID = "999999999";

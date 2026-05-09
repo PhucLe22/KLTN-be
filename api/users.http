@@ -1,6 +1,6 @@
 ### Get Users List (Admin/Manager only)
 GET http://localhost:5001/api/v1/users
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMzk4YTQzOC01MDdlLTRmOTYtYmFlMy0yNWE1NTE5MTMwZTgiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImNjYjc2YWRmLWYxMGUtNDQyYi1iNThlLTJmZWEwZDRkNWVhMyIsInN0b3JlSWQiOiI4MjM4ZGY1ZS1jMTdlLTQ1ZGEtYmFlYi0zMmFmMGNmYzQyOGYiLCJpYXQiOjE3NzYyNDg0NzMsImV4cCI6MTc3NjI1MjA3M30.h_gV89-avYBrSAjg2DFGF9DKaUZDhfFl_4bTBkoq7gU
 Content-Type: application/json
 
 ###
