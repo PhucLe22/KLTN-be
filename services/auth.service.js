@@ -31,7 +31,8 @@ class AuthService extends BaseService {
       case "STAFF":
         return await this.#createStaff(data);
       case "GUEST":
-        return await this.#quickCreateCustomer(data);
+        const customer = await this.#quickCreateCustomer(data);
+        return { type: UserType.GUEST, customer };
       default:
         throw new BadRequestException(VALIDATION_MESSAGES.USER_TYPE_INVALID);
     }
@@ -171,6 +172,8 @@ class AuthService extends BaseService {
 
   async #quickCreateCustomer(data, tx = null) {
     const { phone, name } = data;
+    console.log("phone", phone);
+    console.log("name", name);
 
     // Tận dụng findOne để tránh tạo trùng Profile khách vãng lai
     const existing = await this.customerRepo.findOne({ phone }, tx);

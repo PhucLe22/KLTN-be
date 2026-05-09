@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client";
+import pkg from "@prisma/client";
+const { Prisma } = pkg;
 import { ZodError } from "zod";
 import {
   BadRequestException,
@@ -21,7 +22,7 @@ export const errorHandler = (err, req, res, next) => {
 
     // Log ra bảng cực đẹp trong Terminal khi dev
     if (process.env.NODE_ENV === "development" && issues.length > 0) {
-      console.log("\n❌ [ZOD VALIDATION ERROR]");
+      console.log("\n[ZOD VALIDATION ERROR]");
       console.table(
         issues.map((i) => ({
           field: i.path.join("."),

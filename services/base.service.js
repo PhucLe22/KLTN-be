@@ -2,6 +2,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "../lib/httpExceptions.js";
+import { VALIDATION_MESSAGES } from "../constants/errors.js";
 
 export class BaseService {
   constructor(repository) {
@@ -14,7 +15,7 @@ export class BaseService {
       return await this.repository.findAll(query);
     } catch (error) {
       throw new InternalServerErrorException(
-        "Lỗi khi lấy danh sách: " + error.message,
+        `${VALIDATION_MESSAGES.LIST_FETCH_ERROR} ${error.message}`,
       );
     }
   }
@@ -23,7 +24,7 @@ export class BaseService {
   async getById(id, include = null) {
     const item = await this.repository.findById(id, include);
     if (!item) {
-      throw new NotFoundException(`Không tìm thấy bản ghi với ID: ${id}`);
+      throw new NotFoundException(`${VALIDATION_MESSAGES.RECORD_NOT_FOUND} ${id}`);
     }
     return item;
   }

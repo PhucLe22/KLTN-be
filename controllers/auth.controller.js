@@ -4,6 +4,7 @@ import { asyncHandler } from "../lib/asyncHandler.js";
 import { AuthMapper } from "../mappers/auth.mapper.js";
 import { CookieHelper } from "../lib/cookieHelper.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
+import { UserType } from "../constants/enum.js";
 
 class AuthController extends BaseController {
   constructor() {
@@ -19,28 +20,30 @@ class AuthController extends BaseController {
 
     const result = await this.service.register(type.toUpperCase(), data);
 
+    console.log("result", result);
+
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.CREATED,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
       data:
-        result.type === "GUEST"
-          ? AuthMapper.toGuestResponse(result)
+        result.type === UserType.GUEST
+          ? AuthMapper.toGuestResponse(result.customer)
           : AuthMapper.toAccountResponse(result.user),
     });
-  });
+  }); 
 
   /**
    * Đăng nhập
    */
   login = asyncHandler(async (req, res) => {
     const { identifier, password } = req.body;
-
     const reqInfo = {
       deviceInfo: req.headers["user-agent"],
       ipAddress: req.ip || req.headers["x-forwarded-for"],
     };
 
     const result = await this.service.login({ identifier, password }, reqInfo);
+    console.log("result", result);
 
     CookieHelper.setRefreshToken(res, result.tokens.refreshToken);
 

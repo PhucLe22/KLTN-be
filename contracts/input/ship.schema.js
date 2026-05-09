@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { VALIDATION_MESSAGES } from "../../constants/errors.js";
 
 // 1. GET /api/v1/ship/matrix
 export const getDistanceMatrixSchema = {
   query: z.object({
     // Danh sách các tọa độ điểm giao hàng, cách nhau bằng dấu phẩy
     // Ví dụ: "10.1,106.1|10.2,106.2"
-    locations: z.string().min(1, "Phải cung cấp danh sách tọa độ"),
+    locations: z.string().min(1, VALIDATION_MESSAGES.LOCATIONS_REQUIRED),
     mode: z.enum(["driving", "walking", "cycling"]).default("driving"),
   }),
 };
@@ -15,7 +16,7 @@ export const optimizeRouteSchema = {
   body: z.object({
     orderIds: z
       .array(z.string().uuid())
-      .min(1, "Danh sách đơn hàng không được trống"),
+      .min(1, VALIDATION_MESSAGES.ORDERS_REQUIRED),
 
     // Năng suất của nhân viên (ví dụ: tối đa 5 đơn/chuyến)
     staffCapacity: z.number().int().positive().default(5),
@@ -45,7 +46,7 @@ export const getStaffScheduleSchema = {
   query: z.object({
     date: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Định dạng ngày phải là YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, VALIDATION_MESSAGES.DATE_FORMAT_INVALID)
       .optional(),
   }),
 };

@@ -338,6 +338,37 @@ static toGetAllResponse(items) {
 }
 ```
 
+### 6. Sử dụng enum constants cho validation messages
+Validation messages phải sử dụng enum constants từ `constants/errors.js`, không dùng hardcoded strings:
+
+```javascript
+// ❌ BAD - Hardcoded error messages
+export const createExampleSchema = {
+  body: z.object({
+    id: z.string().uuid("ID không hợp lệ"),
+    name: z.string().min(1, "Tên không được để trống"),
+    email: z.string().email("Email không đúng định dạng"),
+  }),
+};
+
+// ✅ GOOD - Sử dụng VALIDATION_MESSAGES enum
+import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+
+export const createExampleSchema = {
+  body: z.object({
+    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
+    email: z.string().email(VALIDATION_MESSAGES.EMAIL_INVALID),
+  }),
+};
+```
+
+**Tại sao?**
+- Dễ maintain và sửa đổi error messages ở một chỗ
+- Đảm bảo consistency trong toàn bộ hệ thống
+- Dễ dàng internationalization (i18n) nếu cần trong tương lai
+- Tránh duplicate error messages
+
 ---
 
 ## Ví dụ thực tế: Auth API

@@ -1,16 +1,17 @@
 import { z } from "zod";
 import { OrderType, OrderStatus } from "../../constants/enum.js";
+import { VALIDATION_MESSAGES } from "../../constants/errors.js";
 
 export const staffCreateOrderSchema = {
   body: z.object({
     // StoreId sẽ lấy từ JWT, không cần client gửi
-    customerId: z.string().uuid().optional(),
+    customerId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID).optional(),
     type: z.enum(Object.values(OrderType)),
     note: z.string().optional(),
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(),
+          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
           quantity: z.number().int().min(1),
           options: z
             .array(
@@ -22,14 +23,14 @@ export const staffCreateOrderSchema = {
             .optional(),
         }),
       )
-      .min(1, "Đơn hàng phải có sản phẩm"),
+      .min(1, VALIDATION_MESSAGES.ORDER_ITEMS_REQUIRED),
     paymentMethod: z.string().optional(), // Staff thường chọn CASH tại quầy
   }),
 };
 
 export const updateOrderStatusSchema = {
   params: z.object({
-    id: z.string().uuid("ID đơn hàng không hợp lệ"),
+    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
   }),
   body: z.object({
     status: z.enum([

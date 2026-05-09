@@ -58,6 +58,8 @@ enum PaymentStatus {
 }
 
 enum StaffRole {
+  ROOT
+  ADMIN
   MANAGER
   CASHIER
   KITCHEN
@@ -287,6 +289,7 @@ model Product {
 
   orderItems OrderItem[]
 
+  preparationTime Int? // Time to prepare product (in minutes)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -400,8 +403,8 @@ model Order {
   total      Decimal @db.Decimal(14, 2) // total = subtotal - discount + tax + serviceFee
 
   note String?
-
-  createdByStaffId String? // Lưu ID staff để trace (không cascade delete)
+  tableNumber String?
+  createdBy String? // Simple string field to store creator info
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
