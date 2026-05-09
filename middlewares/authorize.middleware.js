@@ -5,9 +5,6 @@ export const restrictTo = (...roles) => {
     // If no user is authenticated, check if CUSTOMER is allowed
     console.log("req.user", req.user);
     if (!req.user) {
-      if (roles.includes(UserType.CUSTOMER)) {
-        return next(); // Allow unauthenticated access for CUSTOMER registration
-      }
       throw new ForbiddenException();
     }
 
