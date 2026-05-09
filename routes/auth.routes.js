@@ -10,7 +10,7 @@ const authRouter = express.Router();
  * @access  Public
  */
 
-authRouter.post("/register/:type", restrictTo("CUSTOMER"), authController.register);
+authRouter.post("/register/:type", authController.register);
 
 /**
  * @route   POST /api/v1/auth/login
