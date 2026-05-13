@@ -1,6 +1,23 @@
+@category_id=2774a8f4-2576-41bb-8a22-060c25b3d634
+
+
 ### Get All Products
 GET http://localhost:5001/api/v1/products
 Content-Type: application/json
+
+
+### Get Products by Category
+GET http://localhost:5001/api/v1/products?categoryId={{category_id}}&page=1&limit=10
+Content-Type: application/json
+
+### Search Products with Filters
+GET http://localhost:5001/api/v1/products?search=Latte&type=SIMPLE&isActive=true&sortBy=basePrice&sortOrder=asc
+Content-Type: application/json
+
+### Get Products by Category with Search and Filters
+GET http://localhost:5001/api/v1/products?categoryId={{category_id}}&search=Latte&type=SIMPLE&isActive=true&sortBy=basePrice&sortOrder=asc
+Content-Type: application/json
+
 
 ### Get product by slug
 GET http://localhost:5001/api/v1/products/nuoc-ep-cam

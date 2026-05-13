@@ -258,6 +258,9 @@ model Category {
   sortOrder Int? // Thứ tự hiển thị menu
   isActive  Boolean @default(true)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   products Product[]
 
   @@schema("catalog")
@@ -268,6 +271,7 @@ model Product {
 
   sku         String  @unique // Mã nội bộ, không đổi sau khi tạo
   name        String
+  slug        String  @unique // URL-friendly name
   description String?
 
   type      ProductType @default(SIMPLE)
@@ -377,6 +381,7 @@ model Store {
   hotline String
 
   isActive Boolean @default(true)
+  isDeleted Boolean @default(false)
 
   staff          Staff[]
   orders         Order[]

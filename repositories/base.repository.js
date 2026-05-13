@@ -35,13 +35,14 @@ export class BaseRepository {
       model.count({ where }),
     ]);
 
+    const totalPages = Math.ceil(total / limit);
     return {
       items,
       meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        currentPage: Number(page),
+        totalPages,
+        hasNext: Number(page) < totalPages,
       },
     };
   }

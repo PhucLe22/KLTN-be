@@ -12,25 +12,46 @@ class AuthController extends BaseController {
   }
 
   /**
-   * Đăng ký
+   * Đăng ký khách hàng
    */
-  register = asyncHandler(async (req, res) => {
+  registerCustomer = asyncHandler(async (req, res) => {
     const data = req.body;
-    const { type } = req.params;
-
-    const result = await this.service.register(type.toUpperCase(), data);
-
-    console.log("result", result);
+    const result = await this.service.registerCustomer(data);
 
     return this.success(res, {
       statusCode: SUCCESS_STATUS_CODE.CREATED,
       message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data:
-        result.type === UserType.GUEST
-          ? AuthMapper.toGuestResponse(result.customer)
-          : AuthMapper.toAccountResponse(result.user),
+      data: AuthMapper.toAccountResponse(result.user),
     });
-  }); 
+  });
+
+  /**
+   * Đăng ký nhân viên
+   */
+  registerStaff = asyncHandler(async (req, res) => {
+    const data = req.body;
+    const result = await this.service.registerStaff(data);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.CREATED,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
+      data: AuthMapper.toAccountResponse(result.user),
+    });
+  });
+
+  /**
+   * Đăng ký khách vãng lai (Guest)
+   */
+  registerGuest = asyncHandler(async (req, res) => {
+    const data = req.body;
+    const result = await this.service.registerGuest(data);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.CREATED,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
+      data: AuthMapper.toGuestResponse(result.customer),
+    });
+  });
 
   /**
    * Đăng nhập

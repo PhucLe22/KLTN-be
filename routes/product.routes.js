@@ -1,7 +1,10 @@
 import express from "express";
 import { productController } from "../controllers/product.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
-import { getProductsSchema as inputGetProductsSchema, getProductBySlugSchema as inputGetProductBySlugSchema } from "../contracts/input/product.schema.js";
+import { 
+  getProductsSchema as inputGetProductsSchema,
+  getProductBySlugSchema as inputGetProductBySlugSchema
+} from "../contracts/input/product.schema.js";
 
 const productRouter = express.Router();
 
@@ -18,7 +21,7 @@ productRouter.get(
 );
 
 /**
- * @route   GET /api/v1/product/:slug
+ * @route   GET /api/v1/products/:slug
  * @desc    Lấy sản phẩm theo slug
  * @access  Public
  */

@@ -1,0 +1,5 @@
+@category_id=2774a8f4-2576-41bb-8a22-060c25b3d634
+
+### Get All Categories
+GET http://localhost:5001/api/v1/categories?page=1&limit=5
+
