@@ -397,3 +397,7 @@ export const createExampleSchema = {
 - [ ] Response format thống nhất với BaseController.success()
 - [ ] Error handling sử dụng httpExceptions
 - [ ] JSDoc comment đã được thêm cho route
+
+
+
+***reminder: always use enums, if not, need to create new suitable ones***

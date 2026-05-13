@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CustomerTier, StaffRole } from "../../constants/enum.js";
+import { USER_FILTERS } from "../../constants/userFilters.js";
 
 const baseUserInfo = z.object({
   name: z.string(),
@@ -50,3 +51,36 @@ export const userInfoSchema = z.union([
   managerSchema,
   adminSchema,
 ]);
+
+// GET /api/v1/users
+export const getUsersSchema = {
+  query: z.object({
+    search: z.string().optional(),
+    limit: z.string().transform(Number).optional().default("10"),
+    page: z.string().transform(Number).optional().default("1"),
+    sortBy: z.enum(Object.values(USER_FILTERS.SORT_BY)).optional().default(USER_FILTERS.SORT_BY.CREATED_AT),
+    sortOrder: z.enum(Object.values(USER_FILTERS.SORT_ORDER)).optional().default(USER_FILTERS.SORT_ORDER.DESC),
+    isActive: z.enum(Object.values(USER_FILTERS.BOOLEAN)).optional(),
+    role: z.enum(Object.values(USER_FILTERS.ROLES)).optional(),
+    staff: z.enum(Object.values(USER_FILTERS.BOOLEAN)).optional(),
+  }),
+};
+
+// PUT /api/v1/users/:id
+export const updateUserSchema = {
+  params: z.object({
+    id: z.string().uuid("Invalid user ID format"),
+  }),
+  body: z.object({
+    isActive: z.boolean().optional(),
+    role: z.enum(Object.values(USER_FILTERS.ROLES)).optional(),
+    store_id: z.string().uuid("Invalid store ID format").optional(),
+  }),
+};
+
+// DELETE /api/v1/users/:id
+export const deleteUserSchema = {
+  params: z.object({
+    id: z.string().uuid("Invalid user ID format"),
+  }),
+};

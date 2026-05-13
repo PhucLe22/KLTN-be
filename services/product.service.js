@@ -1,70 +1,95 @@
 import { BaseService } from "./base.service.js";
 import { productRepository } from "../repositories/product.repository.js";
-import { NotFoundException } from "../lib/httpExceptions.js";
-import { ERROR_MESSAGES } from "../constants/errors.js";
+import { convertToSlug } from "../lib/helpers.js";
 
 class ProductService extends BaseService {
     constructor() {
         super(productRepository);
     }
 
-    #convertToSlug(name) {
-        return name
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-');
-    }
-
     async findAll(query) {
-        const { page = 1, limit = 10, search } = query;
-
+        const { page = 1, limit = 10, categoryId, search, sortBy = "createdAt", sortOrder = "desc", type, isActive = "true" } = query;
+        
         const where = {};
-        if (search) {
-            where.name = { contains: search, mode: 'insensitive' };
+        
+        if (categoryId) {
+            where.categoryId = categoryId;
         }
+        
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" } },
+                { sku: { contains: search, mode: "insensitive" } }
+            ];
+        }
+        
+        if (type) {
+            where.type = type;
+        }
+        
+        if (isActive !== undefined) {
+            where.isActive = isActive === "true";
+        }
+
+        const select = {
+            id: true,
+            sku: true,
+            name: true,
+            description: true,
+            type: true,
+            basePrice: true,
+            costPrice: true,
+            taxRate: true,
+            thumbnail: true,
+            images: true,
+            categoryId: true,
+            category: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true
+                }
+            },
+            sortOrder: true,
+            preparationTime: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true
+        };
 
         return await this.repository.findAll({
             page,
             limit,
             where,
-            select: {
-                id: true,
-                name: true,
-                description: true,
-                basePrice: true,
-                thumbnail: true
-            },
-            orderBy: { createdAt: 'desc' }
+            select,
+            orderBy: { [sortBy]: sortOrder }
         });
     }
 
-    async findBySlug(slug) {
-        const allProducts = await this.repository.findAll({
-            page: 1,
-            limit: 1000,
-            where: { isActive: true },
-            select: {
-                id: true,
-                name: true,
-                description: true,
-                basePrice: true,
-                thumbnail: true
-            }
-        });
-
-        const product = allProducts.items.find(item => {
-            const itemSlug = this.#convertToSlug(item.name);
-            return itemSlug === slug;
-        });
-
-        if (!product) {
-            throw new NotFoundException(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+    async create(data) {
+        // Convert nested category object to categoryId for Prisma
+        const productData = { ...data };
+        if (productData.category && productData.category.id) {
+            productData.categoryId = productData.category.id;
+            delete productData.category;
         }
+        
+        return await this.repository.create(productData);
+    }
 
-        return product;
+    async update(id, data) {
+        // Convert nested category object to categoryId for Prisma
+        const updateData = { ...data };
+        if (updateData.category && updateData.category.id) {
+            updateData.categoryId = updateData.category.id;
+            delete updateData.category;
+        }
+        
+        return await this.repository.update(id, updateData);
+    }
+
+    async delete(id) {
+        return await this.repository.update(id, { isActive: false });
     }
 }
 

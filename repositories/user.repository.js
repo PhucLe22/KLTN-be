@@ -68,6 +68,20 @@ class UserRepository extends BaseRepository {
 
     return !!user;
   }
+
+  /**
+   * Update user with relationships
+   */
+  async update(id, data, tx = null) {
+    return await this.getModel(tx).update({
+      where: { id },
+      data,
+      include: {
+        staff: { include: { store: true } },
+        customer: true,
+      },
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

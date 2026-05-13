@@ -1,31 +1,42 @@
 import { BaseController } from "./base.controller.js";
-import { storeService } from "../services/store.service.js";
+import { categoryService } from "../services/category.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { StoreMapper } from "../mappers/store.mapper.js";
+import { CategoryMapper } from "../mappers/category.mapper.js";
 
-class StoreController extends BaseController {
+class CategoryController extends BaseController {
     constructor() {
-        super(storeService);
+        super(categoryService);
     }
 
-    getAllStores = asyncHandler(async (req, res) => {
+    getAllCategories = asyncHandler(async (req, res) => {
         const result = await this.service.findAll(req.query);
-        const formattedItems = StoreMapper.toGetAllStoresResponse(result.items);
+        const formatted = CategoryMapper.toGetAllCategoriesResponse(result);
 
         return this.success(res, {
             statusCode: SUCCESS_STATUS_CODE.OK,
             message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formattedItems,
-            meta: result.meta
+            data: formatted
         });
     });
 
-    createStore = asyncHandler(async (req, res) => {
+    getCategoryBySlug = asyncHandler(async (req, res) => {
+        const { slug } = req.params;
+        const result = await this.service.findBySlug(slug);
+        const formatted = CategoryMapper.toGetCategoryBySlugResponse(result);
+
+        return this.success(res, {
+            statusCode: SUCCESS_STATUS_CODE.OK,
+            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+            data: formatted
+        });
+    });
+
+    createCategory = asyncHandler(async (req, res) => {
         const body = req.body;
 
         const result = await this.service.create(body);
-        const formatted = StoreMapper.toCreateStoreResponse(result);
+        const formatted = CategoryMapper.toCreateCategoryResponse(result);
 
         return this.success(res, {
             statusCode: SUCCESS_STATUS_CODE.CREATED,
@@ -34,12 +45,12 @@ class StoreController extends BaseController {
         });
     });
 
-    updateStore = asyncHandler(async (req, res) => {
+    updateCategory = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const body = req.body;
 
         const result = await this.service.update(id, body);
-        const formatted = StoreMapper.toUpdateStoreResponse(result);
+        const formatted = CategoryMapper.toUpdateCategoryResponse(result);
 
         return this.success(res, {
             statusCode: SUCCESS_STATUS_CODE.OK,
@@ -48,11 +59,11 @@ class StoreController extends BaseController {
         });
     });
 
-    deleteStore = asyncHandler(async (req, res) => {
+    deleteCategory = asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        const result = await this.service.delete(id);
-        const formatted = StoreMapper.toDeleteStoreResponse(result);
+        await this.service.delete(id);
+        const formatted = CategoryMapper.toDeleteCategoryResponse();
 
         return this.success(res, {
             statusCode: SUCCESS_STATUS_CODE.OK,
@@ -62,4 +73,4 @@ class StoreController extends BaseController {
     });
 }
 
-export const storeController = new StoreController();
+export const categoryController = new CategoryController();

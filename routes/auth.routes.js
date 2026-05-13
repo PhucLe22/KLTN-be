@@ -1,6 +1,5 @@
 import express from "express";
 import { authController } from "../controllers/auth.controller.js";
-import { restrictTo } from "../middlewares/authorize.middleware.js";
 
 const authRouter = express.Router();
 
