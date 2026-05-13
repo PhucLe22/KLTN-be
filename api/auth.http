@@ -2,10 +2,10 @@
 /*
 tạo user + customer 
 */
-POST http://localhost:5001/api/v1/auth/register/customer
+POST http://localhost:5001/api/v1/auth/register
 Content-Type: application/json
+
 {
-  "type": "CUSTOMER",
   "phone": "09337104446",
   "password": "Password123@",
   "name": "Thien Phuc",
@@ -13,8 +13,9 @@ Content-Type: application/json
 }
 
 POST http://localhost:5001/api/v1/internal/auth/register/guest
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3Nzc5OTgzNzEsImV4cCI6MTc3ODAwMTk3MX0.vSQuqTmnuvvKCYErmu9nEdE5jszX_l5yagh2vIV9BZw
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
+
 {
   "phone": "0988888888",
   "name": "Nguyen Van Guest"
@@ -24,9 +25,10 @@ Content-Type: application/json
 tạo user + staff
 */
 POST http://localhost:5001/api/v1/internal/auth/register/staff
+Authorization: Bearer {{accessToken}}
 Content-Type: application/json
+
 {
-  "type": "STAFF",
   "email": "cashier2.hcm01@trasua.com",
   "phone": "0988111223",
   "password": "StaffPassword789",

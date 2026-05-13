@@ -24,18 +24,17 @@ class AuthService extends BaseService {
     this.tokenRepository = tokenRepository;
   }
 
-  async register(type, data) {
-    switch (type) {
-      case "CUSTOMER":
-        return await this.#registerCustomer(data);
-      case "STAFF":
-        return await this.#createStaff(data);
-      case "GUEST":
-        const customer = await this.#quickCreateCustomer(data);
-        return { type: UserType.GUEST, customer };
-      default:
-        throw new BadRequestException(VALIDATION_MESSAGES.USER_TYPE_INVALID);
-    }
+  async registerCustomer(data) {
+    return await this.#registerCustomer(data);
+  }
+
+  async registerStaff(data) {
+    return await this.#createStaff(data);
+  }
+
+  async registerGuest(data) {
+    const customer = await this.#quickCreateCustomer(data);
+    return { type: UserType.GUEST, customer };
   }
 
   async login({ identifier, password }, reqInfo) {
