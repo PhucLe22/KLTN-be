@@ -1,4 +1,10 @@
-import { getProductsSchema as outputGetProductsSchema, createProductSchema as outputCreateProductSchema, updateProductSchema as outputUpdateProductSchema, deleteProductSchema as outputDeleteProductSchema } from "../contracts/output/product.output.schema.js";
+import { 
+    getProductsSchema as outputGetProductsSchema, 
+    createProductSchema as outputCreateProductSchema, 
+    updateProductSchema as outputUpdateProductSchema, 
+    deleteProductSchema as outputDeleteProductSchema,
+    getProductBySlugSchema as outputGetProductBySlugSchema
+} from "../contracts/output/product.output.schema.js";
 
 export class ProductMapper {
     static toGetAllProductsResponse(data) {
@@ -19,6 +25,19 @@ export class ProductMapper {
         };
 
         return outputGetProductsSchema.response.parse(processedData);
+    }
+
+    static toGetProductBySlugResponse(data) {
+        if (!data) return null;
+
+        const processedData = {
+            ...data,
+            basePrice: typeof data.basePrice === 'number' ? data.basePrice : Number(data.basePrice),
+            costPrice: typeof data.costPrice === 'number' ? data.costPrice : Number(data.costPrice),
+            taxRate: typeof data.taxRate === 'number' ? data.taxRate : Number(data.taxRate),
+        };
+
+        return outputGetProductBySlugSchema.response.parse(processedData);
     }
 
     static toCreateProductResponse(data) {

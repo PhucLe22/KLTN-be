@@ -8,67 +8,22 @@ class ProductService extends BaseService {
     }
 
     async findAll(query) {
-        const { page = 1, limit = 10, categoryId, search, sortBy = "createdAt", sortOrder = "desc", type, isActive = "true" } = query;
-        
-        const where = {};
-        
-        if (categoryId) {
-            where.categoryId = categoryId;
-        }
-        
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: "insensitive" } },
-                { sku: { contains: search, mode: "insensitive" } }
-            ];
-        }
-        
-        if (type) {
-            where.type = type;
-        }
-        
-        if (isActive !== undefined) {
-            where.isActive = isActive === "true";
-        }
+        return await this.repository.findAll(query);
+    }
 
-        const select = {
-            id: true,
-            sku: true,
-            name: true,
-            description: true,
-            type: true,
-            basePrice: true,
-            costPrice: true,
-            taxRate: true,
-            thumbnail: true,
-            images: true,
-            categoryId: true,
-            category: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true
-                }
-            },
-            sortOrder: true,
-            preparationTime: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true
-        };
-
-        return await this.repository.findAll({
-            page,
-            limit,
-            where,
-            select,
-            orderBy: { [sortBy]: sortOrder }
-        });
+    async findBySlug(slug) {
+        return await this.repository.findBySlug(slug);
     }
 
     async create(data) {
-        // Convert nested category object to categoryId for Prisma
         const productData = { ...data };
+        
+        // Generate slug from name if not provided
+        if (productData.name && !productData.slug) {
+            productData.slug = convertToSlug(productData.name);
+        }
+
+        // Convert nested category object to categoryId for Prisma
         if (productData.category && productData.category.id) {
             productData.categoryId = productData.category.id;
             delete productData.category;
@@ -78,8 +33,14 @@ class ProductService extends BaseService {
     }
 
     async update(id, data) {
-        // Convert nested category object to categoryId for Prisma
         const updateData = { ...data };
+        
+        // Update slug if name is changed
+        if (updateData.name && !updateData.slug) {
+            updateData.slug = convertToSlug(updateData.name);
+        }
+
+        // Convert nested category object to categoryId for Prisma
         if (updateData.category && updateData.category.id) {
             updateData.categoryId = updateData.category.id;
             delete updateData.category;

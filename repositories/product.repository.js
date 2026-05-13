@@ -5,6 +5,66 @@ class ProductRepository extends BaseRepository {
         super("product");
     }
 
+    async findAll(query, tx = null) {
+        const { page = 1, limit = 10, categoryId, search, sortBy = "createdAt", sortOrder = "desc", type, isActive = "true" } = query;
+
+        const where = {};
+
+        if (categoryId) {
+            where.categoryId = categoryId;
+        }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" } },
+                { sku: { contains: search, mode: "insensitive" } }
+            ];
+        }
+
+        if (type) {
+            where.type = type;
+        }
+
+        if (isActive !== undefined) {
+            where.isActive = isActive === "true";
+        }
+
+        const select = {
+            id: true,
+            sku: true,
+            name: true,
+            slug: true,
+            description: true,
+            type: true,
+            basePrice: true,
+            costPrice: true,
+            taxRate: true,
+            thumbnail: true,
+            images: true,
+            categoryId: true,
+            category: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true
+                }
+            },
+            sortOrder: true,
+            preparationTime: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true
+        };
+
+        return await super.findAll({
+            page,
+            limit,
+            where,
+            select,
+            orderBy: { [sortBy]: sortOrder }
+        }, tx);
+    }
+
     async findById(id, tx = null) {
         const model = this.getModel(tx);
         return await model.findUnique({
@@ -12,6 +72,7 @@ class ProductRepository extends BaseRepository {
             select: {
                 id: true,
                 name: true,
+                slug: true,
                 description: true,
                 basePrice: true,
                 sku: true,
@@ -23,26 +84,38 @@ class ProductRepository extends BaseRepository {
     async findBySlug(slug, tx = null) {
         const model = this.getModel(tx);
 
-        const searchName = slug.replace(/-/g, ' ');
-
-        const product = await model.findFirst({
+        return await model.findFirst({
             where: {
-                isActive: true,
-                name: {
-                    contains: searchName,
-                    mode: 'insensitive'
-                }
+                slug,
+                isActive: true
             },
             select: {
                 id: true,
+                sku: true,
                 name: true,
+                slug: true,
                 description: true,
+                type: true,
                 basePrice: true,
-                thumbnail: true
+                costPrice: true,
+                taxRate: true,
+                thumbnail: true,
+                images: true,
+                categoryId: true,
+                category: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                },
+                sortOrder: true,
+                preparationTime: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true
             }
         });
-
-        return product;
     }
 }
 

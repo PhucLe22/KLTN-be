@@ -8,40 +8,8 @@ class CategoryService extends BaseService {
     }
 
     async findAll(query) {
-        const { page = 1, limit = 10, search, sortBy = "sortOrder", sortOrder = "asc", isActive = "true" } = query;
-        
-        const where = {};
-        
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: "insensitive" } },
-                { slug: { contains: search, mode: "insensitive" } }
-            ];
-        }
-        
-        if (isActive !== undefined) {
-            where.isActive = isActive === "true";
-        }
-
-        const select = {
-            id: true,
-            name: true,
-            slug: true,
-            sortOrder: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true
-        };
-
-        return await this.repository.findAll({
-            page,
-            limit,
-            where,
-            select,
-            orderBy: { [sortBy]: sortOrder }
-        });
+        return await this.repository.findAll(query);
     }
-
     async findBySlug(slug) {
         return await this.repository.findBySlug(slug);
     }

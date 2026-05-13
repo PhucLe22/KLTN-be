@@ -271,6 +271,7 @@ model Product {
 
   sku         String  @unique // Mã nội bộ, không đổi sau khi tạo
   name        String
+  slug        String  @unique // URL-friendly name
   description String?
 
   type      ProductType @default(SIMPLE)

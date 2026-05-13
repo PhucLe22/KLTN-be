@@ -8,6 +8,7 @@ export const getProductsSchema = {
       id: z.string(),
       sku: z.string(),
       name: z.string(),
+      slug: z.string(),
       description: z.string().nullable(),
       type: z.enum(Object.values(ProductType)),
       basePrice: z.number(),
@@ -41,6 +42,7 @@ export const createProductSchema = {
     id: z.string(),
     sku: z.string(),
     name: z.string(),
+    slug: z.string(),
     description: z.string().nullable(),
     type: z.enum(Object.values(ProductType)),
     basePrice: z.number(),
@@ -66,6 +68,7 @@ export const updateProductSchema = {
     id: z.string(),
     sku: z.string(),
     name: z.string(),
+    slug: z.string(),
     description: z.string().nullable(),
     type: z.enum(Object.values(ProductType)),
     basePrice: z.number(),
@@ -90,5 +93,33 @@ export const updateProductSchema = {
 export const deleteProductSchema = {
   response: z.object({
     message: z.string(),
+  }),
+};
+
+// GET /api/v1/products/:slug
+export const getProductBySlugSchema = {
+  response: z.object({
+    id: z.string(),
+    sku: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    type: z.enum(Object.values(ProductType)),
+    basePrice: z.number(),
+    costPrice: z.number().nullable(),
+    taxRate: z.number(),
+    thumbnail: z.string().nullable(),
+    images: z.array(z.string()),
+    categoryId: z.string().nullable(),
+    category: z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+    }).nullable().optional(),
+    sortOrder: z.number().nullable(),
+    preparationTime: z.number().nullable(),
+    isActive: z.boolean(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
   }),
 };

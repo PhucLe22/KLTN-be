@@ -65,3 +65,10 @@ export const deleteProductSchema = {
     id: z.string().uuid("Invalid product ID format"),
   }),
 };
+
+// GET /api/v1/products/:slug
+export const getProductBySlugSchema = {
+  params: z.object({
+    slug: z.string().min(1, "Slug is required"),
+  }),
+};

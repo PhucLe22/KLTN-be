@@ -20,6 +20,26 @@ class ProductController extends BaseController {
         });
     });
 
+    getProductBySlug = asyncHandler(async (req, res) => {
+        const { slug } = req.params;
+        const result = await this.service.findBySlug(slug);
+
+        if (!result) {
+            return this.error(res, {
+                statusCode: 404,
+                message: "Product not found"
+            });
+        }
+
+        const formatted = ProductMapper.toGetProductBySlugResponse(result);
+
+        return this.success(res, {
+            statusCode: SUCCESS_STATUS_CODE.OK,
+            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+            data: formatted
+        });
+    });
+
     createProduct = asyncHandler(async (req, res) => {
         const body = req.body;
 

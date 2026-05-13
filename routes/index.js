@@ -4,7 +4,7 @@ import productRouter from "./product.routes.js";
 import storeRouter from "./store.routes.js";
 import orderRouter from "./order.routes.js";
 import internalRouter from "./internal/index.js";
-
+import categoryRouter from "./category.routes.ts";
 const mainRouter = express.Router();
 
 /**
@@ -27,5 +27,5 @@ mainRouter.use("/products", productRouter);
 mainRouter.use("/stores", storeRouter);
 mainRouter.use("/orders", orderRouter);
 mainRouter.use("/internal", internalRouter);
-
+mainRouter.use("/categories", categoryRouter);
 export default mainRouter;
