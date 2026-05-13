@@ -4,7 +4,7 @@ import productRouter from "./product.routes.js";
 import storeRouter from "./store.routes.js";
 import orderRouter from "./order.routes.js";
 import internalRouter from "./internal/index.js";
-import categoryRouter from "./category.routes.ts";
+import categoryRouter from "./category.routes.js";
 const mainRouter = express.Router();
 
 /**
