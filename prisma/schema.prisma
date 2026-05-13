@@ -258,6 +258,9 @@ model Category {
   sortOrder Int? // Thứ tự hiển thị menu
   isActive  Boolean @default(true)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   products Product[]
 
   @@schema("catalog")
@@ -377,6 +380,7 @@ model Store {
   hotline String
 
   isActive Boolean @default(true)
+  isDeleted Boolean @default(false)
 
   staff          Staff[]
   orders         Order[]

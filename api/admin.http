@@ -1,0 +1,160 @@
+### Admin Routes
+
+### Get All Stores
+GET http://localhost:5001/api/v1/internal/admin/stores
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+
+### Create Store
+POST http://localhost:5001/api/v1/internal/admin/stores
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+
+{
+  "code": "HCM011",
+  "name": "Store 1",
+  "address": "123 Main St",
+  "lat": 10.7757,
+  "lng": 106.7009,
+  "hotline": "0123456789"
+}
+
+### Create Store (without coordinates)
+POST http://localhost:5001/api/v1/internal/admin/stores
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+
+{
+  "code": "HN01",
+  "name": "Hanoi Store",
+  "address": "456 Hoang Quoc Viet",
+  "hotline": "0987654321",
+  "isActive": true
+}
+
+
+### Update Store 01
+PUT http://localhost:5001/api/v1/internal/admin/stores/f6088716-ca5e-4ed0-bef4-3dfe3abb51b8
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+
+{
+  "name": "Store 1",
+  "address": "123 Main St",
+  "lat": 10.7757,
+  "lng": 106.7009,
+  "code": "HCM01",
+  "hotline": "0123456789",
+  "isActive": false
+}
+
+### Update Store 02
+PUT http://localhost:5001/api/v1/internal/admin/stores/f6088716-ca5e-4ed0-bef4-3dfe3abb51b8
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+
+{
+  "name": "Store Ho Chi Minh",
+  "address": "123 Nguyen Hue, District 1, HCM",
+  "lat": 11.77343,
+  "lng": 108.70323,
+  "code": "HCM02",
+  "hotline": "0909123456",
+  "isActive": true
+}
+
+### Delete Store
+DELETE http://localhost:5001/api/v1/internal/admin/stores/75b95f24-ddc4-4c68-b1a7-753781c6ce7f
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+
+
+### Get Users List (Admin)
+GET http://localhost:5001/api/v1/internal/admin/users?page=1&limit=2&staff=true
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+### Update User
+PUT http://localhost:5001/api/v1/internal/admin/users/5c5133f2-796b-4e2b-9860-5c5aa1b9f4ea
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+{
+  "isActive": true,
+  "role": "MANAGER",
+  "store_id": "58660bb9-cfd8-41f3-9cc6-989485b26d10"
+}
+
+### Delete User
+DELETE http://localhost:5001/api/v1/internal/admin/users/5c5133f2-796b-4e2b-9860-5c5aa1b9f4ea
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4NjMyMjYxLCJleHAiOjE3Nzg2MzU4NjF9.AcPGzhneYPZ60qPb8U_-Ps21Hy88x7uITK2zeFnNXDk
+
+### Get All Products (Admin)
+GET http://localhost:5001/api/v1/internal/admin/products?page=1&limit=5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+
+### Create Product
+POST http://localhost:5001/api/v1/internal/admin/products
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+{  
+  "sku": "BURGER002",
+  "name": "Classic Burger",
+  "description": "Delicious beef burger with fresh vegetables",
+  "type": "SIMPLE",
+  "basePrice": 15.99,
+  "costPrice": 8.50,
+  "taxRate": 0.08,
+  "thumbnail": "https://example.com/burger.jpg",
+  "images": [
+    "https://example.com/burger1.jpg",
+    "https://example.com/burger2.jpg"
+  ],
+  "category": {
+    "id": "2ae911b9-d2a1-4b1f-b053-92cec0e00463"
+  },
+  "sortOrder": 1,
+  "preparationTime": 15
+}
+
+### Update Product
+PUT http://localhost:5001/api/v1/internal/admin/products/prod-123
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ0Njg2LCJleHAiOjE3NzgzNDA2NzN9.Z9URaHxLUfymtCub64SxknUIizJiI6ZC22Mm3GcZQ7I
+
+{
+  "name": "Updated Classic Burger",
+  "basePrice": 17.99,
+  "isActive": false
+}
+
+### Delete Product
+DELETE http://localhost:5001/api/v1/internal/admin/products/66950321-f406-4a86-a5cf-2db8bf4fa776
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+
+### Get All Categories (Admin)
+GET http://localhost:5001/api/v1/internal/admin/categories?page=1&limit=5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+
+### Create Category
+POST http://localhost:5001/api/v1/internal/admin/categories
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+{
+  "name": "Foods",
+  "slug": "",
+  "sortOrder": 1,
+  "isActive": true
+}
+
+### Update Category
+PUT http://localhost:5001/api/v1/internal/admin/categories/cat-123
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+
+{
+  "name": "Updated Foods",
+  "slug": "",
+  "sortOrder": 1,
+  "isActive": true
+}
+
+### Delete Category
+DELETE http://localhost:5001/api/v1/internal/admin/categories/cat-123
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
