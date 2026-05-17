@@ -1,5 +1,8 @@
-@category_id=2774a8f4-2576-41bb-8a22-060c25b3d634
+@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMmFhODdmZS04MzUwLTRlZDQtYjY5ZS0yYjVjNmMyOWZkMjMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI3M2IzZGJkMS01MzEzLTRlOWYtODMyNi0zODFiYzExYTViMjEiLCJzdG9yZUlkIjoiNmNiZDg4ZmQtMjkwNC00NjRlLTg5YWEtYjg1NjFjNjY5ODlmIiwiaWF0IjoxNzc4OTk1NjE1LCJleHAiOjE3Nzg5OTkyMTV9.7slXJUSBI8GJX1MSPY0WdrTiSbjSZ7yKrHcbJzziHBI
 
+@category_id=215e35bd-517e-457f-ad04-f4957de88b59
+@option_group_id=8f73831d-f611-43bc-8130-4b429435967f
+@option_id=8ea293e7-26ce-4eb5-8054-f53046c309c3
 
 ### Get All Products
 GET http://localhost:5001/api/v1/products
@@ -22,4 +25,59 @@ Content-Type: application/json
 ### Get product by slug
 GET http://localhost:5001/api/v1/products/nuoc-ep-cam
 Content-Type: application/json
+@category_id=215e35bd-517e-457f-ad04-f4957de88b59
+@option_group_id=8f73831d-f611-43bc-8130-4b429435967f
+@option_id=8ea293e7-26ce-4eb5-8054-f53046c309c3
+
+### Create a new product
+POST http://localhost:5001/api/v1/internal/products
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+    "sku": "TIRA-001",
+    "name": "Tiramisu",
+    "type": "SIMPLE",
+    "basePrice": 150000,
+    "taxRate": 0.1,
+    "category": {
+        "id": "{{category_id}}"
+    },
+    "sortOrder": 1,
+    "optionGroups": [
+        {
+            "optionGroupId": "{{option_group_id}}",
+            "sortOrder": 1,
+            "optionValues": [
+                {
+                    "optionId": "{{option_id}}",
+                    "price": 20000
+                }
+            ]
+        }
+    ]
+}
+### Create Option Group & Options
+POST http://localhost:5001/api/v1/internal/option-groups
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+    "name": "Size",
+    "isRequired": true,
+    "isMultiple": false,
+    "sortOrder": 1,
+    "options": [
+        {
+            "name": "Size M",
+            "basePrice": 0,
+            "sortOrder": 1
+        },
+        {
+            "name": "Size L",
+            "basePrice": 10000,
+            "sortOrder": 2
+        }
+    ]
+}
 

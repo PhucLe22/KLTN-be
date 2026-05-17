@@ -1,6 +1,7 @@
 import { BaseService } from "./base.service.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { convertToSlug } from "../lib/helpers.js";
+import { prisma } from "../lib/prisma.js";
 
 class ProductService extends BaseService {
     constructor() {
@@ -29,7 +30,40 @@ class ProductService extends BaseService {
             delete productData.category;
         }
         
-        return await this.repository.create(productData);
+        // Extract optionGroups
+        const optionGroups = productData.optionGroups;
+        delete productData.optionGroups;
+        
+        // If no optionGroups, just create normal product
+        if (!optionGroups || optionGroups.length === 0) {
+            return await this.repository.create(productData);
+        }
+
+        // With optionGroups, need a transaction
+        return await prisma.$transaction(async (tx) => {
+            const product = await this.repository.create(productData, tx);
+
+            const optionGroupData = optionGroups.map(og => ({
+                productId: product.id,
+                optionGroupId: og.optionGroupId,
+                sortOrder: og.sortOrder
+            }));
+            await tx.productOptionGroup.createMany({ data: optionGroupData });
+
+            const optionValuesData = optionGroups.flatMap(og => 
+                (og.optionValues || []).map(ov => ({
+                    productId: product.id,
+                    optionId: ov.optionId,
+                    price: ov.price
+                }))
+            );
+            
+            if (optionValuesData.length > 0) {
+                await tx.productOptionValue.createMany({ data: optionValuesData });
+            }
+
+            return product;
+        });
     }
 
     async update(id, data) {

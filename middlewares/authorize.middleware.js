@@ -3,7 +3,7 @@ import { UserType } from "../constants/enum.js";
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
     // If no user is authenticated, check if CUSTOMER is allowed
-    console.log("req.user", req.user);
+    // console.log("req.user", req.user);
     if (!req.user) {
       throw new ForbiddenException();
     }

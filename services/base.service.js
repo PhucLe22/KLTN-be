@@ -35,6 +35,34 @@ export class BaseService {
     return await this.repository.delete(id);
   }
 
+  async create(data) {
+    const { name, options } = data;
+
+    // Create the option group
+    const optionGroup = await this.repository.create({
+      data: {
+        name,
+        storeId: data.storeId
+      }
+    });
+
+    // Create options if provided
+    if (options && options.length > 0) {
+      await Promise.all(options.map(option =>
+        this.repository.create({
+          data: {
+            name: option.name,
+            basePrice: option.basePrice,
+            sortOrder: option.sortOrder,
+            optionGroupId: optionGroup.id
+          }
+        })
+      ));
+    }
+
+    return optionGroup;
+  }
+
   /**
    * Helper để chạy Prisma Transaction
    * Giúp Service con có thể gom nhiều thao tác vào 1 phiên làm việc
