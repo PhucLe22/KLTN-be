@@ -1,9 +1,8 @@
-@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMmFhODdmZS04MzUwLTRlZDQtYjY5ZS0yYjVjNmMyOWZkMjMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI3M2IzZGJkMS01MzEzLTRlOWYtODMyNi0zODFiYzExYTViMjEiLCJzdG9yZUlkIjoiNmNiZDg4ZmQtMjkwNC00NjRlLTg5YWEtYjg1NjFjNjY5ODlmIiwiaWF0IjoxNzc4OTk1NjE1LCJleHAiOjE3Nzg5OTkyMTV9.7slXJUSBI8GJX1MSPY0WdrTiSbjSZ7yKrHcbJzziHBI
+@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMmFhODdmZS04MzUwLTRlZDQtYjY5ZS0yYjVjNmMyOWZkMjMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI3M2IzZGJkMS01MzEzLTRlOWYtODMyNi0zODFiYzExYTViMjEiLCJzdG9yZUlkIjoiNmNiZDg4ZmQtMjkwNC00NjRlLTg5YWEtYjg1NjFjNjY5ODlmIiwiaWF0IjoxNzc5MTczMDM2LCJleHAiOjE3NzkxNzY2MzZ9.T1_hbXmPdWhAS2icLwxDp-j54boJ4a1xBSl19ooPjU4
 
 @category_id=215e35bd-517e-457f-ad04-f4957de88b59
-@option_group_id=8f73831d-f611-43bc-8130-4b429435967f
-@option_id=8ea293e7-26ce-4eb5-8054-f53046c309c3
-
+@option_group_id=d4722fd0-3f8a-4188-92a0-72288493929a
+@option_id=94a41015-25c1-49b0-92af-a8fbd1b45cf5
 ### Get All Products
 GET http://localhost:5001/api/v1/products
 Content-Type: application/json
@@ -35,10 +34,10 @@ Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 {
-    "sku": "TIRA-001",
-    "name": "Tiramisu",
+    "sku": "TIRA-002",
+    "name": "Flat White",
     "type": "SIMPLE",
-    "basePrice": 150000,
+    "basePrice": 120000,
     "taxRate": 0.1,
     "category": {
         "id": "{{category_id}}"
@@ -63,19 +62,19 @@ Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 {
-    "name": "Size",
+    "name": "Sugar Level",
     "isRequired": true,
     "isMultiple": false,
     "sortOrder": 1,
     "options": [
         {
-            "name": "Size M",
+            "name": "Sugar 50%",
             "basePrice": 0,
             "sortOrder": 1
         },
         {
-            "name": "Size L",
-            "basePrice": 10000,
+            "name": "Sugar 70%",
+            "basePrice": 0,
             "sortOrder": 2
         }
     ]

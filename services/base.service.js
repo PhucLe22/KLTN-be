@@ -35,32 +35,11 @@ export class BaseService {
     return await this.repository.delete(id);
   }
 
+  // repository.js
   async create(data) {
-    const { name, options } = data;
-
-    // Create the option group
-    const optionGroup = await this.repository.create({
-      data: {
-        name,
-        storeId: data.storeId
-      }
+    return await this.repository.create({
+      data
     });
-
-    // Create options if provided
-    if (options && options.length > 0) {
-      await Promise.all(options.map(option =>
-        this.repository.create({
-          data: {
-            name: option.name,
-            basePrice: option.basePrice,
-            sortOrder: option.sortOrder,
-            optionGroupId: optionGroup.id
-          }
-        })
-      ));
-    }
-
-    return optionGroup;
   }
 
   /**
