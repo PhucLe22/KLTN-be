@@ -35,12 +35,7 @@ export class BaseService {
     return await this.repository.delete(id);
   }
 
-  // repository.js
-  async create(data) {
-    return await this.repository.create({
-      data
-    });
-  }
+
 
   /**
    * Helper để chạy Prisma Transaction
