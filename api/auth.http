@@ -12,6 +12,16 @@ Content-Type: application/json
   "email": "phuclnt22@gmail.com"
 }
 
+POST http://localhost:5001/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "phone": "0123456789",
+  "password": "admin@123",
+  "name": "Admin",
+  "email": "admin@gmail.com"
+}
+
 POST http://localhost:5001/api/v1/internal/auth/register/guest
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -35,6 +45,18 @@ Content-Type: application/json
   "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10", 
   "role": "CASHIER"
 }
+
+POST http://localhost:5001/api/v1/internal/auth/register/staff
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "admin@foodapp.com",
+  "password": "admin@123",
+  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
+  "role": "ADMIN"
+}
+
 
 /*
 login as customer

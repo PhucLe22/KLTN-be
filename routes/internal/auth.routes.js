@@ -35,7 +35,7 @@ authRouter.post(
   authController.registerGuest,
 );
 
-/**
+/** 
  * @route   POST /api/v1/auth/refresh-token
  * @desc    Lấy Access Token mới từ Refresh Token trong Cookie
  */
