@@ -121,5 +121,19 @@ export const getProductBySlugSchema = {
     isActive: z.boolean(),
     createdAt: z.date(),
     updatedAt: z.date(),
+    optionGroups: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+      isRequired: z.boolean(),
+      isMultiple: z.boolean(),
+      sortOrder: z.number().nullable(),
+      options: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        basePrice: z.number(),
+        price: z.number().nullable(),
+        sortOrder: z.number().nullable(),
+      }))
+    })).optional(),
   }),
 };

@@ -35,6 +35,48 @@ class OptionGroupRepository extends BaseRepository {
             }
         });
     }
+
+    async updateProductOptionGroup(productId, optionGroupId, data) {
+        const { sortOrder, optionValues } = data;
+
+        return await this.prisma.$transaction(async (tx) => {
+            // 1. Update sortOrder in ProductOptionGroup if provided
+            if (sortOrder !== undefined) {
+                await tx.productOptionGroup.update({
+                    where: {
+                        productId_optionGroupId: {
+                            productId,
+                            optionGroupId
+                        }
+                    },
+                    data: { sortOrder }
+                });
+            }
+
+            // 2. Update or Create ProductOptionValues
+            if (optionValues && optionValues.length > 0) {
+                const upsertPromises = optionValues.map(ov => 
+                    tx.productOptionValue.upsert({
+                        where: {
+                            productId_optionId: {
+                                productId,
+                                optionId: ov.optionId
+                            }
+                        },
+                        update: { price: ov.price },
+                        create: {
+                            productId,
+                            optionId: ov.optionId,
+                            price: ov.price
+                        }
+                    })
+                );
+                await Promise.all(upsertPromises);
+            }
+
+            return { productId, optionGroupId, status: "updated" };
+        });
+    }
 }
 
 export const optionGroupRepository = new OptionGroupRepository();

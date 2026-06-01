@@ -1,0 +1,10 @@
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzkyMjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
+
+### Get Kitchen Schedule (Internal)
+POST http://localhost:5001/api/v1/internal/kitchen/schedule
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "tardiness_weight": 1000
+}

@@ -112,6 +112,11 @@ Content-Type: application/json
   "message": "User logout"
 }
 
-# @name getProfileWithNewToken
+# @name getCustomerProfile
 GET http://localhost:5001/api/v1/auth/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc2NTQ3NTIsImV4cCI6MTc3NzY1ODM1Mn0.oBEz31SmpdtVwFglXoibJyRKd21mcyAjHZSiFbN4ugM
+Authorization: Bearer {{accessToken}}
+
+###
+# @name getInternalProfile
+GET http://localhost:5001/api/v1/internal/profile
+Authorization: Bearer {{accessToken}}

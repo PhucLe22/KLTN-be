@@ -1,8 +1,8 @@
-@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMmFhODdmZS04MzUwLTRlZDQtYjY5ZS0yYjVjNmMyOWZkMjMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI3M2IzZGJkMS01MzEzLTRlOWYtODMyNi0zODFiYzExYTViMjEiLCJzdG9yZUlkIjoiNmNiZDg4ZmQtMjkwNC00NjRlLTg5YWEtYjg1NjFjNjY5ODlmIiwiaWF0IjoxNzc5MTczMDM2LCJleHAiOjE3NzkxNzY2MzZ9.T1_hbXmPdWhAS2icLwxDp-j54boJ4a1xBSl19ooPjU4
+@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5NzgwNzc5LCJleHAiOjE3Nzk3ODQzNzl9.NuVB4OXiQ8iyJAFwRtGzOE4tKmwXLpGiPoFg7Y3kfl8
 
-@category_id=215e35bd-517e-457f-ad04-f4957de88b59
-@option_group_id=d4722fd0-3f8a-4188-92a0-72288493929a
-@option_id=94a41015-25c1-49b0-92af-a8fbd1b45cf5
+@category_id=96f64438-f16c-43e7-b68b-221704cf2018
+@option_group_id=4ee092fc-13fb-41ae-a75e-8832d9a957a0
+@option_id=b1c647cd-e317-4ef8-b841-b25654dbf641
 ### Get All Products
 GET http://localhost:5001/api/v1/products
 Content-Type: application/json
@@ -22,11 +22,9 @@ Content-Type: application/json
 
 
 ### Get product by slug
-GET http://localhost:5001/api/v1/products/nuoc-ep-cam
+GET http://localhost:5001/api/v1/products/yogurt-trai-cay
 Content-Type: application/json
-@category_id=215e35bd-517e-457f-ad04-f4957de88b59
-@option_group_id=8f73831d-f611-43bc-8130-4b429435967f
-@option_id=8ea293e7-26ce-4eb5-8054-f53046c309c3
+
 
 ### Create a new product
 POST http://localhost:5001/api/v1/internal/products
@@ -34,11 +32,11 @@ Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 {
-    "sku": "TIRA-002",
-    "name": "Flat White",
+    "sku": "TIRA-003",
+    "name": "Flat Black",
     "type": "SIMPLE",
-    "basePrice": 120000,
-    "taxRate": 0.1,
+    "basePrice": 130000,
+    "taxRate": 0.5,
     "category": {
         "id": "{{category_id}}"
     },
@@ -80,3 +78,20 @@ Authorization: Bearer {{access_token}}
     ]
 }
 
+PUT /api/v1/internal/products/{{product_id}}/option-groups/{{option_group_id}}
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+   
+ {
+    "sortOrder": 2,
+   "optionValues": [
+        {
+          "optionId": "{{option_id_1}}",
+          "price": 15000
+        },
+        {
+            "optionId": "{{option_id_2}}",
+            "price": 25000
+        }
+    ]
+ }

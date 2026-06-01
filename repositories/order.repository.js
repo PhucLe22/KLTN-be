@@ -11,9 +11,11 @@ class OrderRepository extends BaseRepository {
       include: {
         store: true,
         customer: true,
+        delivery: true,
         items: {
           include: {
             product: true,
+            options: true,
           },
         },
       },
@@ -77,22 +79,17 @@ class OrderRepository extends BaseRepository {
   }
 
   async getOrdersByUser(userId, query = {}) {
-    const { page = 1, limit = 10 } = query;
-
-    return await this.findAll({
-      page: Number(page),
-      limit: Number(limit),
+    const filters = {
       where: {
         customer: {
           userId: userId,
         },
       },
-      include: {
-        store: true,
-        customer: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+      page: Number(query.page || 1),
+      limit: Number(query.limit || 10),
+    };
+
+    return await this.getOrdersByFilters(filters);
   }
 
   /**
@@ -109,8 +106,22 @@ class OrderRepository extends BaseRepository {
       include: {
         store: true,
         customer: true,
+        delivery: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateStatus(id, status, tx = null) {
+    return await this.getModel(tx).update({
+      where: { id },
+      data: { status },
+      include: {
+        store: true,
+        customer: true,
+        delivery: true,
+        items: true,
+      },
     });
   }
 }

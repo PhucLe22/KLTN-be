@@ -72,6 +72,20 @@ class OrderController extends BaseController {
       meta: formatted.meta,
     });
   });
+
+  updateStatus = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const result = await this.service.updateStatus(id, status, req.user);
+    const formatted = OrderMapper.toCreateResponse(result); // Using toCreateResponse as it includes relations
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
+      data: formatted,
+    });
+  });
 }
 
 export const orderController = new OrderController();

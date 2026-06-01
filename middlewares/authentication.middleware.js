@@ -24,6 +24,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   // Nếu token fake hoặc hết hạn, JwtHelper.verifyAccessToken sẽ tự throw lỗi
   const decoded = JwtHelper.verifyAccessToken(token);
 
+  // move to RF service
   // 3. Kiểm tra User còn tồn tại trong Database không
   const currentUser = await userRepository.findById(decoded.sub);
   if (!currentUser) {

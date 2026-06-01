@@ -1,0 +1,32 @@
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5MjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
+
+### Get Available Vouchers (Public)
+GET http://localhost:5001/api/v1/promotions/available?storeId=fd102949-677b-4843-ada1-8a940c738438&orderAmount=100000
+
+### Create Voucher (Internal)
+POST http://localhost:5001/api/v1/internal/vouchers
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "code": "KM_MOI_2024",
+  "discountType": "PERCENT",
+  "discountValue": 10,
+  "maxUsage": 100,
+  "minOrderAmount": 50000,
+  "maxDiscount": 20000,
+  "isActive": true
+}
+
+### Update Voucher (Internal)
+PATCH http://localhost:5001/api/v1/internal/vouchers/voucher-uuid-here
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "isActive": false
+}
+
+### Delete Voucher (Internal)
+DELETE http://localhost:5001/api/v1/internal/vouchers/voucher-uuid-here
+Authorization: Bearer {{accessToken}}

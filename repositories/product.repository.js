@@ -109,6 +109,42 @@ class ProductRepository extends BaseRepository {
                         slug: true
                     }
                 },
+                optionGroups: {
+                    where: {
+                        optionGroup: {
+                            isActive: true
+                        }
+                    },
+                    select: {
+                        optionGroup: {
+                            select: {
+                                id: true,
+                                name: true,
+                                isRequired: true,
+                                isMultiple: true,
+                                sortOrder: true,
+                                options: {
+                                    where: {
+                                        isActive: true
+                                    },
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        basePrice: true,
+                                        sortOrder: true,
+                                        isActive: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                optionValues: {
+                    select: {
+                        optionId: true,
+                        price: true
+                    }
+                },
                 sortOrder: true,
                 preparationTime: true,
                 isActive: true,

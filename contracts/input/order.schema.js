@@ -40,8 +40,7 @@ export const createOrderSchema = {
           options: z
             .array(
               z.object({
-                name: z.string(),
-                price: z.number(),
+                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
               }),
             )
             .optional(),
@@ -80,14 +79,36 @@ export const createGuestOrderSchema = {
           options: z
             .array(
               z.object({
-                name: z.string(),
-                price: z.number(),
+                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
               }),
             )
             .optional(),
         }),
       )
       .min(1, VALIDATION_MESSAGES.ITEMS_MIN),
+  }),
+};
+
+// GET /api/v1/orders
+export const getOrdersSchema = {
+  query: z.object({
+    page: z.string().transform(Number).optional(),
+    limit: z.string().transform(Number).optional(),
+    status: z.enum([
+      "NEW",
+      "CONFIRMED",
+      "PREPARING",
+      "READY",
+      "COMPLETED",
+      "CANCELLED",
+      "REFUNDED",
+    ]).optional(),
+    type: z.nativeEnum(OrderType).optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    minTotal: z.string().optional().transform(v => v ? Number(v) : undefined),
+    maxTotal: z.string().optional().transform(v => v ? Number(v) : undefined),
+    store_id: z.string().uuid().optional(),
   }),
 };
 
@@ -121,7 +142,6 @@ export const getOrderDetailSchema = {
 // POST /internal/staff/orders - Staff orders (cashier/manager)
 export const createStaffOrderSchema = {
   body: z.object({
-    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
@@ -129,13 +149,17 @@ export const createStaffOrderSchema = {
     // Table number for DINE_IN (not used for TAKEAWAY)
     tableNumber: z.string().optional(),
     
-    // Customer info for staff orders (existing customer or new customer)
-    customerInfo: z.object({
-      phone: z.string().optional(), // For existing customer lookup
-      name: z.string(),
-      email: z.string().optional(),
-      address: z.string().optional(),
-    }).optional(),
+    // Customer phone for lookup
+    phone: z.string(),
+
+    // Delivery info for DELIVERY orders
+    deliveryInfo: z
+      .object({
+        receiverName: z.string(),
+        receiverPhone: z.string(),
+        addressLine: z.string(),
+      })
+      .optional(),
 
     // Order items
     items: z
@@ -148,14 +172,31 @@ export const createStaffOrderSchema = {
           options: z
             .array(
               z.object({
-                name: z.string(),
-                price: z.number(),
+                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
               }),
             )
             .optional(),
         }),
       )
       .min(1, VALIDATION_MESSAGES.ITEMS_MIN),
+  }),
+};
+
+// PATCH /orders/:id/status
+export const updateOrderStatusSchema = {
+  params: z.object({
+    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+  }),
+  body: z.object({
+    status: z.enum([
+      "NEW",
+      "CONFIRMED",
+      "PREPARING",
+      "READY",
+      "COMPLETED",
+      "CANCELLED",
+      "REFUNDED",
+    ]),
   }),
 };
 

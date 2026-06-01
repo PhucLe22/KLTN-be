@@ -74,6 +74,21 @@ export const deleteProductSchema = {
   }),
 };
 
+// PUT /api/v1/products/:id/option-groups/:optionGroupId
+export const updateProductOptionGroupSchema = {
+  params: z.object({
+    id: z.string().uuid("Invalid product ID format"),
+    optionGroupId: z.string().uuid("Invalid optionGroupId format"),
+  }),
+  body: z.object({
+    sortOrder: z.number().int("Sort order must be integer").optional(),
+    optionValues: z.array(z.object({
+      optionId: z.string().uuid("Invalid optionId format"),
+      price: z.number().min(0, "Price must be non-negative")
+    })).optional()
+  }),
+};
+
 // GET /api/v1/products/:slug
 export const getProductBySlugSchema = {
   params: z.object({

@@ -1,70 +1,123 @@
+@customer_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZmU3NjllNy1lNjlmLTQ4NjMtOTU3NS1iOTZmZDQ0ZDUzOGQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI1MDY4MmM2OC05YzAyLTRhNmItOTdhMi0zMzAxMDc5MmI3ZTYiLCJpYXQiOjE3ODAzMDQ2OTIsImV4cCI6MTc4MDMwODI5Mn0.lbwDG14n8gLQyi_Ui4RjhIXIphcToSaVMvU9ROxoPds
+
+@staff_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3Nzg0MDAwMDAsImV4cCI6MTc3ODQwMzYwMH0.fake_token
+@store_id=d88a47c0-5b6c-4776-90e6-53b289d0899c
+@product_id=278a711e-0eb0-49bb-bbaa-7c08bfb505f4
+@product_id_2=b9443b60-aa44-4248-9876-2d0052e9b3a4
+@option_id_1=550e8400-e29b-41d4-a716-446655440101
+@option_id_2=550e8400-e29b-41d4-a716-446655440203
+
 ### Get All Order
 GET http://localhost:5001/api/v1/orders
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1NjQ2ODAsImV4cCI6MTc3NzU2ODI4MH0.EqPYQZsY6cVWqs9KBOD69imNf9cDUfRxLu1Cl6VfFD4
+Authorization: Bearer {{customer_access_token}}
+
+### Get Orders with Status Filter
+GET http://localhost:5001/api/v1/orders?status=NEW
+Authorization: Bearer {{customer_access_token}}
+
+### Get Orders with Date Range Filter
+GET http://localhost:5001/api/v1/orders?startDate=2026-05-01&endDate=2026-05-31
+Authorization: Bearer {{customer_access_token}}
+
+### Get Orders with Total Amount Filter
+GET http://localhost:5001/api/v1/orders?minTotal=100000&maxTotal=500000
+Authorization: Bearer {{customer_access_token}}
+
+### Get Orders with Multiple Filters & Pagination
+GET http://localhost:5001/api/v1/orders?status=COMPLETED&minTotal=50000&page=1&limit=10
+Authorization: Bearer {{customer_access_token}}
+
 ### Get Order by ID
 GET http://localhost:5001/api/v1/orders/550e8400-e29b-41d4-a716-446655440010
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{customer_access_token}}
+
+### Get Order by Code
+GET http://localhost:5001/api/v1/orders/code/VD-DE-1780309702211
+Authorization: Bearer {{customer_access_token}}
+
+### Create Order as Customer (DINE_IN)
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer {{customer_access_token}}
 Content-Type: application/json
 
-POST http://localhost:5001/api/v1/orders
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MjdjYmI4OC0zMzNlLTRhYWEtOTcwYi1kMzc1MmJhMmJiNTQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI4OWI3OWZlYy02NmYzLTQ4ZDItYTNlMC0zMmZjYTZjMzg5MWMiLCJpYXQiOjE3Nzc1MjY4MDcsImV4cCI6MTc3NzUzMDQwN30.vC8iQHWzEMhn5xmffhgl-vFRi03zgokAVQeXAs04FH0
-Content-Type: application/json
 {
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-  "type": "TAKEAWAY",
-  "note": "optional note",
+  "storeId": "{{store_id}}",
+  "type": "DINE_IN",
+  "tableNumber": "A10",
+  "note": "Customer order with multiple products",
   "items": [
     {
-      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "productId": "{{product_id}}",
       "quantity": 2,
-      "note": "optional item note"
-    }
-  ]
-}
-// order as customer
-POST http://localhost:5001/api/v1/orders
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmZiNWVhOC01MDA5LTRjZjgtOTlhOS1lZjQ3Njg4NzQ5NzgiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI2YjY1ZDM1Yy0wNWQ2LTQ5NTAtYjkzOC02ZDQ4ODI4MzRjNzAiLCJpYXQiOjE3NzgwMDE3NjUsImV4cCI6MTc3ODAwNTM2NX0.RtyvtiMdZcUQvkUD2Fo_15C96_yrfgOwj9PFOAaXpGY
-Content-Type: application/json
-{
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-  "type": "DINE_IN",
-  "note": "Order from authenticated user",
-  "items": [
+      "note": "No ice",
+      "options": [
+        { "optionId": "{{option_id_1}}" },
+        { "optionId": "{{option_id_2}}" }
+      ]
+    },
     {
-      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "productId": "{{product_id_2}}",
       "quantity": 1,
-      "note": "Table order"
+      "options": [ { "optionId": "{{option_id_2}}" }]
     }
   ]
 }
 
-// order as staff
-POST http://localhost:5001/api/v1/internal/orders
+### Create Order as Customer (DELIVERY)
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer {{customer_access_token}}
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3NzgwNTQxOTUsImV4cCI6MTc3ODA1Nzc5NX0.TIUsPRzdp5j2WuZRYBrt9jkWd9Ppy3wQDaNE1nkzMOo
+
 {
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-  "type": "DINE_IN",
-  "note": "Order with email",
-  "phone": "09337104446",
+  "storeId": "{{store_id}}",
+  "type": "DELIVERY",
+  "note": "Delivery order",
+  "deliveryInfo": {
+    "receiverName": "John Doe",
+    "receiverPhone": "0912345678",
+    "addressLine": "123 Main St, District 1, HCM"
+  },
   "items": [
     {
-      "productId": "983d1ab2-1a87-4425-9352-3c410ed0c537",
+      "productId": "{{product_id}}",
       "quantity": 1,
-      "note": "Table order"
+      "options": [
+        { "optionId": "{{option_id_1}}" }
+      ]
+    }
+  ]
+}
+
+### Create Order as Staff for Customer
+POST http://localhost:5001/api/v1/internal/orders
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "type": "TAKEAWAY",
+  "phone": "09337104446",
+  "note": "Staff creating order for existing customer",
+  "items": [
+    {
+      "productId": "{{product_id}}",
+      "quantity": 1,
+      "options": [
+        { "optionId": "{{option_id_1}}" }
+      ]
     }
   ]
 }
 
 ### Get orders for staff (filter by store)
-GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=2&limit=10
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=1&limit=10
+Authorization: Bearer {{staff_access_token}}
 
+### Update Order Status (Internal)
+PATCH http://localhost:5001/api/v1/internal/orders/550e8400-e29b-41d4-a716-446655440010/status
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
 
-### Get orders for staff with filters (status + price range + store)
-GET http://localhost:5001/api/v1/internal/orders?status=NEW&store_id=58660bb9-cfd8-41f3-9cc6-989485b26d10&minPrice=10000&maxPrice=500000&limit=10
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
+{
+  "status": "PREPARING"
+}
 
-### Get orders by type (TAKEAWAY)
-GET http://localhost:5001/api/v1/internal/orders?type=TAKEAWAY&limit=10
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NDhiYzk5ZC0xZDQ3LTQ2MDgtYWE3NC0wMmM3ZWQzOWFhMWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjA4MjMyZTAyLWJjZGUtNGQ4MS1hNzU5LWEyMGZiMGQwMzg3NiIsInN0b3JlSWQiOiJmNjA4ODcxNi1jYTVlLTRlZDAtYmVmNC0zZGZlM2FiYjUxYjgiLCJpYXQiOjE3Nzc1NjYwOTIsImV4cCI6MTc3NzU2OTY5Mn0.gEjILeDBs45e-IPeHYJBswnylE1pN9OoEQLSxQb72QY
