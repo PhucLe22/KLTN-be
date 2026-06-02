@@ -1,3 +1,7 @@
+### Get All Users (Admin)
+GET http://localhost:5001/api/v1/internal/admin/users?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
 ### Get User by ID
 GET http://localhost:5001/api/v1/internal/users/550e8400-e29b-41d4-a716-446655440000
 Authorization: Bearer {{accessToken}}

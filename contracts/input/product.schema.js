@@ -32,6 +32,14 @@ export const createProductSchema = {
     }).optional(),
     sortOrder: z.number().int("Sort order must be integer").optional(),
     preparationTime: z.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
+    optionGroups: z.array(z.object({
+      optionGroupId: z.string().uuid("Invalid optionGroupId format"),
+      sortOrder: z.number().int("Sort order must be integer").optional(),
+      optionValues: z.array(z.object({
+        optionId: z.string().uuid("Invalid optionId format"),
+        price: z.number().min(0, "Price must be non-negative")
+      })).optional()
+    })).optional()
   }),
 };
 
@@ -63,6 +71,21 @@ export const updateProductSchema = {
 export const deleteProductSchema = {
   params: z.object({
     id: z.string().uuid("Invalid product ID format"),
+  }),
+};
+
+// PUT /api/v1/products/:id/option-groups/:optionGroupId
+export const updateProductOptionGroupSchema = {
+  params: z.object({
+    id: z.string().uuid("Invalid product ID format"),
+    optionGroupId: z.string().uuid("Invalid optionGroupId format"),
+  }),
+  body: z.object({
+    sortOrder: z.number().int("Sort order must be integer").optional(),
+    optionValues: z.array(z.object({
+      optionId: z.string().uuid("Invalid optionId format"),
+      price: z.number().min(0, "Price must be non-negative")
+    })).optional()
   }),
 };
 

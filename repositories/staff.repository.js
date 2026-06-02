@@ -30,6 +30,25 @@ class StaffRepository extends BaseRepository {
       include: { user: true },
     });
   }
+
+  async findManagerByStore(storeId, tx = null) {
+    return await this.getModel(tx).findFirst({
+      where: {
+        storeId,
+        role: "MANAGER",
+        isActive: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+  }
 }
 
 export const staffRepository = new StaffRepository();

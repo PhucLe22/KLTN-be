@@ -2,8 +2,11 @@ import express from "express";
 import { orderController } from "../controllers/order.controller.js";
 import { validateData } from "../middlewares/validate.middleware.js";
 import { protect } from "../middlewares/authentication.middleware.js";
-import { restrictTo } from "../middlewares/authorize.middleware.js";
-import { createOrderSchema as inputCreateOrderSchema, getOrderCodeSchema as inputGetOrderCodeSchema } from "../contracts/input/order.schema.js";
+import {
+  createOrderSchema as inputCreateOrderSchema,
+  getOrderCodeSchema as inputGetOrderCodeSchema,
+  getOrdersSchema as inputGetOrdersSchema,
+} from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
 
@@ -12,14 +15,6 @@ const orderRouter = express.Router();
  * @desc    Táo don hàng mowi
  * @access  Private (Customer authentication required)
  */
-
-// customer --> customer has data --> error
-
-// staff --> customer has data --> ok / no
-
-// FE auth --> customer has data --> ok 
-
-// domain --> basic calculation
 
 // api name
 orderRouter.post(
@@ -48,10 +43,8 @@ orderRouter.get(
 orderRouter.get(
   "/",
   protect,
+  validateData({ query: inputGetOrdersSchema.query }),
   orderController.getOrders,
 );
 
 export default orderRouter;
-
-
-

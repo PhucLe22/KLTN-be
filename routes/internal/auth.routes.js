@@ -35,17 +35,10 @@ authRouter.post(
   authController.registerGuest,
 );
 
-/**
+/** 
  * @route   POST /api/v1/auth/refresh-token
  * @desc    Lấy Access Token mới từ Refresh Token trong Cookie
  */
 authRouter.post("/refresh-token", authController.refresh);
-
-/**
- * @route   GET /api/v1/auth/profile
- * @desc    Lấy thông tin profile của user đang đăng nhập
- * @access  Private (Cần Access Token)
- */
-authRouter.get("/profile", protect, authController.getProfile);
 
 export default authRouter;

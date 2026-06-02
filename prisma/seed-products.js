@@ -31,64 +31,15 @@ async function seedProducts() {
 
     console.log("✅ Categories created");
 
-    // 2. Create OptionGroup (Size)
-    const sizeGroup = await prisma.optionGroup.upsert({
-      where: { id: "size-group-id" },
-      update: {},
-      create: {
-        id: "size-group-id",
-        name: "Size",
-        isRequired: true,
-        isMultiple: false,
-        sortOrder: 1,
-        isActive: true,
-      },
+    // 2. Fetch all Option Groups and their options
+    const allGroups = await prisma.optionGroup.findMany({
+      include: { options: true }
     });
-
-    // Create Size options
-    const sizeOptions = await Promise.all([
-      prisma.productOption.upsert({
-        where: { id: "size-s" },
-        update: {},
-        create: {
-          id: "size-s",
-          groupId: sizeGroup.id,
-          name: "S",
-          basePrice: 0,
-          sortOrder: 1,
-          isActive: true,
-        },
-      }),
-      prisma.productOption.upsert({
-        where: { id: "size-m" },
-        update: {},
-        create: {
-          id: "size-m",
-          groupId: sizeGroup.id,
-          name: "M",
-          basePrice: 5000,
-          sortOrder: 2,
-          isActive: true,
-        },
-      }),
-      prisma.productOption.upsert({
-        where: { id: "size-l" },
-        update: {},
-        create: {
-          id: "size-l",
-          groupId: sizeGroup.id,
-          name: "L",
-          basePrice: 10000,
-          sortOrder: 3,
-          isActive: true,
-        },
-      }),
-    ]);
-
-    console.log("✅ Size options created");
+    console.log(`✅ Fetched ${allGroups.length} option groups`);
 
     // 3. Create Products (10 items)
     const products = [
+      // ... same products list as before
       // Coffee (6 items)
       {
         sku: "CF001",
@@ -203,49 +154,52 @@ async function seedProducts() {
 
     console.log(`✅ Created ${createdProducts.length} products`);
 
-    // 4. Link Products to Size OptionGroup
+    // 4. Link Products to ALL OptionGroups
     for (const product of createdProducts) {
-      await prisma.productOptionGroup.upsert({
-        where: {
-          productId_optionGroupId: {
-            productId: product.id,
-            optionGroupId: sizeGroup.id,
-          },
-        },
-        update: {},
-        create: {
-          productId: product.id,
-          optionGroupId: sizeGroup.id,
-          sortOrder: 1,
-        },
-      });
-
-      // Link each size option to product with custom pricing
-      for (const option of sizeOptions) {
-        await prisma.productOptionValue.upsert({
+      for (const group of allGroups) {
+        // Link Product to OptionGroup
+        await prisma.productOptionGroup.upsert({
           where: {
-            productId_optionId: {
+            productId_optionGroupId: {
               productId: product.id,
-              optionId: option.id,
+              optionGroupId: group.id,
             },
           },
           update: {},
           create: {
             productId: product.id,
-            optionId: option.id,
-            price: option.basePrice,
+            optionGroupId: group.id,
+            sortOrder: group.sortOrder,
           },
         });
+
+        // Link each option to product with default pricing
+        for (const option of group.options) {
+          await prisma.productOptionValue.upsert({
+            where: {
+              productId_optionId: {
+                productId: product.id,
+                optionId: option.id,
+              },
+            },
+            update: {},
+            create: {
+              productId: product.id,
+              optionId: option.id,
+              price: option.basePrice,
+            },
+          });
+        }
       }
     }
 
-    console.log("✅ Products linked to size options");
+    console.log("✅ Products linked to all option groups");
 
     console.log("🎉 Products seeded successfully!");
     console.log(`\n📋 Summary:`);
     console.log(`   - Categories: 2 (Coffee, Drinks)`);
     console.log(`   - Products: ${createdProducts.length}`);
-    console.log(`   - Size Options: 3 (S, M, L)`);
+    console.log(`   - Option Groups Linked: ${allGroups.length}`);
   } catch (error) {
     console.error("❌ Error seeding products:", error);
     throw error;

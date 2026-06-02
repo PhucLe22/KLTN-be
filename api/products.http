@@ -1,6 +1,8 @@
-@category_id=2774a8f4-2576-41bb-8a22-060c25b3d634
+@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5NzgwNzc5LCJleHAiOjE3Nzk3ODQzNzl9.NuVB4OXiQ8iyJAFwRtGzOE4tKmwXLpGiPoFg7Y3kfl8
 
-
+@category_id=96f64438-f16c-43e7-b68b-221704cf2018
+@option_group_id=4ee092fc-13fb-41ae-a75e-8832d9a957a0
+@option_id=b1c647cd-e317-4ef8-b841-b25654dbf641
 ### Get All Products
 GET http://localhost:5001/api/v1/products
 Content-Type: application/json
@@ -20,6 +22,76 @@ Content-Type: application/json
 
 
 ### Get product by slug
-GET http://localhost:5001/api/v1/products/nuoc-ep-cam
+GET http://localhost:5001/api/v1/products/yogurt-trai-cay
 Content-Type: application/json
 
+
+### Create a new product
+POST http://localhost:5001/api/v1/internal/products
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+    "sku": "TIRA-003",
+    "name": "Flat Black",
+    "type": "SIMPLE",
+    "basePrice": 130000,
+    "taxRate": 0.5,
+    "category": {
+        "id": "{{category_id}}"
+    },
+    "sortOrder": 1,
+    "optionGroups": [
+        {
+            "optionGroupId": "{{option_group_id}}",
+            "sortOrder": 1,
+            "optionValues": [
+                {
+                    "optionId": "{{option_id}}",
+                    "price": 20000
+                }
+            ]
+        }
+    ]
+}
+### Create Option Group & Options
+POST http://localhost:5001/api/v1/internal/option-groups
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+    "name": "Sugar Level",
+    "isRequired": true,
+    "isMultiple": false,
+    "sortOrder": 1,
+    "options": [
+        {
+            "name": "Sugar 50%",
+            "basePrice": 0,
+            "sortOrder": 1
+        },
+        {
+            "name": "Sugar 70%",
+            "basePrice": 0,
+            "sortOrder": 2
+        }
+    ]
+}
+
+PUT /api/v1/internal/products/{{product_id}}/option-groups/{{option_group_id}}
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+   
+ {
+    "sortOrder": 2,
+   "optionValues": [
+        {
+          "optionId": "{{option_id_1}}",
+          "price": 15000
+        },
+        {
+            "optionId": "{{option_id_2}}",
+            "price": 25000
+        }
+    ]
+ }

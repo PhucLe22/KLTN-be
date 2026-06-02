@@ -35,7 +35,25 @@ export class ProductMapper {
             basePrice: typeof data.basePrice === 'number' ? data.basePrice : Number(data.basePrice),
             costPrice: typeof data.costPrice === 'number' ? data.costPrice : Number(data.costPrice),
             taxRate: typeof data.taxRate === 'number' ? data.taxRate : Number(data.taxRate),
+            optionGroups: data.optionGroups?.map(og => ({
+                id: og.optionGroup.id,
+                name: og.optionGroup.name,
+                isRequired: og.optionGroup.isRequired,
+                isMultiple: og.optionGroup.isMultiple,
+                sortOrder: og.optionGroup.sortOrder,
+                options: og.optionGroup.options.map(opt => {
+                    const productValue = data.optionValues?.find(ov => ov.optionId === opt.id);
+                    return {
+                        ...opt,
+                        basePrice: typeof opt.basePrice === 'number' ? opt.basePrice : Number(opt.basePrice),
+                        price: productValue ? (typeof productValue.price === 'number' ? productValue.price : Number(productValue.price)) : null
+                    };
+                })
+            })),
         };
+
+        // Remove optionValues from the final object as it's now merged into options
+        delete processedData.optionValues;
 
         return outputGetProductBySlugSchema.response.parse(processedData);
     }

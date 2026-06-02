@@ -254,8 +254,17 @@ class AuthService extends BaseService {
       throw new UnauthorizedException("Người dùng không tồn tại");
     }
 
-    // Service chỉ trả về raw data + role info
-    // Mapper sẽ handle data transformation
+    // Nếu là STAFF và không phải là MANAGER/ADMIN, tìm thêm thông tin MANAGER của store đó
+    if (
+      user.staff &&
+      user.staff.role !== "MANAGER" &&
+      user.staff.role !== "ADMIN" &&
+      user.staff.role !== "OWNER"
+    ) {
+      const manager = await this.staffRepo.findManagerByStore(user.staff.storeId);
+      user.staff.manager = manager;
+    }
+
     return user;
   }
 }

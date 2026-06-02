@@ -35,71 +35,64 @@ export const guestOutputSchema = z.object({
 });
 
 // Profile response (cho GET /profile)
-export const profileOutputSchema = z.object({
-  type: z.enum(["CUSTOMER", "STAFF", "MANAGER", "ADMIN"]),
-
-  // Customer fields
-  customer: z
-    .object({
-      name: f.name,
-      phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-      email: z.union([z.string().email(), z.null()]).optional(),
-      tier: f.tier,
-      points: f.points,
-    })
-    .optional(),
-
-  // Staff fields
-  staff: z
-    .object({
-      storeInfo: z.object({
-        id: f.id,
-        name: z.string(),
-        address: z.string(),
-      }),
-      userInfo: z.object({
-        email: z.union([z.string().email(), z.null()]).optional(),
-        phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-        name: f.name,
-        role: f.role,
-      }),
-      managerInfo: z
-        .object({
-          id: f.id,
-          name: f.name,
-          email: z.union([z.string().email(), z.null()]).optional(),
-          phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-
-  // Manager fields
-  manager: z
-    .object({
-      storeInfo: z.object({
-        id: f.id,
-        name: z.string(),
-        address: z.string(),
-      }),
-      userInfo: z.object({
-        email: z.union([z.string().email(), z.null()]).optional(),
-        phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-        name: f.name,
-        role: f.role,
-      }),
-    })
-    .optional(),
-
-  // Admin fields (no store info)
-  admin: z
-    .object({
-      userInfo: z.object({
-        email: z.union([z.string().email(), z.null()]).optional(),
-        phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-        name: f.name,
-        role: z.enum(["OWNER", "ADMIN"]),
-      }),
-    })
-    .optional(),
+export const customerProfileSchema = z.object({
+  name: f.name,
+  phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
+  email: z.union([z.string().email(), z.null()]).optional(),
+  tier: f.tier,
+  points: f.points,
 });
+
+export const staffProfileSchema = z.object({
+  storeInfo: z.object({
+    id: f.id,
+    name: z.string(),
+    address: z.string(),
+  }),
+  userInfo: z.object({
+    email: z.union([z.string().email(), z.null()]).optional(),
+    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
+    name: f.name,
+    role: f.role,
+  }),
+  managerInfo: z
+    .object({
+      id: f.id,
+      name: f.name,
+      email: z.union([z.string().email(), z.null()]).optional(),
+      phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
+    })
+    .optional()
+    .nullable(),
+});
+
+export const managerProfileSchema = z.object({
+  storeInfo: z.object({
+    id: f.id,
+    name: z.string(),
+    address: z.string(),
+  }),
+  userInfo: z.object({
+    email: z.union([z.string().email(), z.null()]).optional(),
+    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
+    name: f.name,
+    role: f.role,
+  }),
+});
+
+export const adminProfileSchema = z.object({
+  userInfo: z.object({
+    email: z.union([z.string().email(), z.null()]).optional(),
+    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
+    name: f.name,
+    role: z.enum(["OWNER", "ADMIN", "ROOT"]),
+  }),
+});
+
+export const profileOutputSchema = z.union([
+  customerProfileSchema,
+  staffProfileSchema,
+  managerProfileSchema,
+  adminProfileSchema,
+]);
+

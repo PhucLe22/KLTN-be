@@ -5,6 +5,7 @@ import storeRouter from "./store.routes.js";
 import orderRouter from "./order.routes.js";
 import internalRouter from "./internal/index.js";
 import categoryRouter from "./category.routes.js";
+import promotionRouter from "./promotion.routes.js";
 const mainRouter = express.Router();
 
 /**
@@ -28,4 +29,5 @@ mainRouter.use("/stores", storeRouter);
 mainRouter.use("/orders", orderRouter);
 mainRouter.use("/internal", internalRouter);
 mainRouter.use("/categories", categoryRouter);
+mainRouter.use("/promotions", promotionRouter);
 export default mainRouter;

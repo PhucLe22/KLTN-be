@@ -1,14 +1,15 @@
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5MjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
 ### Admin Routes
 
 ### Get All Stores
 GET http://localhost:5001/api/v1/internal/admin/stores
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+Authorization: Bearer {{accessToken}}
 
 ### Create Store
 POST http://localhost:5001/api/v1/internal/admin/stores
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+Authorization: Bearer {{accessToken}}
 
 {
   "code": "HCM011",
@@ -22,7 +23,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 ### Create Store (without coordinates)
 POST http://localhost:5001/api/v1/internal/admin/stores
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+Authorization: Bearer {{accessToken}}
 
 {
   "code": "HN01",
@@ -36,7 +37,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 ### Update Store 01
 PUT http://localhost:5001/api/v1/internal/admin/stores/f6088716-ca5e-4ed0-bef4-3dfe3abb51b8
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Store 1",
@@ -51,7 +52,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 ### Update Store 02
 PUT http://localhost:5001/api/v1/internal/admin/stores/f6088716-ca5e-4ed0-bef4-3dfe3abb51b8
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Store Ho Chi Minh",
@@ -65,16 +66,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 
 ### Delete Store
 DELETE http://localhost:5001/api/v1/internal/admin/stores/75b95f24-ddc4-4c68-b1a7-753781c6ce7f
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzM3MDczLCJleHAiOjE3NzgzNDA2NzN9.VaGEpOCEtT_Hd1m2KgpIT2r7zTcTxF7KzplbDVibiNg
+Authorization: Bearer {{accessToken}}
 
 
 ### Get Users List (Admin)
 GET http://localhost:5001/api/v1/internal/admin/users?page=1&limit=2&staff=true
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+Authorization: Bearer {{accessToken}}
 ### Update User
 PUT http://localhost:5001/api/v1/internal/admin/users/5c5133f2-796b-4e2b-9860-5c5aa1b9f4ea
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ2MjI0LCJleHAiOjE3NzgzNDk4MjR9.PwieyKhfdgIYKQSWm7SBNn80doeU2xCmLotWtuItQTY
+Authorization: Bearer {{accessToken}}
 {
   "isActive": true,
   "role": "MANAGER",
@@ -83,16 +84,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 
 ### Delete User
 DELETE http://localhost:5001/api/v1/internal/admin/users/5c5133f2-796b-4e2b-9860-5c5aa1b9f4ea
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4NjMyMjYxLCJleHAiOjE3Nzg2MzU4NjF9.AcPGzhneYPZ60qPb8U_-Ps21Hy88x7uITK2zeFnNXDk
+Authorization: Bearer {{accessToken}}
 
 ### Get All Products (Admin)
 GET http://localhost:5001/api/v1/internal/admin/products?page=1&limit=5
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 
 ### Create Product
 POST http://localhost:5001/api/v1/internal/admin/products
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 {  
   "sku": "BURGER002",
   "name": "Classic Burger",
@@ -116,7 +117,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4Y
 ### Update Product
 PUT http://localhost:5001/api/v1/internal/admin/products/prod-123
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0ZC05OTc4LTQ2NzAtYjNmNS1mMGQxNTAyM2FiZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5Yjg4ZGQ2Ny0yMjAzLTQ0OGItYjYyNS0yYzNlY2I4MGQ0NmIiLCJzdG9yZUlkIjoiNTg2NjBiYjktY2ZkOC00MWYzLTljYzYtOTg5NDg1YjI2ZDEwIiwiaWF0IjoxNzc4MzQ0Njg2LCJleHAiOjE3NzgzNDA2NzN9.Z9URaHxLUfymtCub64SxknUIizJiI6ZC22Mm3GcZQ7I
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Updated Classic Burger",
@@ -126,16 +127,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZTdmZWI0Z
 
 ### Delete Product
 DELETE http://localhost:5001/api/v1/internal/admin/products/66950321-f406-4a86-a5cf-2db8bf4fa776
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 
 ### Get All Categories (Admin)
 GET http://localhost:5001/api/v1/internal/admin/categories?page=1&limit=5
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 
 ### Create Category
 POST http://localhost:5001/api/v1/internal/admin/categories
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 {
   "name": "Foods",
   "slug": "",
@@ -146,7 +147,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4Y
 ### Update Category
 PUT http://localhost:5001/api/v1/internal/admin/categories/cat-123
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Updated Foods",
@@ -157,4 +158,4 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4Y
 
 ### Delete Category
 DELETE http://localhost:5001/api/v1/internal/admin/categories/cat-123
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjN2RlOGQ4YS0wYjZjLTQyMjEtYWQ1Yy1jNTI0NjJhMDk0NGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJlNzU4NWU0Ny01N2ZiLTQxNjUtYjY4ZS0zZGMwNDUyMTlkMDYiLCJzdG9yZUlkIjoiYWY4NWE3ZjgtMDViMy00ZTZlLThmZjQtYjJiNTA5OGFlOWIzIiwiaWF0IjoxNzc4NjM0MTYxLCJleHAiOjE3Nzg2Mzc3NjF9.aqnBmThsKNQBkXXrE89a2VOBMcYZOmEUDKyIrtPJWC0
+Authorization: Bearer {{accessToken}}

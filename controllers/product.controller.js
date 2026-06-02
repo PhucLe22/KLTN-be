@@ -67,6 +67,19 @@ class ProductController extends BaseController {
         });
     });
 
+    updateProductOptionGroup = asyncHandler(async (req, res) => {
+        const { id, optionGroupId } = req.params;
+        const body = req.body;
+
+        const result = await this.service.updateProductOptionGroup(id, optionGroupId, body);
+        
+        return this.success(res, {
+            statusCode: SUCCESS_STATUS_CODE.OK,
+            message: "Product option group updated successfully",
+            data: result
+        });
+    });
+
     deleteProduct = asyncHandler(async (req, res) => {
         const { id } = req.params;
 

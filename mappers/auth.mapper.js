@@ -6,6 +6,10 @@ import {
   guestOutputSchema,
   loginOutputSchema,
   profileOutputSchema,
+  customerProfileSchema,
+  staffProfileSchema,
+  managerProfileSchema,
+  adminProfileSchema,
 } from "../contracts/output/auth.output.schema.js";
 const { CustomerTier } = pkg;
 
@@ -52,66 +56,67 @@ export class AuthMapper {
   }
 
   static toProfileResponse(user) {
-    const data = {
-      type: UserType.CUSTOMER,
-    };
-
     if (user.customer) {
-      data.type = UserType.CUSTOMER;
-      data.customer = {
+      const data = {
         name: user.customer.name,
         phone: user.customer.phone,
         email: user.customer.email,
         tier: user.customer.tier,
         points: user.customer.points,
       };
-    } else if (user.staff) {
-      const role = user.staff.role;
-
-      if (role === StaffRole.MANAGER) {
-        data.type = StaffRole.MANAGER;
-        data.manager = {
-          storeInfo: {
-            id: user.staff.store.id,
-            name: user.staff.store.name,
-            address: user.staff.store.address,
-          },
-          userInfo: {
-            email: user.email,
-            phone: user.phone,
-            name: user.email || user.phone || DEFAULT_NAMES.MANAGER,
-            role: user.staff.role,
-          },
-        };
-      } else if (role === StaffRole.OWNER) {
-        data.type = StaffRole.OWNER;
-        data.admin = {
-          userInfo: {
-            email: user.email,
-            phone: user.phone,
-            name: user.email || user.phone || DEFAULT_NAMES.ADMIN,
-            role: user.staff.role,
-          },
-        };
-      } else {
-        data.type = UserType.STAFF;
-        data.staff = {
-          storeInfo: {
-            id: user.staff.store.id,
-            name: user.staff.store.name,
-            address: user.staff.store.address,
-          },
-          userInfo: {
-            email: user.email,
-            phone: user.phone,
-            name: user.email || user.phone || DEFAULT_NAMES.STAFF,
-            role: user.staff.role,
-          },
-        };
-      }
+      return customerProfileSchema.parse(data);
     }
 
-    return profileOutputSchema.parse(data);
+    if (user.staff) {
+      const role = user.staff.role;
+
+      const userInfo = {
+        email: user.email,
+        phone: user.phone,
+        name: user.email || user.phone || DEFAULT_NAMES.STAFF,
+        role: user.staff.role,
+      };
+
+      if (role === StaffRole.MANAGER) {
+        const data = {
+          storeInfo: {
+            id: user.staff.store.id,
+            name: user.staff.store.name,
+            address: user.staff.store.address,
+          },
+          userInfo: { ...userInfo, name: userInfo.name || DEFAULT_NAMES.MANAGER },
+        };
+        return managerProfileSchema.parse(data);
+      }
+
+      if (role === StaffRole.OWNER || role === StaffRole.ADMIN || role === StaffRole.ROOT) {
+        const data = {
+          userInfo: { ...userInfo, name: userInfo.name || DEFAULT_NAMES.ADMIN },
+        };
+        return adminProfileSchema.parse(data);
+      }
+
+      // Default to Staff
+      const data = {
+        storeInfo: {
+          id: user.staff.store.id,
+          name: user.staff.store.name,
+          address: user.staff.store.address,
+        },
+        userInfo,
+        managerInfo: user.staff.manager
+          ? {
+              id: user.staff.manager.id,
+              name: user.staff.manager.user.email || user.staff.manager.user.phone || DEFAULT_NAMES.MANAGER,
+              email: user.staff.manager.user.email,
+              phone: user.staff.manager.user.phone,
+            }
+          : null,
+      };
+      return staffProfileSchema.parse(data);
+    }
+
+    throw new Error("Unknown user type");
   }
 }
 
