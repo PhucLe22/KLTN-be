@@ -6,7 +6,7 @@ import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { OrderType, ROOT_USER_ID } from "../constants/enum.js";
+import { OrderType, OrderStatus, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
 import { generateOrderCode } from "../lib/helpers.js";
 
@@ -167,7 +167,7 @@ class OrderService extends BaseService {
   }
 
   async updateStatus(id, status, user) {
-    const order = await this.repository.findById(id);
+    const order = await this.repository.findByIdWithRelations(id);
 
     if (!order) {
       throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
@@ -178,7 +178,32 @@ class OrderService extends BaseService {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN);
     }
 
+    // Validate status transition
+    this.#validateStatusTransition(order.status, status);
+
     return await this.repository.updateStatus(id, status);
+  }
+
+  #validateStatusTransition(currentStatus, nextStatus) {
+    const allowedTransitions = {
+      [OrderStatus.NEW]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
+      [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
+      [OrderStatus.READY]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED],
+      [OrderStatus.COMPLETED]: [OrderStatus.REFUNDED],
+      [OrderStatus.CANCELLED]: [],
+      [OrderStatus.REFUNDED]: [],
+    };
+
+    if (currentStatus === nextStatus) {
+      return;
+    }
+
+    if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
+      throw new BadRequestException(
+        `Cannot transition from ${currentStatus} to ${nextStatus}`
+      );
+    }
   }
 
   async #buildOrderItems(items, tx) {

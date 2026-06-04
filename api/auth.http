@@ -1,4 +1,7 @@
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZmU3NjllNy1lNjlmLTQ4NjMtOTU3NS1iOTZmZDQ0ZDUzOGQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI1MDY4MmM2OC05YzAyLTRhNmItOTdhMi0zMzAxMDc5MmI3ZTYiLCJpYXQiOjE3ODAzMTAxODAsImV4cCI6MTc4MDMxMzc4MH0.qYuf5nWP7mJ4L0xA0Zt1cmbOQJs8lNNieyehlVd9Fiw
+@refreshToken = 0c7f9b48-14c9-4244-8db7-0c72df73e020
 
+###
 /*
 tạo user + customer 
 */
@@ -12,6 +15,7 @@ Content-Type: application/json
   "email": "phuclnt22@gmail.com"
 }
 
+###
 POST http://localhost:5001/api/v1/auth/register
 Content-Type: application/json
 
@@ -22,6 +26,7 @@ Content-Type: application/json
   "email": "admin@gmail.com"
 }
 
+###
 POST http://localhost:5001/api/v1/internal/auth/register/guest
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -31,6 +36,7 @@ Content-Type: application/json
   "name": "Nguyen Van Guest"
 }
 
+###
 /*
 tạo user + staff
 */
@@ -46,6 +52,7 @@ Content-Type: application/json
   "role": "CASHIER"
 }
 
+###
 POST http://localhost:5001/api/v1/internal/auth/register/staff
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -58,26 +65,31 @@ Content-Type: application/json
 }
 
 
+###
 /*
 login as customer
 */
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
+
 {
   "identifier": "0917630445",
   "password": "123456"
 }
 
+###
 /*
 login as staff
 */
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
+
 {
   "identifier": "cashier2.hcm01@trasua.com",
   "password": "StaffPassword789"
 }
 
+###
 /*
 login as manager
 */
@@ -89,16 +101,19 @@ Content-Type: application/json
   "password": "manager123"
 }
 
+###
 /*
 login as admin
 */
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
+
 {
   "identifier": "admin@foodapp.com",
   "password": "admin123"
 }
 
+###
 /*
 logout
 */
@@ -109,9 +124,10 @@ Cookie: refreshToken={{refreshToken}}
 Content-Type: application/json
 
 {
-  "message": "User logout"
+  "refreshToken": "{{refreshToken}}"
 }
 
+###
 # @name getCustomerProfile
 GET http://localhost:5001/api/v1/auth/profile
 Authorization: Bearer {{accessToken}}

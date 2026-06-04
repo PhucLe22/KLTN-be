@@ -15,42 +15,6 @@
   - Changed the type of `method` on the `Payment` table. No cast exists, the column would be dropped and recreated, which cannot be done if there is data, since the column is required.
 
 */
--- CreateEnum
-CREATE TYPE "public"."OrderType" AS ENUM ('DINE_IN', 'TAKEAWAY', 'DELIVERY');
-
--- CreateEnum
-CREATE TYPE "public"."OrderStatus" AS ENUM ('NEW', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED', 'REFUNDED');
-
--- CreateEnum
-CREATE TYPE "public"."PaymentMethod" AS ENUM ('CASH', 'CARD', 'MOMO', 'VNPAY', 'BANK_TRANSFER');
-
--- CreateEnum
-CREATE TYPE "public"."PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
-
--- CreateEnum
-CREATE TYPE "public"."StaffRole" AS ENUM ('MANAGER', 'CASHIER', 'KITCHEN', 'OWNER');
-
--- CreateEnum
-CREATE TYPE "public"."DeliveryStatus" AS ENUM ('PENDING', 'SHIPPER_ASSIGNED', 'PICKED_UP', 'DELIVERED', 'FAILED', 'CANCELLED');
-
--- CreateEnum
-CREATE TYPE "public"."PointType" AS ENUM ('EARN', 'REDEEM', 'EXPIRE', 'ADJUST');
-
--- CreateEnum
-CREATE TYPE "public"."DiscountType" AS ENUM ('PERCENT', 'FIXED');
-
--- CreateEnum
-CREATE TYPE "public"."CustomerTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
-
--- CreateEnum
-CREATE TYPE "public"."AuditAction" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE', 'LOGIN', 'LOGOUT', 'PERMISSION_CHANGE');
-
--- CreateEnum
-CREATE TYPE "public"."VoucherScope" AS ENUM ('PUBLIC', 'CUSTOMER');
-
--- CreateEnum
-CREATE TYPE "public"."ProductType" AS ENUM ('SIMPLE', 'COMBO', 'SERVICE');
-
 -- AlterTable
 ALTER TABLE "audit"."AuditLog" DROP COLUMN "action",
 ADD COLUMN     "action" "public"."AuditAction" NOT NULL;

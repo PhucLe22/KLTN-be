@@ -1,0 +1,32 @@
+@staff_access_token=YOUR_STAFF_TOKEN_HERE
+@order_id=YOUR_ORDER_ID_HERE
+
+### Get New Orders (Staff)
+GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=1&limit=10
+Authorization: Bearer {{staff_access_token}}
+
+### Confirm Order (Staff)
+POST http://localhost:5001/api/v1/internal/orders/{{order_id}}/confirm
+Authorization: Bearer {{staff_access_token}}
+
+### Start Preparing Order (Kitchen/Staff)
+POST http://localhost:5001/api/v1/internal/orders/{{order_id}}/prepare
+Authorization: Bearer {{staff_access_token}}
+
+### Update Status to Ready (Generic)
+PATCH http://localhost:5001/api/v1/internal/orders/{{order_id}}/status
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "status": "READY"
+}
+
+### Update Status to Completed (Generic)
+PATCH http://localhost:5001/api/v1/internal/orders/{{order_id}}/status
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "status": "COMPLETED"
+}

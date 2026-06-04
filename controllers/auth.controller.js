@@ -78,6 +78,7 @@ class AuthController extends BaseController {
    * Đăng xuất
    */
   logout = asyncHandler(async (req, res) => {
+    console.log("Cookies:", req.cookies);
     const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
     await this.service.logout(refreshToken);

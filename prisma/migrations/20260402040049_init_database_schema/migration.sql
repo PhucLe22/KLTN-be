@@ -17,40 +17,40 @@ CREATE SCHEMA IF NOT EXISTS "loyalty";
 CREATE SCHEMA IF NOT EXISTS "sales";
 
 -- CreateEnum
-CREATE TYPE "OrderType" AS ENUM ('DINE_IN', 'TAKEAWAY', 'DELIVERY');
+CREATE TYPE "public"."OrderType" AS ENUM ('DINE_IN', 'TAKEAWAY', 'DELIVERY');
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('NEW', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED', 'REFUNDED');
+CREATE TYPE "public"."OrderStatus" AS ENUM ('NEW', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED', 'REFUNDED');
 
 -- CreateEnum
-CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'CARD', 'MOMO', 'VNPAY', 'BANK_TRANSFER');
+CREATE TYPE "public"."PaymentMethod" AS ENUM ('CASH', 'CARD', 'MOMO', 'VNPAY', 'BANK_TRANSFER');
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
+CREATE TYPE "public"."PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
 
 -- CreateEnum
-CREATE TYPE "StaffRole" AS ENUM ('MANAGER', 'CASHIER', 'KITCHEN', 'OWNER');
+CREATE TYPE "public"."StaffRole" AS ENUM ('MANAGER', 'CASHIER', 'KITCHEN', 'OWNER');
 
 -- CreateEnum
-CREATE TYPE "DeliveryStatus" AS ENUM ('PENDING', 'SHIPPER_ASSIGNED', 'PICKED_UP', 'DELIVERED', 'FAILED', 'CANCELLED');
+CREATE TYPE "public"."DeliveryStatus" AS ENUM ('PENDING', 'SHIPPER_ASSIGNED', 'PICKED_UP', 'DELIVERED', 'FAILED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "PointType" AS ENUM ('EARN', 'REDEEM', 'EXPIRE', 'ADJUST');
+CREATE TYPE "public"."PointType" AS ENUM ('EARN', 'REDEEM', 'EXPIRE', 'ADJUST');
 
 -- CreateEnum
-CREATE TYPE "DiscountType" AS ENUM ('PERCENT', 'FIXED');
+CREATE TYPE "public"."DiscountType" AS ENUM ('PERCENT', 'FIXED');
 
 -- CreateEnum
-CREATE TYPE "CustomerTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
+CREATE TYPE "public"."CustomerTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
 
 -- CreateEnum
-CREATE TYPE "AuditAction" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE', 'LOGIN', 'LOGOUT', 'PERMISSION_CHANGE');
+CREATE TYPE "public"."AuditAction" AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE', 'LOGIN', 'LOGOUT', 'PERMISSION_CHANGE');
 
 -- CreateEnum
-CREATE TYPE "VoucherScope" AS ENUM ('PUBLIC', 'CUSTOMER');
+CREATE TYPE "public"."VoucherScope" AS ENUM ('PUBLIC', 'CUSTOMER');
 
 -- CreateEnum
-CREATE TYPE "ProductType" AS ENUM ('SIMPLE', 'COMBO', 'SERVICE');
+CREATE TYPE "public"."ProductType" AS ENUM ('SIMPLE', 'COMBO', 'SERVICE');
 
 -- CreateTable
 CREATE TABLE "audit"."AuditLog" (

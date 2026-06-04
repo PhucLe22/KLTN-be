@@ -86,6 +86,30 @@ class OrderController extends BaseController {
       data: formatted,
     });
   });
+
+  confirmOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const result = await this.service.updateStatus(id, "CONFIRMED", req.user);
+    const formatted = OrderMapper.toCreateResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: "Order confirmed successfully",
+      data: formatted,
+    });
+  });
+
+  startPreparing = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const result = await this.service.updateStatus(id, "PREPARING", req.user);
+    const formatted = OrderMapper.toCreateResponse(result);
+
+    return this.success(res, {
+      statusCode: SUCCESS_STATUS_CODE.OK,
+      message: "Order is now being prepared",
+      data: formatted,
+    });
+  });
 }
 
 export const orderController = new OrderController();
