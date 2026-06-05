@@ -1,64 +1,38 @@
-import { BaseController } from "./base.controller.js";
 import { storeService } from "../services/store.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { StoreMapper } from "../mappers/store.mapper.js";
+import { mapper } from "../lib/mapper.js";
+import { StoreMap } from "../contracts/output/store.output.schema.js";
 
-class StoreController extends BaseController {
-    constructor() {
-        super(storeService);
-    }
+class StoreController {
+    list = asyncHandler(async (req, res) => {
+        const stores = await storeService.findAll(req.query);
+        const result = mapper(stores.items, StoreMap);
 
-    getAllStores = asyncHandler(async (req, res) => {
-        const result = await this.service.findAll(req.query);
-        const formattedItems = StoreMapper.toGetAllStoresResponse(result.items);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formattedItems,
-            meta: result.meta
-        });
+        return res.ok(result, stores.meta);
     });
 
-    createStore = asyncHandler(async (req, res) => {
+    create = asyncHandler(async (req, res) => {
         const body = req.body;
+        const store = await storeService.create(body);
+        const result = mapper(store, StoreMap);
 
-        const result = await this.service.create(body);
-        const formatted = StoreMapper.toCreateStoreResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.CREATED,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    updateStore = asyncHandler(async (req, res) => {
+    update = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const body = req.body;
+        const store = await storeService.update(id, body);
+        const result = mapper(store, StoreMap);
 
-        const result = await this.service.update(id, body);
-        const formatted = StoreMapper.toUpdateStoreResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    deleteStore = asyncHandler(async (req, res) => {
+    remove = asyncHandler(async (req, res) => {
         const { id } = req.params;
+        await storeService.delete(id);
 
-        const result = await this.service.delete(id);
-        const formatted = StoreMapper.toDeleteStoreResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok();
     });
 }
 

@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class CustomerRepository extends BaseRepository {
   constructor() {
-    super("customer"); // Tên model trong prisma schema
+    super(MODELS.customer); // Tên model trong prisma schema
   }
 
   // Tìm khách kèm theo lịch sử ví điểm (Loyalty)

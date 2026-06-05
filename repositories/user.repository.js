@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class UserRepository extends BaseRepository {
   constructor() {
-    super("user");
+    super(MODELS.user);
   }
   /**
    * Tìm User bằng Email HOẶC Số điện thoại

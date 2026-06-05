@@ -1,51 +1,30 @@
-import { BaseController } from "./base.controller.js";
 import { userService } from "../services/user.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { UserMapper } from "../mappers/user.mapper.js";
+import { mapper } from "../lib/mapper.js";
+import { UserMap } from "../contracts/output/user.output.schema.js";
 
-class UserController extends BaseController {
-    constructor() {
-        super(userService);
-    }
+class UserController {
+    list = asyncHandler(async (req, res) => {
+        const users = await userService.findAll(req.query);
+        const result = mapper(users.items, UserMap);
 
-    getAllUsers = asyncHandler(async (req, res) => {
-        const result = await this.service.findAll(req.query);
-        const formattedItems = UserMapper.toGetAllUsersResponse(result.items);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formattedItems,
-            meta: result.meta
-        });
+        return res.ok(result, users.meta);
     });
 
-    updateUser = asyncHandler(async (req, res) => {
+    update = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const body = req.body;
+        const user = await userService.update(id, body);
+        const result = mapper(user, UserMap);
 
-        const result = await this.service.updateUser(id, body);
-        const formatted = UserMapper.toUpdateUserResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    deleteUser = asyncHandler(async (req, res) => {
+    remove = asyncHandler(async (req, res) => {
         const { id } = req.params;
+        await userService.remove(id);
 
-        await this.service.deleteUser(id);
-        const formatted = UserMapper.toDeleteUserResponse();
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok();
     });
 }
 

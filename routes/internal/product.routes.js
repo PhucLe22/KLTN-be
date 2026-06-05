@@ -3,10 +3,11 @@ import express from "express";
 import { productController } from "../../controllers/product.controller.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { StaffRole } from "../../constants/enum.js";
 import { 
-  createProductSchema,
-  updateProductOptionGroupSchema 
+  createProduct,
+  updateProductOptionGroup 
 } from "../../contracts/input/product.schema.js";
 
 const productRouter = express.Router();
@@ -18,9 +19,9 @@ const productRouter = express.Router();
 productRouter.post(
   "/",
   protect,
-  restrictTo("ADMIN", "MANAGER"),
-  validateData(createProductSchema),
-  productController.createProduct,
+  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
+  validate(createProduct),
+  productController.create,
 );
 
 /**
@@ -30,9 +31,9 @@ productRouter.post(
 productRouter.put(
   "/:id/option-groups/:optionGroupId",
   protect,
-  restrictTo("ADMIN", "MANAGER"),
-  validateData(updateProductOptionGroupSchema),
-  productController.updateProductOptionGroup,
+  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
+  validate(updateProductOptionGroup),
+  productController.updateOptionGroup,
 );
 
 export default productRouter;

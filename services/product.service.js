@@ -1,20 +1,18 @@
-import { BaseService } from "./base.service.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { optionGroupRepository } from "../repositories/option-group.repository.js";
-import { convertToSlug } from "../lib/helpers.js";
+import { createSlug } from "../lib/helpers.js";
 import { prisma } from "../lib/prisma.js";
+import { ERR } from "../lib/httpExceptions.js";
 
-class ProductService extends BaseService {
-    constructor() {
-        super(productRepository);
-    }
+class ProductService  {
 
     async findAll(query) {
-        return await this.repository.findAll(query);
+        return await productRepository.findAll(query);
     }
 
     async findBySlug(slug) {
-        return await this.repository.findBySlug(slug);
+        const product = await productRepository.findBySlug(slug);
+        if (!product) throw ERR.NotFound(`Product ${slug} not found`)
     }
 
     async create(data) {
@@ -22,7 +20,7 @@ class ProductService extends BaseService {
         
         // Generate slug from name if not provided
         if (productData.name && !productData.slug) {
-            productData.slug = convertToSlug(productData.name);
+            productData.slug = await createSlug(productRepository, productData.name);
         }
 
         // Convert nested category object to categoryId for Prisma
@@ -57,12 +55,12 @@ class ProductService extends BaseService {
         
         // If no optionGroups (even after trying to add Size), just create normal product
         if (optionGroups.length === 0) {
-            return await this.repository.create(productData);
+            return await productRepository.create(productData);
         }
 
         // With optionGroups, need a transaction
         return await prisma.$transaction(async (tx) => {
-            const product = await this.repository.create(productData, tx);
+            const product = await productRepository.create(productData, tx);
 
             const optionGroupData = optionGroups.map(og => ({
                 productId: product.id,
@@ -92,7 +90,7 @@ class ProductService extends BaseService {
         
         // Update slug if name is changed
         if (updateData.name && !updateData.slug) {
-            updateData.slug = convertToSlug(updateData.name);
+            updateData.slug = await createSlug(productRepository, updateData.name) 
         }
 
         // Convert nested category object to categoryId for Prisma
@@ -101,7 +99,7 @@ class ProductService extends BaseService {
             delete updateData.category;
         }
         
-        return await this.repository.update(id, updateData);
+        return await productRepository.update(id, updateData);
     }
 
     async updateProductOptionGroup(productId, optionGroupId, data) {
@@ -109,7 +107,7 @@ class ProductService extends BaseService {
     }
 
     async delete(id) {
-        return await this.repository.update(id, { isActive: false });
+        return await productRepository.update(id, { isActive: false });
     }
 }
 

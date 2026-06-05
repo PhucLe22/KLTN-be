@@ -3,8 +3,9 @@ import express from "express";
 import { optionGroupController } from "../../controllers/option-group.controller.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
-import { createOptionGroupSchema } from "../../contracts/input/option.schema.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { StaffRole } from "../../constants/enum.js";
+import { createOptionGroup } from "../../contracts/input/option.schema.js";
 
 const optionGroupRouter = express.Router();
 
@@ -15,8 +16,8 @@ const optionGroupRouter = express.Router();
 optionGroupRouter.post(
   "/",
   protect,
-  restrictTo("ADMIN", "MANAGER"),
-  validateData(createOptionGroupSchema),
+  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
+  validate(createOptionGroup),
   optionGroupController.createOptionGroup,
 );
 

@@ -1,8 +1,8 @@
 @customer_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZmU3NjllNy1lNjlmLTQ4NjMtOTU3NS1iOTZmZDQ0ZDUzOGQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI1MDY4MmM2OC05YzAyLTRhNmItOTdhMi0zMzAxMDc5MmI3ZTYiLCJpYXQiOjE3ODAzMDQ2OTIsImV4cCI6MTc4MDMwODI5Mn0.lbwDG14n8gLQyi_Ui4RjhIXIphcToSaVMvU9ROxoPds
 
-@staff_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YzUxMzNmMi03OTZiLTRlMmItOTg2MC01YzVhYTFiOWY0ZWEiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQ0FTSElFUiIsInNpZCI6IjJlMmY1Y2E1LWMyYWQtNDFlZC04Njg1LWIyYzMwZTUyZWVhNyIsInN0b3JlSWQiOiI1ODY2MGJiOS1jZmQ4LTQxZjMtOWNjNi05ODk0ODViMjZkMTAiLCJpYXQiOjE3Nzg0MDAwMDAsImV4cCI6MTc3ODQwMzYwMH0.fake_token
+@staff_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODA2YTA3NS1hNThiLTQwM2YtOGEyMS1hNDcyOWYxNTk0MjIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6IjhhZDlhNjU4LWQ3YWUtNDkyZi05OTI4LTVlOGVhOTFlNTVlZSIsInN0b3JlSWQiOiIwZDgxYWU5My1hYmM5LTRhOWYtOGUyYy01Y2MyZmIwNzZkNmYiLCJpYXQiOjE3ODA2Mzg1NzksImV4cCI6MTc4MDY0MjE3OX0.SatoJbPu6PLYFFQSOiHCutXw-muxGvQHSevaFImjQn0
 @store_id=d88a47c0-5b6c-4776-90e6-53b289d0899c
-@product_id=278a711e-0eb0-49bb-bbaa-7c08bfb505f4
+@product_id=87a1a425-7fdf-438a-9890-94307dad87d3
 @product_id_2=b9443b60-aa44-4248-9876-2d0052e9b3a4
 @option_id_1=550e8400-e29b-41d4-a716-446655440101
 @option_id_2=550e8400-e29b-41d4-a716-446655440203
@@ -65,7 +65,7 @@ Content-Type: application/json
 
 ### Create Order as Customer (DELIVERY)
 POST http://localhost:5001/api/v1/orders
-Authorization: Bearer {{customer_access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODA2YTA3NS1hNThiLTQwM2YtOGEyMS1hNDcyOWYxNTk0MjIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6IjhhZDlhNjU4LWQ3YWUtNDkyZi05OTI4LTVlOGVhOTFlNTVlZSIsInN0b3JlSWQiOiIwZDgxYWU5My1hYmM5LTRhOWYtOGUyYy01Y2MyZmIwNzZkNmYiLCJpYXQiOjE3ODA2Mzg1NzksImV4cCI6MTc4MDY0MjE3OX0.SatoJbPu6PLYFFQSOiHCutXw-muxGvQHSevaFImjQn0
 Content-Type: application/json
 
 {
@@ -82,7 +82,7 @@ Content-Type: application/json
       "productId": "{{product_id}}",
       "quantity": 1,
       "options": [
-        { "optionId": "{{option_id_1}}" }
+        { "550e8400-e29b-41d4-a716-446655440001": "550e8400-e29b-41d4-a716-446655440101" }
       ]
     }
   ]
@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ### Create Order as Staff for Customer
 POST http://localhost:5001/api/v1/internal/orders
-Authorization: Bearer {{staff_access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODA2YTA3NS1hNThiLTQwM2YtOGEyMS1hNDcyOWYxNTk0MjIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6IjhhZDlhNjU4LWQ3YWUtNDkyZi05OTI4LTVlOGVhOTFlNTVlZSIsInN0b3JlSWQiOiIwZDgxYWU5My1hYmM5LTRhOWYtOGUyYy01Y2MyZmIwNzZkNmYiLCJpYXQiOjE3ODA2Mzg1NzksImV4cCI6MTc4MDY0MjE3OX0.SatoJbPu6PLYFFQSOiHCutXw-muxGvQHSevaFImjQn0
 Content-Type: application/json
 
 {
@@ -99,10 +99,11 @@ Content-Type: application/json
   "note": "Staff creating order for existing customer",
   "items": [
     {
-      "productId": "{{product_id}}",
+      "productId": "87a1a425-7fdf-438a-9890-94307dad87d3",
       "quantity": 1,
       "options": [
-        { "optionId": "{{option_id_1}}" }
+       { "optionId": "550e8400-e29b-41d4-a716-446655440101" }
+
       ]
     }
   ]

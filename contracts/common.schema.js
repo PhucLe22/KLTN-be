@@ -11,9 +11,11 @@ export const name = z
   .min(2, VALIDATION_MESSAGES.NAME_MIN)
   .max(40, VALIDATION_MESSAGES.NAME_MAX);
 export const email = z.email(VALIDATION_MESSAGES.EMAIL_INVALID);
+export const optionalEmail = email.optional().nullable();
 export const phone = z
   .string()
   .regex(/^[0-9]{10,11}$/, VALIDATION_MESSAGES.PHONE_INVALID);
+export const optionalPhone = phone.optional().nullable();
 export const password = z.string().min(6, VALIDATION_MESSAGES.PASSWORD_MIN);
 
 // Các field đặc thù nghiệp vụ

@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import * as f from "../common.schema.js";
 
 // 1. GET /api/v1/ship/matrix
-export const getDistanceMatrixSchema = {
+export const getDistanceMatrix = {
   query: z.object({
     // Danh sách các tọa độ điểm giao hàng, cách nhau bằng dấu phẩy
     // Ví dụ: "10.1,106.1|10.2,106.2"
@@ -12,10 +13,10 @@ export const getDistanceMatrixSchema = {
 };
 
 // 2. POST /api/v1/ship/optimize-route
-export const optimizeRouteSchema = {
+export const optimizeRoute = {
   body: z.object({
     orderIds: z
-      .array(z.string().uuid())
+      .array(f.id)
       .min(1, VALIDATION_MESSAGES.ORDERS_REQUIRED),
 
     // Năng suất của nhân viên (ví dụ: tối đa 5 đơn/chuyến)
@@ -39,9 +40,9 @@ export const optimizeRouteSchema = {
 };
 
 // 3. GET /api/v1/ship/schedule/:staff_id
-export const getStaffScheduleSchema = {
+export const getStaffSchedule = {
   params: z.object({
-    staff_id: z.string().uuid(),
+    staff_id: f.id,
   }),
   query: z.object({
     date: z

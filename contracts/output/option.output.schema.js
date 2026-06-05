@@ -1,24 +1,18 @@
-import { z } from "zod";
+export const OptionMap = {
+  id: true,
+  groupId: true,
+  name: true,
+  basePrice: true,
+  sortOrder: true,
+  isActive: true,
+};
 
-const optionSchema = z.object({
-  id: z.string().uuid(),
-  groupId: z.string().uuid(),
-  name: z.string(),
-  basePrice: z.number(),
-  sortOrder: z.number().nullable().optional(),
-  isActive: z.boolean(),
-});
-
-const optionGroupSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  isRequired: z.boolean(),
-  isMultiple: z.boolean(),
-  sortOrder: z.number().nullable().optional(),
-  isActive: z.boolean(),
-  options: z.array(optionSchema).optional(),
-});
-
-export const createOptionGroupSchema = {
-  response: optionGroupSchema,
+export const OptionGroupMap = {
+  id: true,
+  name: true,
+  isRequired: true,
+  isMultiple: true,
+  sortOrder: true,
+  isActive: true,
+  options: [OptionMap],
 };

@@ -1,13 +1,12 @@
 import axios from "axios";
-import { BaseService } from "./base.service.js";
 import { orderRepository } from "../repositories/order.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
-import { BadRequestException } from "../lib/httpExceptions.js";
+import { ERR } from "../lib/httpExceptions.js";
 import { OrderStatus } from "../constants/enum.js";
+import { storeRepository } from "../repositories/store.repository.js";
 
-class KitchenService extends BaseService {
+class KitchenService  {
   constructor() {
-    super(orderRepository);
     this.pythonBackendUrl =
       process.env.LOGISTIC_SOLVER_URL || "http://localhost:5002";
   }
@@ -18,12 +17,12 @@ class KitchenService extends BaseService {
     const chefNames = staff.map((s) => s.user.email || s.user.phone || s.id);
 
     if (chefNames.length === 0) {
-      throw new BadRequestException("No staff available in this store");
+      throw ERR.BadRequest("No staff available in this store");
     }
 
     // 2. Lấy danh sách đơn hàng đang chờ hoặc đang chế biến của store
     // NEW -> Chờ, PREPARING -> Đang chế biến
-    const orders = await this.repository.findAll({
+    const orders = await orderRepository.findAll({
       where: {
         storeId,
         status: {
@@ -75,11 +74,18 @@ class KitchenService extends BaseService {
       return response.data;
     } catch (error) {
       console.error("Error calling Python Solver:", error.message);
-      throw new BadRequestException(
+      throw ERR.BadRequest(
         "Failed to get schedule from logistic solver",
       );
     }
   }
+
+  async orderStoreBalance(){
+    
+    //get store
+    const store = await storeRepository.findAll()
+
+  } 
 }
 
 export const kitchenService = new KitchenService();

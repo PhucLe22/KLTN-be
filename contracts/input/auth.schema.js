@@ -1,6 +1,6 @@
 import { z } from "zod";
 import * as f from "../common.schema.js";
-export const registerCustomerSchema = {
+export const registerCustomer = {
   body: z.object({
     name: f.name,
     phone: f.phone,
@@ -9,7 +9,7 @@ export const registerCustomerSchema = {
   }),
 };
 
-export const registerStaffSchema = {
+export const registerStaff = {
   body: z.object({
     email: f.email,
     phone: f.phone,
@@ -19,7 +19,7 @@ export const registerStaffSchema = {
   }),
 };
 
-export const registerGuestSchema = {
+export const registerGuest = {
   body: z.object({
     phone: f.phone,
     name: f.name,

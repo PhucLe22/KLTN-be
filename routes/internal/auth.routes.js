@@ -3,10 +3,11 @@ import express from "express";
 import { authController } from "../../controllers/auth.controller.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { StaffRole, UserType } from "../../constants/enum.js";
 import {
-  registerStaffSchema,
-  registerGuestSchema,
+  registerStaff,
+  registerGuest,
 } from "../../contracts/input/auth.schema.js";
 
 const authRouter = express.Router();
@@ -18,8 +19,8 @@ const authRouter = express.Router();
 authRouter.post(
   "/register/staff",
   protect,
-  restrictTo("ADMIN"),
-  validateData(registerStaffSchema),
+  restrictTo(StaffRole.ADMIN),
+  validate(registerStaff),
   authController.registerStaff,
 );
 
@@ -30,13 +31,13 @@ authRouter.post(
 authRouter.post(
   "/register/guest",
   protect,
-  restrictTo("STAFF", "CASHIER", "MANAGER", "ADMIN"),
-  validateData(registerGuestSchema),
+  restrictTo(UserType.STAFF),
+  validate(registerGuest),
   authController.registerGuest,
 );
 
 /** 
- * @route   POST /api/v1/auth/refresh-token
+ * @route   POST /api/v1/internal/auth/refresh-token
  * @desc    Lấy Access Token mới từ Refresh Token trong Cookie
  */
 authRouter.post("/refresh-token", authController.refresh);

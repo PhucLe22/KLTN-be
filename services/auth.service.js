@@ -1,28 +1,16 @@
-// services/auth.service.js
 import bcrypt from "bcrypt";
 
-import { BaseService } from "./base.service.js";
 import { userRepository } from "../repositories/user.repository.js";
 import { customerRepository } from "../repositories/customer.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { tokenRepository } from "../repositories/token.repository.js";
 
-import {
-  BadRequestException,
-  UnauthorizedException,
-} from "../lib/httpExceptions.js";
+import { ERR } from "../lib/httpExceptions.js";
 import { prisma } from "../lib/prisma.js";
 import { JwtHelper } from "../lib/jwt.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import { UserType } from "../constants/enum.js";
-class AuthService extends BaseService {
-  constructor() {
-    super(userRepository);
-    this.userRepo = userRepository;
-    this.customerRepo = customerRepository;
-    this.staffRepo = staffRepository;
-    this.tokenRepository = tokenRepository;
-  }
+class AuthService {
 
   async registerCustomer(data) {
     return await this.#registerCustomer(data);
@@ -59,7 +47,7 @@ class AuthService extends BaseService {
   // Logout
   async logout(refreshToken) {
     if (!refreshToken) return false;
-    await this.tokenRepository.revokeToken(refreshToken);
+    await tokenRepository.revokeToken(refreshToken);
     return true;
   }
 
@@ -67,27 +55,27 @@ class AuthService extends BaseService {
 
   async refreshToken(oldRefreshTokenStr, reqInfo) {
     if (!oldRefreshTokenStr) {
-      throw new UnauthorizedException(VALIDATION_MESSAGES.TOKEN_REQUIRED);
+      throw ERR.Unauthorized(VALIDATION_MESSAGES.TOKEN_REQUIRED);
     }
 
     // Kiểm tra token còn hạn và chưa bị revoke trong DB
     const savedToken =
-      await this.tokenRepository.findValidToken(oldRefreshTokenStr);
+      await tokenRepository.findValidToken(oldRefreshTokenStr);
 
     if (!savedToken) {
-      throw new UnauthorizedException(
+      throw ERR.Unauthorized(
         "Phiên đăng nhập đã hết hạn hoặc không hợp lệ",
       );
     }
 
     // Lấy thông tin user để build claims
-    const user = await this.userRepo.findByIdWithProfile(savedToken.userId);
+    const user = await userRepository.findByIdWithProfile(savedToken.userId);
     if (!user) {
-      throw new UnauthorizedException("Người dùng không tồn tại");
+      throw ERR.Unauthorized("Người dùng không tồn tại");
     }
 
     // THU HỒI TOKEN CŨ
-    await this.tokenRepository.revokeToken(oldRefreshTokenStr);
+    await tokenRepository.revokeToken(oldRefreshTokenStr);
 
     // CẤP TOKENS MỚI
     const { accessToken, refreshToken } = await this.#issueTokens(
@@ -106,14 +94,14 @@ class AuthService extends BaseService {
   async #createUserIdentity(data, tx) {
     const { email, phone, password } = data;
 
-    const isTaken = await this.userRepo.isIdentityTaken(email, phone);
+    const isTaken = await userRepository.isIdentityTaken(email, phone);
     if (isTaken) {
-      throw new BadRequestException("Email hoặc Số điện thoại đã được sử dụng");
+      throw ERR.BadRequest("Email hoặc Số điện thoại đã được sử dụng");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return await this.userRepo.create(
+    return await userRepository.create(
       {
         email,
         phone,
@@ -133,7 +121,7 @@ class AuthService extends BaseService {
       const user = await this.#createUserIdentity(data, tx);
 
       // Tạo Customer (Profile)
-      const customer = await this.customerRepo.create(
+      const customer = await customerRepository.create(
         {
           userId: user.id,
           name: data.name,
@@ -153,7 +141,7 @@ class AuthService extends BaseService {
     return await prisma.$transaction(async (tx) => {
       const user = await this.#createUserIdentity(data, tx);
 
-      const staff = await this.staffRepo.create(
+      const staff = await staffRepository.create(
         {
           userId: user.id,
           storeId: data.storeId,
@@ -175,10 +163,10 @@ class AuthService extends BaseService {
     console.log("name", name);
 
     // Tận dụng findOne để tránh tạo trùng Profile khách vãng lai
-    const existing = await this.customerRepo.findOne({ phone }, tx);
+    const existing = await customerRepository.findOne({ phone }, tx);
     if (existing) return existing;
 
-    return await this.customerRepo.create(
+    return await customerRepository.create(
       {
         phone,
         name,
@@ -188,15 +176,15 @@ class AuthService extends BaseService {
   }
 
   async #validateUserCredentials(identifier, password) {
-    const user = await this.userRepo.findByIdentifier(identifier);
+    const user = await userRepository.findByIdentifier(identifier);
 
     if (!user) {
-      throw new UnauthorizedException(ERROR_MESSAGES.AUTH_INVALID);
+      throw ERR.Unauthorized(ERROR_MESSAGES.AUTH_INVALID);
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      throw new UnauthorizedException(ERROR_MESSAGES.AUTH_INVALID);
+      throw ERR.Unauthorized(ERROR_MESSAGES.AUTH_INVALID);
     }
 
     return user;
@@ -213,7 +201,7 @@ class AuthService extends BaseService {
     const refreshTokenString = JwtHelper.generateRefreshTokenString();
 
     //  Lưu/ ghi đè Token
-    await this.tokenRepository.upsertSession({
+    await tokenRepository.upsertSession({
       userId: user.id,
       token: refreshTokenString,
       ipAddress: reqInfo.ipAddress,
@@ -248,10 +236,10 @@ class AuthService extends BaseService {
   }
 
   async getProfile(userId) {
-    const user = await this.userRepo.findByIdWithProfile(userId);
+    const user = await userRepository.findByIdWithProfile(userId);
 
     if (!user) {
-      throw new UnauthorizedException("Người dùng không tồn tại");
+      throw ERR.Unauthorized("Người dùng không tồn tại");
     }
 
     // Nếu là STAFF và không phải là MANAGER/ADMIN, tìm thêm thông tin MANAGER của store đó
@@ -261,7 +249,7 @@ class AuthService extends BaseService {
       user.staff.role !== "ADMIN" &&
       user.staff.role !== "OWNER"
     ) {
-      const manager = await this.staffRepo.findManagerByStore(user.staff.storeId);
+      const manager = await staffRepository.findManagerByStore(user.staff.storeId);
       user.staff.manager = manager;
     }
 

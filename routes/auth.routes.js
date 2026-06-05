@@ -1,8 +1,8 @@
 import express from "express";
 import { authController } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/authentication.middleware.js";
-import { validateData } from "../middlewares/validate.middleware.js";
-import { registerCustomerSchema } from "../contracts/input/auth.schema.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { registerCustomer } from "../contracts/input/auth.schema.js";
 
 const authRouter = express.Router();
 
@@ -14,7 +14,7 @@ const authRouter = express.Router();
 
 authRouter.post(
   "/register",
-  validateData(registerCustomerSchema),
+  validate(registerCustomer),
   authController.registerCustomer,
 );
 

@@ -1,51 +1,36 @@
-import { BaseController } from "./base.controller.js";
 import { voucherService } from "../services/voucher.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { VoucherMapper } from "../mappers/voucher.mapper.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
+import { mapper } from "../lib/mapper.js";
+import { VoucherMap } from "../contracts/output/promotions.output.schema.js";
 
-class VoucherController extends BaseController {
-  constructor() {
-    super(voucherService);
-  }
+class VoucherController {
+  listAvailable = asyncHandler(async (req, res) => {
+    const vouchers = await voucherService.getAvailableVouchers(req.query);
+    const result = mapper(vouchers.items, VoucherMap);
 
-  getAvailableVouchers = asyncHandler(async (req, res) => {
-    const result = await this.service.getAvailableVouchers(req.query);
-    const formatted = VoucherMapper.toAvailableVouchersResponse(result);
-
-    return this.success(res, {
-      data: formatted,
-    });
+    return res.ok(result, vouchers.meta);
   });
 
-  createVoucher = asyncHandler(async (req, res) => {
-    const result = await this.service.createVoucher(req.body);
-    const formatted = VoucherMapper.toVoucherResponse(result);
+  create = asyncHandler(async (req, res) => {
+    const voucher = await voucherService.createVoucher(req.body);
+    const result = mapper(voucher, VoucherMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  updateVoucher = asyncHandler(async (req, res) => {
+  update = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await this.service.updateVoucher(id, req.body);
-    const formatted = VoucherMapper.toVoucherResponse(result);
+    const voucher = await voucherService.updateVoucher(id, req.body);
+    const result = mapper(voucher, VoucherMap);
 
-    return this.success(res, {
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  deleteVoucher = asyncHandler(async (req, res) => {
+  remove = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await this.service.deleteVoucher(id);
+    await voucherService.deleteVoucher(id);
 
-    return this.success(res, {
-      message: SUCCESS_MESSAGES.DELETE_SUCCESS || "Deleted successfully",
-    });
+    return res.ok();
   });
 }
 

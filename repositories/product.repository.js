@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class ProductRepository extends BaseRepository {
     constructor() {
-        super("product");
+        super(MODELS.product);
     }
 
     async findAll(query, tx = null) {

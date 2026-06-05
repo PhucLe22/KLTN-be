@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import * as f from "../common.schema.js";
 
 // GET /api/v1/stores
-export const getStoresSchema = {
+export const getStores = {
   query: z.object({
     search: z.string().optional(),
     limit: z.string().transform(Number).optional().default("10"),
@@ -13,36 +14,36 @@ export const getStoresSchema = {
 };
 
 // POST /api/v1/stores
-export const createStoresSchema = {
+export const createStores = {
   body: z.object({
     code: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
     name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
     address: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED),
-    hotline: z.string().regex(/^\d{10}$/, VALIDATION_MESSAGES.HOTLINE_INVALID),
-    lat: z.number().optional(),
-    lng: z.number().optional(),
+    hotline: f.hotline,
+    lat: f.lat,
+    lng: f.lng,
   }),
 };
 
 // PUT /api/v1/stores/:id
-export const updateStoresSchema = {
+export const updateStores = {
   params: z.object({
-    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    id: f.id,
   }),
   body: z.object({
     code: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
     name: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
     address: z.string().min(1, VALIDATION_MESSAGES.NAME_REQUIRED).optional(),
-    hotline: z.string().regex(/^\d{10}$/, VALIDATION_MESSAGES.HOTLINE_INVALID).optional(),
-    lat: z.number().optional(),
-    lng: z.number().optional(),
+    hotline: f.hotline.optional(),
+    lat: f.lat,
+    lng: f.lng,
     isActive: z.boolean().optional(),
   }),
 };
 
 // DELETE /api/v1/stores/:id
-export const deleteStoresSchema = {
+export const deleteStores = {
   params: z.object({
-    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    id: f.id,
   }),
 };

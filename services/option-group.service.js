@@ -1,10 +1,6 @@
-import { BaseService } from "./base.service.js";
 import { optionGroupRepository } from "../repositories/option-group.repository.js";
 
-class OptionGroupService extends BaseService {
-    constructor() {
-        super(optionGroupRepository);
-    }
+class OptionGroupService {
 
     // async create(data) {
     //     return await this.repository.create(data);
@@ -13,7 +9,7 @@ class OptionGroupService extends BaseService {
     async create(data) {
     const { name, storeId, isRequired, isMultiple, sortOrder, options = [] } = data;
 
-    return await this.repository.create({
+        return await optionGroupRepository.create({
         name,
         storeId,
         isRequired,

@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class OrderRepository extends BaseRepository {
   constructor() {
-    super("order");
+    super(MODELS.order);
   }
 
   async findByIdWithRelations(id, tx = null) {

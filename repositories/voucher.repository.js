@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class VoucherRepository extends BaseRepository {
   constructor() {
-    super("voucher");
+    super(MODELS.voucher);
   }
 
   async findAvailable(query = {}, tx = null) {

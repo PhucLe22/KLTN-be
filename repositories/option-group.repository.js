@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class OptionGroupRepository extends BaseRepository {
     constructor() {
-        super("optionGroup");
+        super(MODELS.optionGroup);
     }
 
     async create(data, tx = null) {

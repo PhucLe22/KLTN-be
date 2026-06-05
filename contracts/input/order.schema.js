@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { OrderType } from "../../constants/enum.js";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import * as f from "../common.schema.js";
 
 // POST /api/v1/orders - Customer orders (authenticated)
-export const createOrderSchema = {
+export const createOrder = {
   body: z.object({
-    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    storeId: f.id,
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
@@ -15,9 +16,9 @@ export const createOrderSchema = {
     
     // Customer info for guest orders (not used for authenticated)
     customerInfo: z.object({
-      phone: z.string(),
+      phone: f.phone,
       name: z.string(),
-      email: z.string().optional(),
+      email: f.email.optional(),
     }).optional(),
 
     // Delivery info for DELIVERY orders
@@ -33,14 +34,14 @@ export const createOrderSchema = {
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+          productId: f.id,
           quantity: z.number().int().min(1),
           note: z.string().optional(),
           // Product options (Size/Topping)
           options: z
             .array(
               z.object({
-                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+                optionId: f.id,
               }),
             )
             .optional(),
@@ -51,9 +52,9 @@ export const createOrderSchema = {
 };
 
 // POST /api/v1/orders/guest - Guest orders (no authentication)
-export const createGuestOrderSchema = {
+export const createGuestOrder = {
   body: z.object({
-    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    storeId: f.id,
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
@@ -63,7 +64,7 @@ export const createGuestOrderSchema = {
     
     // Customer info for guest orders (phone, name, address only)
     customerInfo: z.object({
-      phone: z.string(),
+      phone: f.phone,
       name: z.string(),
       address: z.string().optional(),
     }),
@@ -72,14 +73,14 @@ export const createGuestOrderSchema = {
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+          productId: f.id,
           quantity: z.number().int().min(1),
           note: z.string().optional(),
           // Product options (Size/Topping)
           options: z
             .array(
               z.object({
-                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+                optionId: f.id,
               }),
             )
             .optional(),
@@ -90,7 +91,7 @@ export const createGuestOrderSchema = {
 };
 
 // GET /api/v1/orders
-export const getOrdersSchema = {
+export const getOrders = {
   query: z.object({
     page: z.string().transform(Number).optional(),
     limit: z.string().transform(Number).optional(),
@@ -108,14 +109,14 @@ export const getOrdersSchema = {
     endDate: z.string().optional(),
     minTotal: z.string().optional().transform(v => v ? Number(v) : undefined),
     maxTotal: z.string().optional().transform(v => v ? Number(v) : undefined),
-    store_id: z.string().uuid().optional(),
+    store_id: f.id.optional(),
   }),
 };
 
 // GET /api/v1/orders/history
-export const getOrderHistorySchema = {
+export const getOrderHistory = {
   query: z.object({
-    storeId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    storeId: f.id,
     page: z.string().transform(Number).optional(),
     limit: z.string().transform(Number).optional(),
     status: z
@@ -133,14 +134,14 @@ export const getOrderHistorySchema = {
 };
 
 // GET /api/v1/orders/:id
-export const getOrderDetailSchema = {
+export const getOrderDetail = {
   params: z.object({
-    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    id: f.id,
   }),
 };
 
 // POST /internal/staff/orders - Staff orders (cashier/manager)
-export const createStaffOrderSchema = {
+export const createStaffOrder = {
   body: z.object({
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
@@ -183,9 +184,9 @@ export const createStaffOrderSchema = {
 };
 
 // PATCH /orders/:id/status
-export const updateOrderStatusSchema = {
+export const updateOrderStatus = {
   params: z.object({
-    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    id: f.id,
   }),
   body: z.object({
     status: z.enum([
@@ -201,7 +202,7 @@ export const updateOrderStatusSchema = {
 };
 
 // GET /api/v1/orders/code/:orderCode
-export const getOrderCodeSchema = {
+export const getOrderCode = {
   params: z.object({
     orderCode: z.string(),
   }),

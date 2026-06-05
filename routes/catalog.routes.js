@@ -3,6 +3,6 @@ import { productController } from "../controllers/product.controller.js";
 
 const catalogRouter = express.Router();
 
-catalogRouter.get("/", productController.getAllProducts);
+catalogRouter.get("/", productController.list);
 
 export default catalogRouter;

@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class TokenRepository extends BaseRepository {
   constructor() {
-    super("refreshToken");
+    super(MODELS.refreshToken);
   }
 
   /**

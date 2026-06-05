@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class StaffRepository extends BaseRepository {
   constructor() {
-    super("staff");
+    super(MODELS.staff);
   }
 
   //Lấy danh sách nhân viên của một chi nhánh cụ thể

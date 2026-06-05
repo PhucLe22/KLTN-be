@@ -1,96 +1,55 @@
-import { BaseController } from "./base.controller.js";
 import { productService } from "../services/product.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { ProductMapper } from "../mappers/product.mapper.js";
+import { mapper } from "../lib/mapper.js";
+import { ProductMap } from "../contracts/output/product.output.schema.js";
 
-class ProductController extends BaseController {
-    constructor() {
-        super(productService);
-    }
+class ProductController {
+    list = asyncHandler(async (req, res) => {
+        const products = await productService.findAll(req.query);
+        const result = mapper(products.items, ProductMap);
 
-    getAllProducts = asyncHandler(async (req, res) => {
-        const result = await this.service.findAll(req.query);
-        const formattedItems = ProductMapper.toGetAllProductsResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formattedItems
-        });
+        return res.ok(result, products.meta);
     });
 
-    getProductBySlug = asyncHandler(async (req, res) => {
+    show = asyncHandler(async (req, res) => {
         const { slug } = req.params;
-        const result = await this.service.findBySlug(slug);
+        const product = await productService.findBySlug(slug);
 
-        if (!result) {
-            return this.error(res, {
-                statusCode: 404,
-                message: "Product not found"
-            });
-        }
+        const result = mapper(product, ProductMap);
 
-        const formatted = ProductMapper.toGetProductBySlugResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    createProduct = asyncHandler(async (req, res) => {
+    create = asyncHandler(async (req, res) => {
         const body = req.body;
+        const product = await productService.create(body);
+        const result = mapper(product, ProductMap);
 
-        const result = await this.service.create(body);
-        const formatted = ProductMapper.toCreateProductResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.CREATED,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    updateProduct = asyncHandler(async (req, res) => {
+    update = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const body = req.body;
+        const product = await productService.update(id, body);
+        const result = mapper(product, ProductMap);
 
-        const result = await this.service.update(id, body);
-        const formatted = ProductMapper.toUpdateProductResponse(result);
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok(result);
     });
 
-    updateProductOptionGroup = asyncHandler(async (req, res) => {
+    updateOptionGroup = asyncHandler(async (req, res) => {
         const { id, optionGroupId } = req.params;
         const body = req.body;
-
-        const result = await this.service.updateProductOptionGroup(id, optionGroupId, body);
+        const product = await productService.updateProductOptionGroup(id, optionGroupId, body);
         
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: "Product option group updated successfully",
-            data: result
-        });
+        return res.ok(product, null, "Product option group updated successfully");
     });
 
-    deleteProduct = asyncHandler(async (req, res) => {
+    remove = asyncHandler(async (req, res) => {
         const { id } = req.params;
+        await productService.delete(id);
 
-        await this.service.delete(id);
-        const formatted = ProductMapper.toDeleteProductResponse();
-
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.OK,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-            data: formatted
-        });
+        return res.ok();
     });
 }
 

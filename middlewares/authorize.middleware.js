@@ -1,20 +1,30 @@
-import { ForbiddenException } from "../lib/httpExceptions.js";
-import { UserType } from "../constants/enum.js";
+import { ERR } from "../lib/httpExceptions.js";
+import { StaffRole, UserType } from "../constants/enum.js";
+
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
-    // If no user is authenticated, check if CUSTOMER is allowed
-    // console.log("req.user", req.user);
     if (!req.user) {
-      throw new ForbiddenException();
+      throw ERR.Forbidden();
     }
 
-    // If user is authenticated, check their role
-    if (
-      !roles.includes(req.user.staff?.role) &&
-      !roles.includes(UserType.CUSTOMER)
-    ) {
-      throw new ForbiddenException();
+    const hasStaffRole = Boolean(req.user.staff?.role);
+    const staffRole = req.user.staff?.role;
+
+    // Allow any staff when UserType.STAFF is requested.
+    if (hasStaffRole && roles.includes(UserType.STAFF)) {
+      return next();
     }
-    next();
+
+    // Allow specific staff roles.
+    if (hasStaffRole && staffRole && roles.includes(staffRole)) {
+      return next();
+    }
+
+    // Allow customers explicitly if the role list includes CUSTOMER.
+    if (!hasStaffRole && roles.includes(UserType.CUSTOMER)) {
+      return next();
+    }
+
+    throw ERR.Forbidden();
   };
 };

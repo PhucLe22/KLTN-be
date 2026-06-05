@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createOptionGroupSchema = {
+export const createOptionGroup = {
   body: z.object({
     name: z.string().min(1, "Name is required"),
     isRequired: z.boolean().optional().default(false),

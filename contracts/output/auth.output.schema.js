@@ -1,98 +1,65 @@
-import { z } from "zod";
-import * as f from "../common.schema.js";
+import { UserType, StaffRole } from "../../constants/enum.js";
+import { DEFAULT_NAMES, TOKEN_CONSTANTS } from "../../constants/errors.js";
 
-export const registerOutputSchema = z.object({
-  id: f.id,
-  email: f.email,
-  phone: f.phone,
-});
+export const AuthMap = {
+  id: true,
+  email: true,
+  phone: true,
+};
 
-export const loginOutputSchema = z.object({
-  id: f.id,
-  name: f.name,
-  email: f.email,
-  type: f.userType,
+export const LoginMap = {
+  id: 'user.id',
+  name: (s) => s.user.customer?.name || s.user.email || s.user.phone,
+  email: 'user.email',
+  type: (s) => s.user.customer ? UserType.CUSTOMER : UserType.STAFF,
+  
+  // Customer
+  tier: 'user.customer.tier',
+  points: 'user.customer.points',
 
-  // Thông tin riêng cho Customer (Optional)
-  tier: f.tier.optional(),
-  points: f.points.optional(),
+  // Staff
+  role: 'user.staff.role',
+  storeName: 'user.staff.store.name',
 
-  // Thông tin riêng cho Staff (Optional)
-  role: f.role.optional(),
-  storeName: z.string().optional(),
+  // Tokens
+  accessToken: (s, ctx) => ctx.tokens.accessToken,
+  refreshToken: () => TOKEN_CONSTANTS.PROTECTED_REFRESH_TOKEN,
+};
 
-  // Thông tin Tokens
-  accessToken: f.token,
-  refreshToken: f.token,
-});
+export const GuestMap = {
+  customerId: 'id',
+  name: true,
+  phone: true,
+  tier: (s) => s.tier || "BRONZE",
+};
 
-// Trả về cho Guest (Quick Customer) tại quầy
-export const guestOutputSchema = z.object({
-  customerId: f.id,
-  name: f.name,
-  phone: f.phone,
-  tier: f.tier,
-});
+export const ProfileMap = {
+  // Common
+  name: (s) => s.customer?.name || s.email || s.phone || (s.staff ? DEFAULT_NAMES.STAFF : ""),
+  email: (s) => s.customer?.email || s.email,
+  phone: (s) => s.customer?.phone || s.phone,
 
-// Profile response (cho GET /profile)
-export const customerProfileSchema = z.object({
-  name: f.name,
-  phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-  email: z.union([z.string().email(), z.null()]).optional(),
-  tier: f.tier,
-  points: f.points,
-});
+  // Customer fields
+  tier: 'customer.tier',
+  points: 'customer.points',
 
-export const staffProfileSchema = z.object({
-  storeInfo: z.object({
-    id: f.id,
-    name: z.string(),
-    address: z.string(),
+  // Staff / Admin fields
+  storeInfo: {
+    $from: 'staff.store',
+    id: true,
+    name: true,
+    address: true,
+  },
+  userInfo: (s) => ({
+    email: s.email,
+    phone: s.phone,
+    name: s.email || s.phone || (s.staff?.role === StaffRole.MANAGER ? DEFAULT_NAMES.MANAGER : DEFAULT_NAMES.STAFF),
+    role: s.staff?.role,
   }),
-  userInfo: z.object({
-    email: z.union([z.string().email(), z.null()]).optional(),
-    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-    name: f.name,
-    role: f.role,
-  }),
-  managerInfo: z
-    .object({
-      id: f.id,
-      name: f.name,
-      email: z.union([z.string().email(), z.null()]).optional(),
-      phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-    })
-    .optional()
-    .nullable(),
-});
-
-export const managerProfileSchema = z.object({
-  storeInfo: z.object({
-    id: f.id,
-    name: z.string(),
-    address: z.string(),
-  }),
-  userInfo: z.object({
-    email: z.union([z.string().email(), z.null()]).optional(),
-    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-    name: f.name,
-    role: f.role,
-  }),
-});
-
-export const adminProfileSchema = z.object({
-  userInfo: z.object({
-    email: z.union([z.string().email(), z.null()]).optional(),
-    phone: z.union([z.string().regex(/^[0-9]{10,11}$/), z.null()]).optional(),
-    name: f.name,
-    role: z.enum(["OWNER", "ADMIN", "ROOT"]),
-  }),
-});
-
-export const profileOutputSchema = z.union([
-  customerProfileSchema,
-  staffProfileSchema,
-  managerProfileSchema,
-  adminProfileSchema,
-]);
-
+  managerInfo: (s) => s.staff?.manager ? {
+    id: s.staff.manager.id,
+    name: s.staff.manager.user.email || s.staff.manager.user.phone || DEFAULT_NAMES.MANAGER,
+    email: s.staff.manager.user.email,
+    phone: s.staff.manager.user.phone,
+  } : null,
+};

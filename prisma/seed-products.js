@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { prisma } from "../lib/prisma.js";
-import { convertToSlug } from "../lib/helpers.js";
+import {  createSlug } from "../lib/helpers.js";
 
 async function seedProducts() {
   try {
@@ -136,7 +136,7 @@ async function seedProducts() {
 
     const createdProducts = [];
     for (const productData of products) {
-      const slug = convertToSlug(productData.name);
+      const slug = await createSlug(prisma.product, productData.name);
       const product = await prisma.product.upsert({
         where: { sku: productData.sku },
         update: {

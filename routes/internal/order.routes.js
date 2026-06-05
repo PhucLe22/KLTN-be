@@ -1,12 +1,12 @@
 import express from "express";
 import { orderController } from "../../controllers/order.controller.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
 import {
-  createStaffOrderSchema,
-  updateOrderStatusSchema,
+  createStaffOrder,
+  updateOrderStatus,
 } from "../../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
@@ -20,11 +20,11 @@ orderRouter.post(
   "/",
   protect,
   restrictTo(StaffRole.CASHIER, StaffRole.MANAGER),
-  validateData({ body: createStaffOrderSchema.body }),
-  orderController.createOrderForStaff,
+  validate(createStaffOrder),
+  orderController.createForStaff,
 );
 
-orderRouter.get("/", protect, orderController.getOrderForStaff);
+orderRouter.get("/", protect, orderController.listForStaff);
 
 /**
  * @route   PATCH /internal/orders/:id/status
@@ -41,32 +41,8 @@ orderRouter.patch(
     StaffRole.OWNER,
     StaffRole.KITCHEN,
   ),
-  validateData(updateOrderStatusSchema),
+  validate(updateOrderStatus),
   orderController.updateStatus,
-);
-
-/**
- * @route   POST /internal/orders/:id/confirm
- * @desc    Xác nhận đơn hàng (staff/manager)
- * @access  Private (Internal only)
- */
-orderRouter.post(
-  "/:id/confirm",
-  protect,
-  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.ADMIN),
-  orderController.confirmOrder,
-);
-
-/**
- * @route   POST /internal/orders/:id/prepare
- * @desc    Bắt đầu chế biến (kitchen/staff)
- * @access  Private (Internal only)
- */
-orderRouter.post(
-  "/:id/prepare",
-  protect,
-  restrictTo(StaffRole.KITCHEN, StaffRole.MANAGER, StaffRole.ADMIN),
-  orderController.startPreparing,
 );
 
 export default orderRouter;

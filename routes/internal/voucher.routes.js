@@ -1,13 +1,13 @@
 import express from "express";
 import { voucherController } from "../../controllers/voucher.controller.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
 import {
-  createVoucherSchema,
-  updateVoucherSchema,
-  deleteVoucherSchema,
+  createVoucher,
+  updateVoucher,
+  deleteVoucher,
 } from "../../contracts/input/promotions.schema.js";
 
 const voucherRouter = express.Router();
@@ -22,8 +22,8 @@ voucherRouter.use(restrictTo(StaffRole.ADMIN, StaffRole.OWNER, StaffRole.MANAGER
  */
 voucherRouter.post(
   "/",
-  validateData(createVoucherSchema),
-  voucherController.createVoucher,
+  validate(createVoucher),
+  voucherController.create,
 );
 
 /**
@@ -32,8 +32,8 @@ voucherRouter.post(
  */
 voucherRouter.patch(
   "/:id",
-  validateData(updateVoucherSchema),
-  voucherController.updateVoucher,
+  validate(updateVoucher),
+  voucherController.update,
 );
 
 /**
@@ -42,8 +42,8 @@ voucherRouter.patch(
  */
 voucherRouter.delete(
   "/:id",
-  validateData(deleteVoucherSchema),
-  voucherController.deleteVoucher,
+  validate(deleteVoucher),
+  voucherController.remove,
 );
 
 export default voucherRouter;

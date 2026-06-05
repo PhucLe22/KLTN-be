@@ -1,7 +1,7 @@
 import express from "express";
 import { voucherController } from "../controllers/voucher.controller.js";
-import { validateData } from "../middlewares/validate.middleware.js";
-import { getAvailableVouchersSchema } from "../contracts/input/promotions.schema.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { getAvailableVouchers } from "../contracts/input/promotions.schema.js";
 
 const promotionRouter = express.Router();
 
@@ -12,8 +12,8 @@ const promotionRouter = express.Router();
  */
 promotionRouter.get(
   "/available",
-  validateData(getAvailableVouchersSchema),
-  voucherController.getAvailableVouchers,
+  validate(getAvailableVouchers),
+  voucherController.listAvailable,
 );
 
 export default promotionRouter;

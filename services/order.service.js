@@ -1,22 +1,14 @@
-import { BaseService } from "./base.service.js";
 import { orderRepository } from "../repositories/order.repository.js";
 import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { prisma } from "../lib/prisma.js";
-import { BadRequestException, NotFoundException, ForbiddenException } from "../lib/httpExceptions.js";
+import { ERR } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { OrderType, OrderStatus, ROOT_USER_ID } from "../constants/enum.js";
+import { OrderType, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
-import { generateOrderCode } from "../lib/helpers.js";
 
-class OrderService extends BaseService {
-  constructor() {
-    super(orderRepository);
-    this.customerRepo = customerRepository;
-    this.productRepo = productRepository;
-    this.staffRepo = staffRepository;
-  }
+class OrderService  {
 
   // Customer (Auth) 
   // Staff (Auth) create order for Guest (user_id?)/ Customer
@@ -29,18 +21,17 @@ class OrderService extends BaseService {
   async createOrder(body, user) {
     return await prisma.$transaction(async (tx) => {
       const { storeId, type, items, note, tableNumber, deliveryInfo } = body;
-      
+
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
       const totals = this.#calculateTotals(subtotal, type);
 
-      const customer = await this.customerRepo.findCustomerByUserId(user.id, tx);
+      const customer = await customerRepository.findCustomerByUserId(user.id, tx);
       if (!customer) {
-        throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+        throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
       }
       const customerId = customer.id;
 
       const orderData = {
-        orderCode: generateOrderCode(type),
         storeId,
         type,
         subtotal,
@@ -64,27 +55,27 @@ class OrderService extends BaseService {
         };
       }
 
-      const order = await this.repository.create(orderData, tx);
+      const order = await orderRepository.create(orderData, tx);
 
-      return await this.repository.findByIdWithRelations(order.id, tx);
+      return await orderRepository.findByIdWithRelations(order.id, tx);
     });
   }
 
   async createOrderForStaff(storeId, body, user) {
     return await prisma.$transaction(async (tx) => {
       const { type, items, note, tableNumber, phone, deliveryInfo } = body;
-      
+
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
       const totals = this.#calculateTotals(subtotal, type);
 
-      const customer = await this.customerRepo.findByPhone(phone, tx);
+      const customer = await customerRepository.findByPhone(phone, tx);
       if (!customer) {
-        throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+        throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
       }
+      
       const customerId = customer.id;
 
       const orderData = {
-        orderCode: generateOrderCode(type),
         storeId,
         type,
         subtotal,
@@ -108,17 +99,17 @@ class OrderService extends BaseService {
         };
       }
 
-      const order = await this.repository.create(orderData, tx);
+      const order = await orderRepository.create(orderData, tx);
 
-      return await this.repository.findByIdWithRelations(order.id, tx);
+      return await orderRepository.findByIdWithRelations(order.id, tx);
     });
   }
 
   async findByOrderCode(orderCode) {
-    const order = await this.repository.findByOrderCode(orderCode);
+    const order = await orderRepository.findByOrderCode(orderCode);
 
     if (!order) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
     // Get staff info for createdBy
@@ -132,8 +123,8 @@ class OrderService extends BaseService {
 
   async getOrders(userId, query = {}) {
     const filters = buildOrderFilters({ userId, query });
-    const result = await this.repository.getOrdersByFilters(filters);
-    
+    const result = await orderRepository.getOrdersByFilters(filters);
+
     const enrichedItems = await this.#enrichOrdersWithStaffInfo(result.items);
 
     return {
@@ -144,7 +135,7 @@ class OrderService extends BaseService {
 
   async getOrdersForStaff(storeId, query = {}) {
     const filters = buildOrderFilters({ storeId, query });
-    const result = await this.repository.getOrdersByFilters(filters);
+    const result = await orderRepository.getOrdersByFilters(filters);
 
     const enrichedItems = await this.#enrichOrdersWithStaffInfo(result.items);
 
@@ -167,43 +158,18 @@ class OrderService extends BaseService {
   }
 
   async updateStatus(id, status, user) {
-    const order = await this.repository.findByIdWithRelations(id);
+    const order = await orderRepository.findById(id);
 
     if (!order) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
     // Nếu là STAFF/MANAGER/CASHIER, chỉ được update order của store mình
     if (user.staff && order.storeId !== user.staff.storeId) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN);
+      throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
     }
 
-    // Validate status transition
-    this.#validateStatusTransition(order.status, status);
-
-    return await this.repository.updateStatus(id, status);
-  }
-
-  #validateStatusTransition(currentStatus, nextStatus) {
-    const allowedTransitions = {
-      [OrderStatus.NEW]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-      [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
-      [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
-      [OrderStatus.READY]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED],
-      [OrderStatus.COMPLETED]: [OrderStatus.REFUNDED],
-      [OrderStatus.CANCELLED]: [],
-      [OrderStatus.REFUNDED]: [],
-    };
-
-    if (currentStatus === nextStatus) {
-      return;
-    }
-
-    if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
-      throw new BadRequestException(
-        `Cannot transition from ${currentStatus} to ${nextStatus}`
-      );
-    }
+    return await orderRepository.updateStatus(id, status);
   }
 
   async #buildOrderItems(items, tx) {
@@ -211,10 +177,10 @@ class OrderService extends BaseService {
     let subtotal = 0;
 
     for (const item of items) {
-      const product = await this.productRepo.findById(item.productId, null, tx);
+      const product = await productRepository.findById(item.productId, null, tx);
 
       if (!product) {
-        throw new BadRequestException(`${VALIDATION_MESSAGES.PRODUCT_NOT_FOUND} (${item.productId})`);
+        throw ERR.BadRequest(`${VALIDATION_MESSAGES.PRODUCT_NOT_FOUND} (${item.productId})`);
       }
 
       let optionsPrice = 0;
@@ -234,7 +200,7 @@ class OrderService extends BaseService {
           });
 
           if (!optionValue) {
-            throw new BadRequestException(`Option ${opt.optionId} is not valid for product ${item.productId}`);
+            throw ERR.BadRequest(`Option ${opt.optionId} is not valid for product ${item.productId}`);
           }
 
           const price = Number(optionValue.price);
@@ -285,7 +251,7 @@ class OrderService extends BaseService {
   async #getStaffInfoById(staffId) {
     if (!staffId) return null;
 
-    const staff = await this.staffRepo.findWithUser(staffId);
+    const staff = await staffRepository.findWithUser(staffId);
 
     if (!staff) return null;
 
@@ -294,6 +260,7 @@ class OrderService extends BaseService {
       name: staff.user.email,
     };
   }
+
 }
 
 export const orderService = new OrderService();

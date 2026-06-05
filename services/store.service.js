@@ -1,18 +1,14 @@
-import { BaseService } from "./base.service.js";
 import { storeRepository } from "../repositories/store.repository.js";
 import { buildStoreFilters, STORE_SELECT_FIELDS } from "../constants/storeFilters.js";
 
-class StoreService extends BaseService {
-    constructor() {
-        super(storeRepository);
-    }
+class StoreService {
 
     async findAll(query) {
         const { page = 1, limit = 10 } = query;
         
         const { where, sortBy, sortOrder } = buildStoreFilters(query);
 
-        return await this.repository.findAll({
+        return await storeRepository.findAll({
             page,
             limit,
             where,
@@ -22,15 +18,15 @@ class StoreService extends BaseService {
     }
 
     async create(data) {
-        return await this.repository.create(data);
+        return await storeRepository.create(data);
     }
 
     async update(id, data) {
-        return await this.repository.update(id, data);
+        return await storeRepository.update(id, data);
     }
 
     async delete(id) {
-        return await this.repository.update(id, { isDeleted: true });
+        return await storeRepository.update(id, { isDeleted: true });
     }
 }
 
