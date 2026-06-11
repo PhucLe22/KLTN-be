@@ -37,15 +37,22 @@ async function seedProducts() {
     });
     console.log(`✅ Fetched ${allGroups.length} option groups`);
 
+    // Define mapping of Category Slug to Option Group Names
+    const CATEGORY_OPTIONS_MAP = {
+      coffee: ["Size", "Sugar Level", "Ice Level"],
+      drinks: ["Size", "Sugar Level", "Ice Level", "Toppings"]
+    };
+
     // 3. Create Products (10 items)
     const products = [
-      // ... same products list as before
+      // ... (products list remains same)
       // Coffee (6 items)
       {
         sku: "CF001",
         name: "Espresso",
         description: "Cà phê đậm vị truyền thống",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 25000,
         costPrice: 8000,
         taxRate: 8.00,
@@ -55,6 +62,7 @@ async function seedProducts() {
         name: "Americano",
         description: "Cà phê pha máy với nước nóng",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 30000,
         costPrice: 10000,
         taxRate: 8.00,
@@ -64,6 +72,7 @@ async function seedProducts() {
         name: "Cappuccino",
         description: "Cà phê với bọt sữa dày",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 45000,
         costPrice: 15000,
         taxRate: 8.00,
@@ -73,6 +82,7 @@ async function seedProducts() {
         name: "Latte",
         description: "Cà phê với sữa nhiều",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 40000,
         costPrice: 12000,
         taxRate: 8.00,
@@ -82,6 +92,7 @@ async function seedProducts() {
         name: "Mocha",
         description: "Cà phê với chocolate",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 48000,
         costPrice: 16000,
         taxRate: 8.00,
@@ -91,6 +102,7 @@ async function seedProducts() {
         name: "Cold Brew",
         description: "Cà phê ngâm lạnh 12h",
         categoryId: coffeeCategory.id,
+        categorySlug: coffeeCategory.slug,
         basePrice: 35000,
         costPrice: 11000,
         taxRate: 8.00,
@@ -101,6 +113,7 @@ async function seedProducts() {
         name: "Trà Đào Cam Sả",
         description: "Trà tươi với đào và cam sả",
         categoryId: drinksCategory.id,
+        categorySlug: drinksCategory.slug,
         basePrice: 35000,
         costPrice: 10000,
         taxRate: 8.00,
@@ -110,6 +123,7 @@ async function seedProducts() {
         name: "Sinh Tố Bơ",
         description: "Sinh tố bơ creamy",
         categoryId: drinksCategory.id,
+        categorySlug: drinksCategory.slug,
         basePrice: 45000,
         costPrice: 15000,
         taxRate: 8.00,
@@ -119,6 +133,7 @@ async function seedProducts() {
         name: "Nước Ép Cam",
         description: "Nước ép cam tươi",
         categoryId: drinksCategory.id,
+        categorySlug: drinksCategory.slug,
         basePrice: 30000,
         costPrice: 8000,
         taxRate: 8.00,
@@ -128,6 +143,7 @@ async function seedProducts() {
         name: "Yogurt Trái Cây",
         description: "Yogurt với trái cây tươi",
         categoryId: drinksCategory.id,
+        categorySlug: drinksCategory.slug,
         basePrice: 40000,
         costPrice: 12000,
         taxRate: 8.00,
@@ -143,20 +159,30 @@ async function seedProducts() {
           slug
         },
         create: {
-          ...productData,
+          sku: productData.sku,
+          name: productData.name,
+          description: productData.description,
+          categoryId: productData.categoryId,
+          basePrice: productData.basePrice,
+          costPrice: productData.costPrice,
+          taxRate: productData.taxRate,
           slug,
           type: "SIMPLE",
           isActive: true,
         },
       });
-      createdProducts.push(product);
+      // Attach categorySlug for mapping
+      createdProducts.push({ ...product, categorySlug: productData.categorySlug });
     }
 
     console.log(`✅ Created ${createdProducts.length} products`);
 
-    // 4. Link Products to ALL OptionGroups
+    // 4. Link Products to Relevant OptionGroups
     for (const product of createdProducts) {
-      for (const group of allGroups) {
+      const allowedGroupNames = CATEGORY_OPTIONS_MAP[product.categorySlug] || [];
+      const relevantGroups = allGroups.filter(g => allowedGroupNames.includes(g.name));
+
+      for (const group of relevantGroups) {
         // Link Product to OptionGroup
         await prisma.productOptionGroup.upsert({
           where: {

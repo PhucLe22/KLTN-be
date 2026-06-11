@@ -13,6 +13,11 @@ class ProductService  {
     async findBySlug(slug) {
         const product = await productRepository.findBySlug(slug);
         if (!product) throw ERR.NotFound(`Product ${slug} not found`)
+        return product;
+    }
+
+    async generateSlug(name) {
+        return await createSlug(productRepository, name);
     }
 
     async create(data) {
@@ -20,7 +25,7 @@ class ProductService  {
         
         // Generate slug from name if not provided
         if (productData.name && !productData.slug) {
-            productData.slug = await createSlug(productRepository, productData.name);
+            productData.slug = await this.generateSlug(productData.name);
         }
 
         // Convert nested category object to categoryId for Prisma

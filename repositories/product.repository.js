@@ -18,7 +18,8 @@ class ProductRepository extends BaseRepository {
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" } },
-                { sku: { contains: search, mode: "insensitive" } }
+                { sku: { contains: search, mode: "insensitive" } },
+                { category: { name: { contains: search, mode: "insensitive" } } }
             ];
         }
 

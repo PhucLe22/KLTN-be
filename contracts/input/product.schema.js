@@ -23,24 +23,30 @@ export const createProduct = {
     name: z.string().min(1, "Name is required"),
     description: z.string().optional(),
     type: z.enum(Object.values(ProductType)).default("SIMPLE"),
-    basePrice: z.number().positive("Base price must be positive"),
-    costPrice: z.number().positive("Cost price must be positive").optional(),
-    taxRate: z.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").default(0),
-    thumbnail: z.string().url("Invalid thumbnail URL").optional(),
-    images: z.array(z.string().url("Invalid image URL")).optional(),
-    category: z.object({
+    basePrice: z.coerce.number().positive("Base price must be positive"),
+    costPrice: z.coerce.number().positive("Cost price must be positive").optional(),
+    taxRate: z.coerce.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").default(0),
+    thumbnail: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    category: z.preprocess((val) => {
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.object({
       id: f.id,
-    }).optional(),
-    sortOrder: z.number().int("Sort order must be integer").optional(),
-    preparationTime: z.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
-    optionGroups: z.array(z.object({
+    })).optional(),
+    sortOrder: z.coerce.number().int("Sort order must be integer").optional(),
+    preparationTime: z.coerce.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
+    optionGroups: z.preprocess((val) => {
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.array(z.object({
       optionGroupId: f.id,
-      sortOrder: z.number().int("Sort order must be integer").optional(),
+      sortOrder: z.coerce.number().int("Sort order must be integer").optional(),
       optionValues: z.array(z.object({
         optionId: f.id,
-        price: z.number().min(0, "Price must be non-negative")
+        price: z.coerce.number().min(0, "Price must be non-negative")
       })).optional()
-    })).optional()
+    }))).optional()
   }),
 };
 
@@ -54,17 +60,20 @@ export const updateProduct = {
     name: z.string().min(1, "Name is required").optional(),
     description: z.string().optional(),
     type: z.enum(Object.values(ProductType)).optional(),
-    basePrice: z.number().positive("Base price must be positive").optional(),
-    costPrice: z.number().positive("Cost price must be positive").optional(),
-    taxRate: z.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").optional(),
-    thumbnail: z.string().url("Invalid thumbnail URL").optional(),
-    images: z.array(z.string().url("Invalid image URL")).optional(),
-    category: z.object({
+    basePrice: z.coerce.number().positive("Base price must be positive").optional(),
+    costPrice: z.coerce.number().positive("Cost price must be positive").optional(),
+    taxRate: z.coerce.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").optional(),
+    thumbnail: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    category: z.preprocess((val) => {
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.object({
       id: f.id,
-    }).optional(),
-    sortOrder: z.number().int("Sort order must be integer").optional(),
-    preparationTime: z.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
-    isActive: z.boolean().optional(),
+    })).optional(),
+    sortOrder: z.coerce.number().int("Sort order must be integer").optional(),
+    preparationTime: z.coerce.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
+    isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
   }),
 };
 

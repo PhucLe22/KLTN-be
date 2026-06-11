@@ -12,8 +12,14 @@ class OrderRepository extends BaseRepository {
       include: {
         store: true,
         customer: true,
-        delivery: true,
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } }
+          }
+        },
+        assignedChef: { include: { user: true } },
         items: {
+
           include: {
             product: true,
             options: true,
@@ -91,6 +97,26 @@ class OrderRepository extends BaseRepository {
     };
 
     return await this.getOrdersByFilters(filters);
+  }
+
+  async getOrdersByStoreId(storeId, query = {}) {
+    const { page = 1, limit = 10, status } = query;
+    const where = { storeId };
+    if (status) where.status = status;
+
+    return await this.findAll({
+      page: Number(page),
+      limit: Number(limit),
+      where,
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   /**

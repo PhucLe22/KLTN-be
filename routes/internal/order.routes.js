@@ -27,6 +27,13 @@ orderRouter.post(
 orderRouter.get("/", protect, orderController.listForStaff);
 
 /**
+ * @route   GET /internal/orders/store/:storeId
+ * @desc    Lấy danh sách đơn hàng theo storeId (cho staff/manager/admin)
+ * @access  Private (Staff authentication required)
+ */
+orderRouter.get("/store/:storeId", protect, orderController.listByStoreId);
+
+/**
  * @route   PATCH /internal/orders/:id/status
  * @desc    Cập nhật trạng thái đơn hàng (staff/manager/admin)
  * @access  Private (Internal only)

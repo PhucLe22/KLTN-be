@@ -2,6 +2,7 @@ import { orderRepository } from "../repositories/order.repository.js";
 import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
+import { storeRepository } from "../repositories/store.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { ERR } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
@@ -32,6 +33,7 @@ class OrderService  {
       const customerId = customer.id;
 
       const orderData = {
+        orderCode: this.#generateOrderCode(type),
         storeId,
         type,
         subtotal,
@@ -45,6 +47,7 @@ class OrderService  {
 
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
+        console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
         orderData.delivery = {
           create: {
             storeId,
@@ -55,6 +58,7 @@ class OrderService  {
         };
       }
 
+      console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
 
       return await orderRepository.findByIdWithRelations(order.id, tx);
@@ -76,6 +80,7 @@ class OrderService  {
       const customerId = customer.id;
 
       const orderData = {
+        orderCode: this.#generateOrderCode(type),
         storeId,
         type,
         subtotal,
@@ -89,6 +94,7 @@ class OrderService  {
 
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
+        console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
         orderData.delivery = {
           create: {
             storeId,
@@ -99,6 +105,7 @@ class OrderService  {
         };
       }
 
+      console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
 
       return await orderRepository.findByIdWithRelations(order.id, tx);
@@ -143,6 +150,24 @@ class OrderService  {
       items: enrichedItems,
       meta: result.meta,
     };
+  }
+
+  async getOrdersByStoreId(storeId, query = {}, user) {
+    // 1. Check if store exists
+    const store = await storeRepository.findById(storeId);
+    if (!store) {
+      throw ERR.NotFound(VALIDATION_MESSAGES.STORE_NOT_FOUND);
+    }
+
+    // 2. Permission check: Staff can only view their own store unless they are ADMIN/OWNER
+    if (user.staff && 
+        user.staff.role !== "ADMIN" && 
+        user.staff.role !== "OWNER" && 
+        user.staff.storeId !== storeId) {
+      throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+    }
+
+    return await orderRepository.getOrdersByStoreId(storeId, query);
   }
 
   async #enrichOrdersWithStaffInfo(orders) {
@@ -246,6 +271,18 @@ class OrderService  {
     const total = Number(subtotal) - discount + tax + serviceFee;
 
     return { serviceFee, tax, discount, total };
+  }
+
+  #generateOrderCode(type) {
+    const prefix = "VD";
+    const typeMapping = {
+      [OrderType.DELIVERY]: "DE",
+      [OrderType.TAKEAWAY]: "TA",
+      [OrderType.DINE_IN]: "DI",
+    };
+    const typeCode = typeMapping[type] || "OR";
+    const timestamp = Date.now();
+    return `${prefix}-${typeCode}-${timestamp}`;
   }
 
   async #getStaffInfoById(staffId) {

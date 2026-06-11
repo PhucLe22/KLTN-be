@@ -73,8 +73,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "0917630445",
-  "password": "123456"
+  "identifier": "09337104446",
+  "password": "Password123@"
 }
 
 ###
@@ -85,8 +85,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "cashier2.hcm01@trasua.com",
-  "password": "StaffPassword789"
+  "identifier": "admin@foodapp.com",
+  "password": "admin123"
 }
 
 ###
@@ -111,6 +111,30 @@ Content-Type: application/json
 {
   "identifier": "admin@foodapp.com",
   "password": "admin123"
+}
+
+###
+/*
+login as kitchen staff
+*/
+POST http://localhost:5001/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "kitchen1@foodapp.com",
+  "password": "password123"
+}
+
+###
+/*
+login as shipper
+*/
+POST http://localhost:5001/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "test_shipper@foodapp.com",
+  "password": "password123"
 }
 
 ###

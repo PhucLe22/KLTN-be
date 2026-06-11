@@ -38,6 +38,7 @@ export const updateOrderStatus = {
       OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
       OrderStatus.READY,
+      OrderStatus.DELIVERING,
       OrderStatus.COMPLETED,
       OrderStatus.CANCELLED,
     ]),

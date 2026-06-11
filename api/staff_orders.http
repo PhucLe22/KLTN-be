@@ -1,8 +1,13 @@
 @staff_access_token=YOUR_STAFF_TOKEN_HERE
 @order_id=YOUR_ORDER_ID_HERE
+@store_id=YOUR_STORE_ID_HERE
 
 ### Get New Orders (Staff)
 GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=1&limit=10
+Authorization: Bearer {{staff_access_token}}
+
+### Get Orders by Store ID (Staff/Admin)
+GET http://localhost:5001/api/v1/internal/orders/store/{{store_id}}?status=NEW&page=1&limit=10
 Authorization: Bearer {{staff_access_token}}
 
 ### Confirm Order (Staff)
@@ -29,4 +34,13 @@ Content-Type: application/json
 
 {
   "status": "COMPLETED"
+}
+
+### Update Status to DELIVERING
+PATCH http://localhost:5001/api/v1/internal/orders/{{order_id}}/status
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "status": "DELIVERING"
 }

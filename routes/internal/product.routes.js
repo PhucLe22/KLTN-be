@@ -5,6 +5,7 @@ import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
+import { uploadSingleImage } from "../../middlewares/upload.middleware.js";
 import { 
   createProduct,
   updateProductOptionGroup 
@@ -20,6 +21,7 @@ productRouter.post(
   "/",
   protect,
   restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
+  uploadSingleImage("image"),
   validate(createProduct),
   productController.create,
 );

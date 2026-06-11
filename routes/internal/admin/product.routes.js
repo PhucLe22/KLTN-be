@@ -11,6 +11,8 @@ import { protect } from "../../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../../middlewares/authorize.middleware.js";
 import { StaffRole } from "../../../constants/enum.js";
 
+import { uploadSingleImage } from "../../../middlewares/upload.middleware.js";
+
 const router = express.Router();
 
 router.use(protect);
@@ -20,11 +22,17 @@ router.use(restrictTo(StaffRole.ADMIN));
 router.get("/", validate(getProducts), productController.list);
 
 // /api/v1/internal/admin/products
-router.post("/", validate(createProduct), productController.create);
+router.post(
+  "/", 
+  uploadSingleImage("image"),
+  validate(createProduct), 
+  productController.create
+);
 
 // /api/v1/internal/admin/products/:id
 router.put(
   "/:id",
+  uploadSingleImage("image"),
   validate(updateProduct),
   productController.update
 );

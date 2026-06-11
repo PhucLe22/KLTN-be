@@ -10,9 +10,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   schemas  = ["iam", "catalog", "sales", "store", "audit", "public", "loyalty", "delivery"]
-
 }
-
 
 //////////////////////////////////////////////////////
 // ENUMS (GLOBAL - dùng chung nhiều domain)
@@ -31,6 +29,7 @@ enum OrderStatus {
   CONFIRMED
   PREPARING
   READY
+  DELIVERING
   COMPLETED
   CANCELLED
   REFUNDED
@@ -63,6 +62,7 @@ enum StaffRole {
   MANAGER
   CASHIER
   KITCHEN
+  SHIPPER
   OWNER
 
   @@schema("public")
@@ -156,6 +156,7 @@ model AuditLog {
 model User {
   id String @id @default(uuid())
 
+  name     String?
   email    String? @unique // login bằng email (optional)
   phone    String? @unique // login bằng phone
   password String // password đã hash (bcrypt/argon2)
@@ -173,30 +174,30 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id     String @id @default(uuid())
   // Token ID (JTI) hoặc Opaque Token string
-  token     String   @unique @db.VarChar(255)
-  userId    String
-  
+  token  String @unique @db.VarChar(255)
+  userId String
+
   // Tracking & Security
-  deviceInfo String?  // User-Agent string
-  ipAddress  String?  @db.VarChar(45) // Hỗ trợ cả IPv6
-  
+  deviceInfo String? // User-Agent string
+  ipAddress  String? @db.VarChar(45) // Hỗ trợ cả IPv6
+
   // Trạng thái & Bảo mật
-  isRevoked  Boolean  @default(false)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  
+
   // Token Rotation (Cực kỳ quan trọng để chống tấn công Replay)
   // Lưu ID của token mới được tạo ra từ token này
-  replacedBy String?  
-  
+  replacedBy String?
+
   // Quan hệ
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([token]) 
+  @@index([token])
   @@schema("iam")
 }
 
@@ -212,10 +213,14 @@ model Staff {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   store Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
 
+  chefOrders    Order[] @relation("ChefOrders")
+  shipperOrders DeliveryOrder[] @relation("ShipperOrders")
+
   createdAt DateTime @default(now())
 
   @@schema("iam")
 }
+
 
 model Customer {
   id     String  @id @default(uuid())
@@ -239,7 +244,8 @@ model Customer {
   pointTransactions PointTransaction[]
   vouchers          CustomerVoucher[]
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  addresses Address[]
 
   @@schema("iam")
 }
@@ -294,8 +300,8 @@ model Product {
   orderItems OrderItem[]
 
   preparationTime Int? // Time to prepare product (in minutes)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@schema("catalog")
 }
@@ -380,13 +386,14 @@ model Store {
 
   hotline String
 
-  isActive Boolean @default(true)
+  isActive  Boolean @default(true)
   isDeleted Boolean @default(false)
 
   staff          Staff[]
   orders         Order[]
   deliveryOrders DeliveryOrder[]
   vouchers       Voucher[]
+  addresses      Address[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -398,7 +405,7 @@ model Order {
   id         String  @id @default(uuid())
   storeId    String
   customerId String?
-
+  orderCode String @unique
   type   OrderType
   status OrderStatus @default(NEW)
 
@@ -415,7 +422,13 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  chefId          String?
+  expectedReadyAt DateTime?
+
+  assignedChef Staff? @relation("ChefOrders", fields: [chefId], references: [id])
+
   store    Store     @relation(fields: [storeId], references: [id])
+
   customer Customer? @relation(fields: [customerId], references: [id])
 
   items             OrderItem[]
@@ -522,10 +535,20 @@ model DeliveryOrder {
   estimatedFee  Decimal?       @db.Decimal(14, 2) // Phí dự kiến
   actualFee     Decimal?       @db.Decimal(14, 2) // Phí thực tế (dùng khi report)
 
+  // Tracking coords
+  lat Float?
+  lng Float?
+
   // Thông tin shipper (để mở rộng tích hợp API giao hàng sau)
+  shipperId    String?
   shipperName  String?
   shipperPhone String?
   trackingCode String? // Mã tracking từ đơn vị vận chuyển
+
+  deliverySequence Int?
+
+  assignedShipper Staff? @relation("ShipperOrders", fields: [shipperId], references: [id])
+
 
   // Timeline
   requestedAt DateTime  @default(now())
@@ -634,4 +657,31 @@ model VoucherRedemption {
 
   @@index([voucherId])
   @@schema("loyalty")
+}
+
+model Address {
+  id String @id @default(uuid())
+
+  customerId String?
+  storeId    String?
+
+  receiverName  String?
+  receiverPhone String?
+
+  addressLine String
+  lat         Float?
+  lng         Float?
+
+  isDefault Boolean @default(false)
+  label     String? // e.g., Home, Work, Store
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  store    Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([storeId])
+  @@schema("public")
 }

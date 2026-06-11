@@ -21,7 +21,9 @@ async function seedAdmin() {
       data: {
         code: "SYSTEM",
         name: "System Store",
-        address: "System Headquarters",
+        address: "Bitexco Financial Tower, 2 Hai Trieu, District 1, HCMC",
+        lat: 10.7715,
+        lng: 106.7042,
         hotline: "0900000000",
         isActive: true,
       },

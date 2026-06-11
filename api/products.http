@@ -26,7 +26,51 @@ GET http://localhost:5001/api/v1/products/yogurt-trai-cay
 Content-Type: application/json
 
 
-### Create a new product
+### Create a new product (with image upload)
+POST http://localhost:5001/api/v1/internal/products
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="sku"
+
+TIRA-005
+--boundary
+Content-Disposition: form-data; name="name"
+
+Flat White Image
+--boundary
+Content-Disposition: form-data; name="type"
+
+SIMPLE
+--boundary
+Content-Disposition: form-data; name="basePrice"
+
+135000
+--boundary
+Content-Disposition: form-data; name="taxRate"
+
+0.08
+--boundary
+Content-Disposition: form-data; name="category"
+
+{ "id": "{{category_id}}" }
+--boundary
+Content-Disposition: form-data; name="sortOrder"
+
+2
+--boundary
+Content-Disposition: form-data; name="optionGroups"
+
+[{"optionGroupId": "{{option_group_id}}", "sortOrder": 1, "optionValues": [{"optionId": "{{option_id}}", "price": 20000}]}]
+--boundary
+Content-Disposition: form-data; name="image"; filename="coffee.jpg"
+Content-Type: image/jpeg
+
+< ./coffee.jpg
+--boundary--
+
+### Create a new product (JSON - legacy/no image)
 POST http://localhost:5001/api/v1/internal/products
 Content-Type: application/json
 Authorization: Bearer {{access_token}}

@@ -1,0 +1,123 @@
+
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMjJmNGViZi1lZDcxLTQ4NjUtOWM2MC0wNTM0NzY5NDVlZjYiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyY2I5NDhlYy01YTc1LTRiYmQtYWQ1Yi0xYTA2YzdhMTU5NzAiLCJpYXQiOjE3ODA4MjI3MzUsImV4cCI6MTc4MDgyNjMzNX0.54pBunFSzgLTHR4KUh05qx7GnPIPn3i1t2ubXc7UyR0
+@staffToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNGQ3YzIyMS1mZmRlLTQ4NmMtOWYzNC1hMzZiZWE0YzUxZmUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiS0lUQ0hFTiIsInNpZCI6ImM0MWNmN2ZhLTJiODktNDJjMi1iMWFlLTg2YzM2YzM1ZDI4MiIsInN0b3JlSWQiOiIyOWQxMDZhZC1lNWNmLTQwNWItYThkYi1jZDJlODQzOGRhOGQiLCJpYXQiOjE3ODA4MjI4OTEsImV4cCI6MTc4MDgyNjQ5MX0.lM1ccKmEISww_w2td5r2-cGS9FIxsAMITg7HCbBEKXI
+@storeId = 29d106ad-e5cf-405b-a8db-cd2e8438da8d
+@productId = 322ce951-9dfc-4833-9fa8-f30481427651
+@orderId = e7a4590a-70ed-4299-852d-d4111d75d04f
+@orderId1=5ecb5bdd-6156-4264-908c-05c5e817bc4b
+@orderId2=7087c3cd-8a44-40d6-b216-b35edb30df15
+@orderId3=028c9250-dafe-4a7f-b4d3-971fb53b2099
+@orderId4=2ab04f60-a01d-4fc7-890f-461d2a1f013a
+@orderId5=4879378c-ee53-4869-a3dd-779e1f589303
+### ORDER_ID_FROM_STEP_1
+### END-TO-END ORDER FLOW WITH SOLVER INTEGRATION
+
+# This file documents the standard flow for a delivery order
+# 1. NEW -> CONFIRMED (Staff confirm)
+# 2. CONFIRMED -> PREPARING (Solver schedules kitchen and VRP)
+# 3. PREPARING -> READY (Kitchen finishes or deadline reached)
+# 4. READY -> DELIVERING (Shipper picks up based on route)
+# 5. DELIVERING -> COMPLETED (Shipper finishes)
+
+# NEW SCHEMA NOTES:
+# - chefId & expectedReadyAt are in the root of the Order response.
+# - shipperId & deliverySequence are nested inside the 'delivery' object.
+
+
+### STEP 1: Customer Creates a Delivery Order
+# Status: NEW
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "storeId": "{{storeId}}",
+  "type": "DELIVERY",
+  "note": "Please deliver to my home",
+  "deliveryInfo": {
+    "receiverName": "Customer Name",
+    "receiverPhone": "0987654321",
+    "addressLine": "10 Nguyen Thi Minh Khai, Quan 1, Ho Chi Minh City"
+  },
+  "items": [
+    {
+      "productId": "{{productId}}",
+      "quantity": 2
+    }
+  ]
+}
+
+### STEP 2: Staff Confirms the Order
+# Status: NEW -> CONFIRMED
+PATCH http://localhost:5001/api/v1/internal/orders/{{orderId4}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "CONFIRMED"
+}
+
+### STEP 3: Get Unified Schedule (Solver)
+# Solver looks for CONFIRMED/PREPARING Delivery Orders and:
+# 1. Assigns Kitchen Staff (chefId in root)
+# 2. Assigns Shippers and calculates delivery routes (shipperId & sequence in 'delivery' object)
+# Status: CONFIRMED -> PREPARING (Assignment determined)
+POST http://localhost:5001/api/v1/internal/kitchen/schedule
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "tardiness_weight": 1000
+}
+
+# Example Response Extract:
+# {
+#   "data": {
+#     "orderCode": "VD-DE-12345",
+#     "chefId": "uuid-chef-1",
+#     "expectedReadyAt": "2026-06-07T14:30:00.000Z",
+#     "delivery": {
+#       "shipperId": "uuid-shipper-2",
+#       "deliverySequence": 1,
+#       "status": "PENDING"
+#     }
+#   }
+# }
+
+
+### STEP 4: Physical Status Transitions
+# Once assignments are known, orders move through these stages:
+
+# A. Start Preparation
+PATCH http://localhost:5001/api/v1/internal/orders/{{orderId}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "PREPARING" }
+
+# B. Finish Preparation
+PATCH http://localhost:5001/api/v1/internal/orders/{{orderId1}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "READY" }
+
+### STEP 5: Shipper Picks Up and Marks as DELIVERING
+# Status: READY -> DELIVERING
+PATCH http://localhost:5001/api/v1/internal/orders/{{orderId}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "DELIVERING"
+}
+
+### STEP 7: Shipper Completes Delivery
+# Status: DELIVERING -> COMPLETED
+PATCH http://localhost:5001/api/v1/internal/orders/{{orderId}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "COMPLETED"
+}

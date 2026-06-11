@@ -12,7 +12,29 @@ export const OrderMap = {
   tableNumber: true,
   createdAt: true,
   updatedAt: true,
+  expectedReadyAt: true,
+  assignedChef: {
+    id: true,
+    user: {
+      name: true,
+      email: true,
+    },
+  },
+  delivery: {
+    id: true,
+    status: true,
+    shipperId: true,
+    deliverySequence: true,
+    assignedShipper: {
+      id: true,
+      user: {
+        name: true,
+        email: true,
+      },
+    },
+  },
   store: {
+
     id: true,
     name: true,
     address: true,
@@ -39,4 +61,18 @@ export const OrderMap = {
       price: true,
     }]
   }],
+};
+
+export const StaffOrderSummaryMap = {
+  orderCode: true,
+  status: true,
+  total: true,
+  items: [{
+    quantity: true,
+    product: {
+      name: true,
+      thumbnail: true,
+      sku: true,
+    }
+  }]
 };

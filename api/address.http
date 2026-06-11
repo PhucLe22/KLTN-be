@@ -1,0 +1,52 @@
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5MjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
+
+### Create Address for Customer
+POST http://localhost:5001/api/v1/addresses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "customerId": "50682m68-9c02-4a6b-97a2-33010792b7e6",
+  "receiverName": "Nguyen Van A",
+  "receiverPhone": "0909123456",
+  "addressLine": "123 Nguyen Hue, District 1, Ho Chi Minh City",
+  "label": "Home",
+  "isDefault": true
+}
+
+### Create Address for Store
+POST http://localhost:5001/api/v1/addresses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "storeId": "fd102949-677b-4843-ada1-8a940c738438",
+  "addressLine": "456 Le Loi, District 1, Ho Chi Minh City",
+  "label": "Warehouse"
+}
+
+### Update Address
+PUT http://localhost:5001/api/v1/addresses/address-uuid-here
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "receiverName": "Nguyen Van B",
+  "addressLine": "789 Pastuer, District 3, Ho Chi Minh City"
+}
+
+### Set Default Address
+PATCH http://localhost:5001/api/v1/addresses/address-uuid-here/default
+Authorization: Bearer {{accessToken}}
+
+### List Addresses by Customer
+GET http://localhost:5001/api/v1/addresses/customer/50682m68-9c02-4a6b-97a2-33010792b7e6
+Authorization: Bearer {{accessToken}}
+
+### List Addresses by Store
+GET http://localhost:5001/api/v1/addresses/store/fd102949-677b-4843-ada1-8a940c738438
+Authorization: Bearer {{accessToken}}
+
+### Delete Address
+DELETE http://localhost:5001/api/v1/addresses/address-uuid-here
+Authorization: Bearer {{accessToken}}

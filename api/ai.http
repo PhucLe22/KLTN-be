@@ -1,0 +1,81 @@
+### FoodApp AI Assistant Chat
+# The AI is configured as a helpful assistant that can search for products and check order details.
+
+### 1. General Product Inquiry
+# Ask the AI to list available products. 
+# It will use the 'searchProducts' tool and then summarize the results.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hi, what products do you have? I'm looking for some drinks."
+    }
+  ]
+}
+
+### 2. Search for Specific Products
+# Search for products by name or category.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Do you have any coffee? Maybe a Latte?"
+    }
+  ]
+}
+
+### 3. Get Detailed Product Information
+# Ask for details about a specific product using its slug.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Can you tell me more about the 'yogurt-trai-cay'?"
+    }
+  ]
+}
+
+### 4. Check Order Status
+# Track an order by its unique code.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hi, can you check the status of my order VD-DE-1780747990298"
+    }
+  ]
+}
+
+### 5. Multi-turn Conversation
+# The AI maintains context if you pass the message history.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "What coffee do you have?"
+    },
+    {
+      "role": "assistant",
+      "content": "We have several coffee options including Espresso, Americano, Cappuccino, Latte, Mocha, and Cold Brew. Which one would you like to know more about?"
+    },
+    {
+      "role": "user",
+      "content": "Tell me about the Cold Brew price and description."
+    }
+  ]
+}

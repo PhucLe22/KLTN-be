@@ -22,21 +22,20 @@ export const protect = asyncHandler(async (req, res, next) => {
   const decoded = JwtHelper.verifyAccessToken(token);
 
   // 3. Kiểm tra User còn tồn tại trong Database không
-  // const currentUser = await userRepository.findById(decoded.sub);
-  // if (!currentUser) {
-  //   throw ERR.Unauthorized(
-  //     "Người dùng sở hữu token này không còn tồn tại.",
-  //   );
-  // }
+  const currentUser = await userRepository.findById(decoded.sub);
+  if (!currentUser) {
+    throw ERR.Unauthorized(
+      "Người dùng sở hữu token này không còn tồn tại.",
+    );
+  }
 
   // 4. Kiểm tra tài khoản có bị khóa (isActive) không
-  // if (!currentUser.isActive) {
-  //   throw ERR.Forbidden("Tài khoản của bạn đã bị khóa.");
-  // }
+  if (!currentUser.isActive) {
+    throw ERR.Forbidden("Tài khoản của bạn đã bị khóa.");
+  }
 
   // 5. Gán thông tin user vào request để các Controller/Middleware sau sử dụng
-  // Ông có thể gán toàn bộ user hoặc chỉ id/role tùy nhu cầu
-  // req.user = currentUser;
+  req.user = currentUser;
 
   // 6. Gán staff info từ JWT claims để restrictTo middleware có thể kiểm tra role
   if (decoded.role && decoded.sid) {

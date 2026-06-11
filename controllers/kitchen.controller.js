@@ -10,6 +10,23 @@ class KitchenController {
 
     return res.ok(schedule);
   });
+
+  getDeliverySchedule = asyncHandler(async (req, res) => {
+    const storeId = req.user.staff.storeId;
+    const staffId = req.user.staff.id;
+    const role = req.user.staff.role;
+    
+    // Use cache only for GET requests
+    const useCache = req.method === 'GET';
+
+    // If SHIPPER, only get their own schedule
+    const shipperId = role === 'SHIPPER' ? staffId : null;
+
+    const schedule = await kitchenService.getDeliverySchedule(storeId, !useCache, shipperId);
+
+    return res.ok(schedule);
+  });
+
 }
 
 export const kitchenController = new KitchenController();

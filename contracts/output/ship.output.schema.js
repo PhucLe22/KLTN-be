@@ -24,3 +24,23 @@ export const RouteOptimizationMap = {
   }],
   unassignedOrders: [true],
 };
+
+export const InternalDeliveryQueueMap = {
+  id: 'order.orderCode',
+  customer: (s) => s.order.customer?.name || "Khách hàng",
+  status: (s) => {
+    const statusMap = {
+      NEW: "MỚI",
+      CONFIRMED: "ĐÃ XÁC NHẬN",
+      PREPARING: "ĐANG CHUẨN BỊ",
+      READY: "SẴN SÀNG",
+      DELIVERING: "ĐANG GIAO",
+    };
+    return statusMap[s.order.status] || s.order.status;
+  },
+  address: 'addressLine',
+  items: (s) => s.order.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+  location: (s) => ({ lng: s.lng, lat: s.lat }),
+  isFocused: (s, ctx) => ctx.firstId === s.id,
+};
+

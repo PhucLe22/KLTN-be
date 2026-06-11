@@ -1,7 +1,7 @@
 import { orderService } from "../services/order.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { mapper } from "../lib/mapper.js";
-import { OrderMap } from "../contracts/output/order.output.schema.js";
+import { OrderMap, StaffOrderSummaryMap } from "../contracts/output/order.output.schema.js";
 
 class OrderController {
   create = asyncHandler(async (req, res) => {
@@ -43,6 +43,14 @@ class OrderController {
     const staffStoreId = req.user?.staff?.storeId;
     const orders = await orderService.getOrdersForStaff(staffStoreId, req.query);
     const result = mapper(orders.items, OrderMap);
+
+    return res.ok(result, orders.meta);
+  });
+
+  listByStoreId = asyncHandler(async (req, res) => {
+    const { storeId } = req.params;
+    const orders = await orderService.getOrdersByStoreId(storeId, req.query, req.user);
+    const result = mapper(orders.items, StaffOrderSummaryMap);
 
     return res.ok(result, orders.meta);
   });

@@ -9,7 +9,7 @@ import { ERR } from "../lib/httpExceptions.js";
 import { prisma } from "../lib/prisma.js";
 import { JwtHelper } from "../lib/jwt.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { UserType } from "../constants/enum.js";
+import { UserType, StaffRole } from "../constants/enum.js";
 class AuthService {
 
   async registerCustomer(data) {
@@ -92,7 +92,7 @@ class AuthService {
   // Logic tạo Identity chung
 
   async #createUserIdentity(data, tx) {
-    const { email, phone, password } = data;
+    const { email, phone, password, name } = data;
 
     const isTaken = await userRepository.isIdentityTaken(email, phone);
     if (isTaken) {
@@ -103,6 +103,7 @@ class AuthService {
 
     return await userRepository.create(
       {
+        name,
         email,
         phone,
         password: hashedPassword,
@@ -221,6 +222,11 @@ class AuthService {
       claims.role = user.staff.role;
       claims.sid = user.staff.id;
       claims.storeId = user.staff.storeId;
+
+      if (user.staff.role === StaffRole.SHIPPER && user.staff.store) {
+        claims.lat = user.staff.store.lat;
+        claims.lng = user.staff.store.lng;
+      }
     } else if (user.customer) {
       claims.type = UserType.CUSTOMER;
       claims.cid = user.customer.id;

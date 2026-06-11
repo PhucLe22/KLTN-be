@@ -21,7 +21,9 @@ async function seedManager() {
       data: {
         code: "MAIN",
         name: "Main Store",
-        address: "123 Main Street",
+        address: "720A Dien Bien Phu, Binh Thanh, HCMC",
+        lat: 10.7950,
+        lng: 106.7219,
         hotline: "0901234567",
         isActive: true,
       },

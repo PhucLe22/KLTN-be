@@ -1,3 +1,7 @@
 ### Get All Stores
 GET http://localhost:5001/api/v1/stores
 Content-Type: application/json
+
+### Get Stores Near Location
+GET http://localhost:5001/api/v1/stores?lat=10.7757&lng=106.7009
+Content-Type: application/json
