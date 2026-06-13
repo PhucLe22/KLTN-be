@@ -1,26 +1,28 @@
 import "dotenv/config";
 import { prisma } from "../lib/prisma.js";
 
-const STORE_ID = "3c7a4a4f-e551-4344-8bab-2086262274ff";
-
 async function main() {
-  console.log("🧹 Deleting all orders for store:", STORE_ID);
+  console.log("🧹 Deleting ALL orders and related records across the entire network...");
   
   // Need to delete in correct order due to foreign keys: OrderItem, Payment, DeliveryOrder, Order
   
   // 1. Delete OrderItems
-  await prisma.orderItem.deleteMany({ where: { order: { storeId: STORE_ID } } });
+  const orderItems = await prisma.orderItem.deleteMany({});
+  console.log(`- Deleted ${orderItems.count} order items.`);
   
   // 2. Delete Payments
-  await prisma.payment.deleteMany({ where: { order: { storeId: STORE_ID } } });
+  const payments = await prisma.payment.deleteMany({});
+  console.log(`- Deleted ${payments.count} payments.`);
   
   // 3. Delete DeliveryOrders
-  await prisma.deliveryOrder.deleteMany({ where: { storeId: STORE_ID } });
+  const deliveryOrders = await prisma.deliveryOrder.deleteMany({});
+  console.log(`- Deleted ${deliveryOrders.count} delivery orders.`);
   
   // 4. Delete Orders
-  const deletedOrders = await prisma.order.deleteMany({ where: { storeId: STORE_ID } });
+  const orders = await prisma.order.deleteMany({});
+  console.log(`- Deleted ${orders.count} orders.`);
   
-  console.log(`✅ Deleted ${deletedOrders.count} orders and related records.`);
+  console.log(`✅ Clean slate achieved. Network-wide orders cleared.`);
 }
 
 main()

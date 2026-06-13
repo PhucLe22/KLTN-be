@@ -25,6 +25,25 @@ class StaffRepository extends BaseRepository {
     });
   }
 
+  // Lấy danh sách nhân viên của nhiều chi nhánh
+  async findByStores(storeIds, tx = null) {
+    return await this.getModel(tx).findMany({
+      where: {
+        storeId: { in: storeIds },
+        isActive: true,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+  }
+
   async findWithUser(staffId, tx = null) {
     return await this.getModel(tx).findUnique({
       where: { id: staffId },

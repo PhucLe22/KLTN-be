@@ -47,4 +47,15 @@ orderRouter.get(
   orderController.list,
 );
 
+/**
+ * @route   GET /api/v1/orders/:id/activities
+ * @desc    Lấy lịch sử hoạt động của đơn hàng (timeline)
+ * @access  Private (Customer authentication required)
+ */
+orderRouter.get(
+  "/:id/activities",
+  protect,
+  orderController.getActivities,
+);
+
 export default orderRouter;

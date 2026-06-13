@@ -58,7 +58,35 @@ Content-Type: application/json
   ]
 }
 
-### 5. Multi-turn Conversation
+### 5. Find All Stores
+# Ask the AI to list all available stores.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Can you list all available stores?"
+    }
+  ]
+}
+
+### 6. Find Closest Store
+# Ask the AI to find the closest store based on a provided address.
+POST http://localhost:5001/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the closest store to 123 Nguyen Van Linh, District 7, Ho Chi Minh City?"
+    }
+  ]
+}
+
+### 7. Multi-turn Conversation
 # The AI maintains context if you pass the message history.
 POST http://localhost:5001/api/v1/ai/chat
 Content-Type: application/json

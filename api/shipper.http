@@ -1,0 +1,35 @@
+### SHIPPER API TESTS
+
+@baseUrl = http://localhost:5001/api/v1
+@shipperEmail = shipper1@foodapp.com
+@password = password123
+
+# @name loginShipper
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{shipperEmail}}",
+  "password": "{{password}}"
+}
+
+###
+@shipperToken = {{loginShipper.response.body.data.accessToken}}
+@orderId = YOUR_ORDER_ID_HERE
+
+### 1. Get Shipper's Delivery Schedule
+# Status: READY
+GET {{baseUrl}}/internal/kitchen/delivery-schedule
+Authorization: Bearer {{shipperToken}}
+
+### 2. Confirm Pickup
+# Status: READY -> DELIVERING
+# Delivery Status: PENDING/SHIPPER_ASSIGNED -> PICKED_UP
+PATCH {{baseUrl}}/internal/orders/{{orderId}}/pickup
+Authorization: Bearer {{shipperToken}}
+
+### 3. Complete Delivery
+# Status: DELIVERING -> COMPLETED
+# Delivery Status: PICKED_UP -> DELIVERED
+PATCH {{baseUrl}}/internal/orders/{{orderId}}/complete
+Authorization: Bearer {{shipperToken}}

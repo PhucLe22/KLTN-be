@@ -215,6 +215,7 @@ model Staff {
 
   chefOrders    Order[] @relation("ChefOrders")
   shipperOrders DeliveryOrder[] @relation("ShipperOrders")
+  deliveryRoute DeliveryRoute? @relation("ShipperRoute")
 
   createdAt DateTime @default(now())
 
@@ -559,8 +560,23 @@ model DeliveryOrder {
   store Store @relation(fields: [storeId], references: [id])
 
   events DeliveryEvent[] // Log status
+  route  DeliveryRoute?
 
   @@index([storeId, requestedAt])
+  @@schema("delivery")
+}
+
+model DeliveryRoute {
+  id        String   @id @default(uuid())
+  shipperId String   @unique
+  deliveryOrderId String? @unique
+  
+  route     Json     // Stores the full array of optimized steps
+  updatedAt DateTime @updatedAt
+
+  shipper Staff @relation("ShipperRoute", fields: [shipperId], references: [id], onDelete: Cascade)
+  deliveryOrder DeliveryOrder? @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+
   @@schema("delivery")
 }
 

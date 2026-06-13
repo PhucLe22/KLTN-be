@@ -52,4 +52,28 @@ orderRouter.patch(
   orderController.updateStatus,
 );
 
+/**
+ * @route   PATCH /internal/orders/:id/pickup
+ * @desc    Shipper xác nhận đã lấy hàng
+ * @access  Private (SHIPPER only)
+ */
+orderRouter.patch(
+  "/:id/pickup",
+  protect,
+  restrictTo(StaffRole.SHIPPER),
+  orderController.confirmPickup
+);
+
+/**
+ * @route   PATCH /internal/orders/:id/complete
+ * @desc    Shipper xác nhận đã giao hàng thành công
+ * @access  Private (SHIPPER only)
+ */
+orderRouter.patch(
+  "/:id/complete",
+  protect,
+  restrictTo(StaffRole.SHIPPER),
+  orderController.completeDelivery
+);
+
 export default orderRouter;

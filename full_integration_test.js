@@ -132,10 +132,13 @@ async function runIntegrationTest() {
 
     // Shipper Routes
     console.log("\n[SHIPPER ROUTES]");
-    if (result.delivery.schedule.length > 0) {
-        result.delivery.schedule.forEach(step => {
-            const nodeInfo = step.type === 'STORE' ? '🏪 STORE' : (step.type === 'PICKUP' ? `📦 PICKUP (${step.orderCode})` : `📍 DELIVERY (${step.orderCode})`);
-            console.log(`- Shipper ${step.shipperName}: ${nodeInfo} at ${step.arrival_datetime}`);
+    if (result.delivery.shippers && result.delivery.shippers.length > 0) {
+        result.delivery.shippers.forEach(shipper => {
+            console.log(`\n--- Shipper: ${shipper.shipperName} ---`);
+            shipper.routes.forEach(step => {
+                const nodeInfo = step.type === 'STORE' ? '🏪 STORE' : (step.type === 'PICKUP' ? `📦 PICKUP (${step.orderCode})` : `📍 DELIVERY (${step.orderCode})`);
+                console.log(`- ${nodeInfo} at ${step.arrival_datetime}`);
+            });
         });
     }
 

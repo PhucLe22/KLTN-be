@@ -6,7 +6,7 @@ import { storeRepository } from "../repositories/store.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { ERR } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { OrderType, ROOT_USER_ID } from "../constants/enum.js";
+import { OrderType, OrderStatus, StaffRole, DeliveryStatus, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
 
 class OrderService  {
@@ -61,6 +61,22 @@ class OrderService  {
       console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
 
+      // Record initial event for delivery order
+      if (type === OrderType.DELIVERY) {
+        const delivery = await tx.deliveryOrder.findUnique({
+          where: { orderId: order.id }
+        });
+        if (delivery) {
+          await tx.deliveryEvent.create({
+            data: {
+              deliveryId: delivery.id,
+              status: OrderStatus.NEW,
+              note: "Đơn hàng đã được đặt thành công",
+            }
+          });
+        }
+      }
+
       return await orderRepository.findByIdWithRelations(order.id, tx);
     });
   }
@@ -107,6 +123,22 @@ class OrderService  {
 
       console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
+
+      // Record initial event for delivery order
+      if (type === OrderType.DELIVERY) {
+        const delivery = await tx.deliveryOrder.findUnique({
+          where: { orderId: order.id }
+        });
+        if (delivery) {
+          await tx.deliveryEvent.create({
+            data: {
+              deliveryId: delivery.id,
+              status: OrderStatus.NEW,
+              note: "Đơn hàng đã được đặt thành công (bởi nhân viên)",
+            }
+          });
+        }
+      }
 
       return await orderRepository.findByIdWithRelations(order.id, tx);
     });
@@ -183,18 +215,193 @@ class OrderService  {
   }
 
   async updateStatus(id, status, user) {
-    const order = await orderRepository.findById(id);
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) {
+        throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+
+      // Nếu là STAFF/MANAGER/CASHIER, chỉ được update order của store mình
+      if (user.staff && 
+          user.staff.role !== StaffRole.ADMIN && 
+          user.staff.role !== StaffRole.OWNER && 
+          order.storeId !== user.staff.storeId) {
+        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+      }
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status },
+        include: {
+          delivery: true,
+          store: true,
+          customer: true,
+          items: true,
+        }
+      });
+
+      // Record Delivery Event if it's a delivery order
+      if (updatedOrder.delivery) {
+        let note = `Trạng thái đơn hàng thay đổi thành ${status}`;
+        
+        // Custom notes based on status
+        if (status === OrderStatus.CONFIRMED) note = "Đơn hàng đã được xác nhận";
+        else if (status === OrderStatus.PREPARING) note = "Cửa hàng đang chuẩn bị món ăn";
+        else if (status === OrderStatus.READY) note = "Đơn hàng đã sẵn sàng để giao";
+        else if (status === OrderStatus.CANCELLED) note = "Đơn hàng đã bị hủy";
+
+        await tx.deliveryEvent.create({
+          data: {
+            deliveryId: updatedOrder.delivery.id,
+            status: status,
+            note: note,
+          }
+        });
+      }
+
+      return updatedOrder;
+    });
+  }
+
+  async getOrderActivities(id, user) {
+    const order = await orderRepository.findByIdWithRelations(id);
 
     if (!order) {
       throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
-    // Nếu là STAFF/MANAGER/CASHIER, chỉ được update order của store mình
-    if (user.staff && order.storeId !== user.staff.storeId) {
+    // Security check: Only customer who own the order or staff can see activities
+    if (order.customerId !== user.customer?.id && !user.staff) {
       throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
     }
 
-    return await orderRepository.updateStatus(id, status);
+    if (!order.delivery) {
+      // For non-delivery orders, synthesized timeline from order createdAt/updatedAt
+      // or return just the basic placed event
+      return [
+        {
+          status: OrderStatus.NEW,
+          createdAt: order.createdAt,
+          note: "Đơn hàng đã được đặt thành công",
+        }
+      ];
+    }
+
+    const events = await prisma.deliveryEvent.findMany({
+      where: { deliveryId: order.delivery.id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return events;
+  }
+
+
+  async confirmPickup(id, user) {
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) {
+        throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+
+      if (order.status !== OrderStatus.READY) {
+        throw ERR.BadRequest(ERROR_MESSAGES.ORDER_STATUS_INVALID);
+      }
+
+      // Check if user is a shipper
+      if (user.staff?.role !== StaffRole.SHIPPER) {
+        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+      }
+
+      // Check if order is assigned to this shipper
+      if (order.delivery?.shipperId !== user.staff.id) {
+        throw ERR.Forbidden(ERROR_MESSAGES.ORDER_NOT_ASSIGNED_TO_SHIPPER);
+      }
+
+      // Update Order Status
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: {
+          status: OrderStatus.DELIVERING,
+          delivery: {
+            update: {
+              status: DeliveryStatus.PICKED_UP,
+              pickedAt: new Date(),
+            }
+          }
+        },
+        include: {
+          delivery: true,
+          store: true,
+          customer: true,
+          items: true,
+        }
+      });
+
+      // Record Delivery Event
+      await tx.deliveryEvent.create({
+        data: {
+          deliveryId: order.delivery.id,
+          status: DeliveryStatus.PICKED_UP,
+          note: `Đơn hàng đã được lấy bởi shipper ${user.name || user.id}`,
+        }
+      });
+
+      return updatedOrder;
+    });
+  }
+
+  async completeDelivery(id, user) {
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) {
+        throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+
+      if (order.status !== OrderStatus.DELIVERING) {
+        throw ERR.BadRequest(ERROR_MESSAGES.ORDER_STATUS_INVALID);
+      }
+
+      // Check if user is a shipper
+      if (user.staff?.role !== StaffRole.SHIPPER) {
+        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+      }
+
+      if (order.delivery?.shipperId !== user.staff.id) {
+        throw ERR.Forbidden(ERROR_MESSAGES.ORDER_NOT_ASSIGNED_TO_SHIPPER);
+      }
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: {
+          status: OrderStatus.COMPLETED,
+          delivery: {
+            update: {
+              status: DeliveryStatus.DELIVERED,
+              deliveredAt: new Date(),
+            }
+          }
+        },
+        include: {
+          delivery: true,
+          store: true,
+          customer: true,
+          items: true,
+        }
+      });
+
+      await tx.deliveryEvent.create({
+        data: {
+          deliveryId: order.delivery.id,
+          status: DeliveryStatus.DELIVERED,
+          note: `Đơn hàng đã được giao thành công bởi shipper ${user.name || user.id}`,
+        }
+      });
+
+      return updatedOrder;
+    });
   }
 
   async #buildOrderItems(items, tx) {

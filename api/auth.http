@@ -133,7 +133,7 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "test_shipper@foodapp.com",
+  "identifier": "shipper1@foodapp.com",
   "password": "password123"
 }
 

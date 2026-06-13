@@ -14,19 +14,24 @@ class KitchenService {
       process.env.LOGISTIC_SOLVER_URL || "http://localhost:8000";
   }
 
-  async getSchedule(storeId, tardinessWeight = 1000) {
+  async getSchedule(storeIds, tardinessWeight = 1000) {
+    if (!Array.isArray(storeIds)) {
+      storeIds = [storeIds];
+    }
     console.log(
-      `[KitchenService] Triggering unified solver for store ${storeId}...`,
+      `[KitchenService] Triggering unified solver for stores ${storeIds.join(", ")}...`,
     );
 
     // 1. Get all staff and categorize
-    const allStaff = await staffRepository.findByStore(storeId);
+    const allStaff = await staffRepository.findByStores(storeIds);
     if (allStaff.length === 0) {
-      throw ERR.BadRequest("No staff available in this store");
+      throw ERR.BadRequest("No staff available in these stores");
     }
 
     const shippers = allStaff.filter((s) => s.role === StaffRole.SHIPPER);
     const chefs = allStaff.filter((s) => s.role !== StaffRole.SHIPPER);
+
+    // For kitchen scheduling, we keep it store-specific by grouping chefs
     const targetChefs = chefs.length > 0 ? chefs : allStaff;
     const chefNames = targetChefs.map(
       (s) => s.user.email || s.user.phone || s.id,
@@ -36,7 +41,7 @@ class KitchenService {
     // 2. Get orders for Kitchen Schedule (CONFIRMED & PREPARING)
     const deliveryOrders = await prisma.deliveryOrder.findMany({
       where: {
-        storeId,
+        storeId: { in: storeIds },
         order: {
           status: {
             in: [OrderStatus.CONFIRMED, OrderStatus.PREPARING],
@@ -120,31 +125,41 @@ class KitchenService {
       const response = await axios.post(
         `${this.pythonBackendUrl}/schedule`,
         kitchenPayload,
+        { timeout: 30000 } // 30s timeout
       );
       kitchenResult = response.data;
+      console.log("[KitchenService] Phase 3 Completed: Kitchen Solver returned results.");
 
       // PERSIST Kitchen Results
       await this.#saveKitchenAssignments(kitchenResult.schedule, targetChefs);
+      console.log("[KitchenService] Phase 3: Kitchen assignments persisted.");
     } catch (error) {
       console.error("Error calling Kitchen Solver:", error.message);
       throw ERR.BadRequest("Failed to get kitchen schedule from solver");
     }
 
     // 4. Get orders for Delivery Routing (READY)
+    console.log("[KitchenService] Phase 4: Fetching READY orders for routing...");
     const deliveryOrdersForRouting = await prisma.deliveryOrder.findMany({
       where: {
-        storeId,
+        storeId: { in: storeIds },
         order: {
           status: OrderStatus.READY,
         },
       },
       include: {
-        order: true,
+        order: {
+          include: {
+            customer: true,
+          },
+        },
         store: true,
       },
     });
+    console.log(`[KitchenService] Phase 4: Found ${deliveryOrdersForRouting.length} READY orders.`);
 
     // 5. Combine READY and predicted DELIVERY orders
+    console.log("[KitchenService] Phase 5: Combining READY and predicted orders...");
     const ordersForRouting = [...deliveryOrdersForRouting];
     const kitchenScheduleMap = new Map(
       kitchenResult.schedule.map((s) => [s.OrderID, s]),
@@ -169,23 +184,38 @@ class KitchenService {
     const uniqueOrdersForRouting = Array.from(
       new Map(ordersForRouting.map((o) => [o.id, o])).values(),
     );
+    console.log(`[KitchenService] Phase 5: Total unique orders for routing: ${uniqueOrdersForRouting.length}`);
 
     if (uniqueOrdersForRouting.length === 0) {
+      console.log("[KitchenService] Phase 5: No orders for routing. Returning kitchen results only.");
       return { kitchen: kitchenResult, delivery: { schedule: [] } };
     }
 
     // 6. Build VRP
-    const store = await storeRepository.findById(storeId);
-    if (!store.lat || !store.lng) {
-      const geo = await geocodeAddress(store.address);
-      store.lat = geo.lat;
-      store.lng = geo.lng;
+    console.log("[KitchenService] Phase 6: Starting VRP Data Construction...");
+    const stores = await storeRepository.findByIds(storeIds);
+    const storeMap = new Map(stores.map((s) => [s.id, s]));
+
+    // Ensure all stores have coordinates
+    for (const store of stores) {
+      if (!store.lat || !store.lng) {
+        console.log(`[KitchenService] Phase 6: Geocoding store ${store.name || store.id}...`);
+        const geo = await geocodeAddress(store.address);
+        await storeRepository.update(store.id, { lat: geo.lat, lng: geo.lng });
+        store.lat = geo.lat;
+        store.lng = geo.lng;
+      }
     }
 
-    const locations = [{ lat: store.lat, lng: store.lng }];
+    const locations = [];
+    // Assume depot is the first store for now or a central location.
+    // Given the solver uses node 0 as start/end, let's use the first store as depot
+    locations.push({ lat: stores[0].lat, lng: stores[0].lng });
+
     const orderIdMap = [];
     const now = new Date();
 
+    console.log(`[KitchenService] Phase 6: Processing ${uniqueOrdersForRouting.length} delivery locations...`);
     for (const deliveryOrder of uniqueOrdersForRouting) {
       if (!deliveryOrder.addressLine) continue;
       try {
@@ -193,6 +223,7 @@ class KitchenService {
         let orderLng = deliveryOrder.lng;
 
         if (!orderLat || !orderLng) {
+          console.log(`[KitchenService] Phase 6: Geocoding order address: ${deliveryOrder.addressLine}`);
           const geo = await geocodeAddress(deliveryOrder.addressLine);
           orderLat = geo.lat;
           orderLng = geo.lng;
@@ -202,6 +233,9 @@ class KitchenService {
             data: { lat: orderLat, lng: orderLng },
           });
         }
+
+        const store = storeMap.get(deliveryOrder.storeId);
+        if (!store) continue;
 
         locations.push({ lat: store.lat, lng: store.lng }); // Pickup Node
         locations.push({ lat: orderLat, lng: orderLng }); // Delivery Node
@@ -213,19 +247,25 @@ class KitchenService {
           id: deliveryOrder.orderId,
           orderCode: deliveryOrder.order?.orderCode || "N/A",
           pickupOffset,
+          customerName: deliveryOrder.order?.customer?.name || "Unknown",
+          customerPhone: deliveryOrder.order?.customer?.phone || "Unknown",
+          address: deliveryOrder.addressLine || "Unknown",
         });
       } catch (e) {
         console.warn(
-          `Geocode fail for ${deliveryOrder.order?.orderCode || "N/A"}: ${e.message}`,
+          `[KitchenService] Geocode fail for ${deliveryOrder.order?.orderCode || "N/A"}: ${e.message}`,
         );
       }
     }
 
     if (orderIdMap.length === 0) {
+      console.log("[KitchenService] Phase 6: No valid order locations. Skipping VRP.");
       return { kitchen: kitchenResult, delivery: { schedule: [] } };
     }
 
+    console.log(`[KitchenService] Phase 6: Requesting route matrix for ${locations.length} nodes...`);
     const matrixData = await getRouteMatrix(locations);
+    console.log("[KitchenService] Phase 6: Route matrix received.");
     const timeMatrix = matrixData.sources_to_targets.map((row) =>
       row.map((cell) => Math.round(cell.time / 60)),
     );
@@ -253,7 +293,7 @@ class KitchenService {
       time_matrix: timeMatrix,
       pickups_deliveries: pickupsDeliveries,
       demands: demands,
-      vehicle_capacities: new Array(targetShippers.length).fill(10),
+      vehicle_capacities: new Array(targetShippers.length).fill(3), // Reasonable capacity
       time_windows: timeWindows,
     };
 
@@ -261,11 +301,13 @@ class KitchenService {
       const vrpResponse = await axios.post(
         `${this.pythonBackendUrl}/vrp`,
         vrpPayload,
+        { timeout: 30000 } // 30s timeout
       );
       console.log(
         `[KitchenService] VRP returned ${vrpResponse.data.length} steps.`,
       );
 
+      const shipperNodeCounters = {};
       const deliverySchedule = vrpResponse.data.map((entry) => {
         const node = entry.node;
         const location = locations[node];
@@ -276,14 +318,31 @@ class KitchenService {
           orderCode: null,
           lat: location.lat,
           lng: location.lng,
+          storeId: stores[0].id, // Depot store ID
+          storeName: stores[0].name, // Default to depot store name
+          storeAddress: stores[0].address,
         };
         if (node > 0) {
           const isPickup = node % 2 !== 0;
           const idx = isPickup ? (node + 1) / 2 - 1 : node / 2 - 1;
           const o = orderIdMap[idx];
-          res.type = isPickup ? "PICKUP" : "DELIVERY";
+          res.type = isPickup ? "STORE" : "DELIVERY";
           res.orderId = o.id;
           res.orderCode = o.orderCode;
+          res.customerName = o.customerName;
+          res.customerPhone = o.customerPhone;
+          res.address = o.address;
+
+          if (isPickup) {
+            // Find the specific store for this order
+            const orderDelivery = uniqueOrdersForRouting.find(d => d.orderId === o.id);
+            const specificStore = storeMap.get(orderDelivery?.storeId);
+            if (specificStore) {
+              res.storeId = specificStore.id;
+              res.storeName = specificStore.name;
+              res.storeAddress = specificStore.address;
+            }
+          }
         }
         const shipper = targetShippers[entry.shipper_id];
         if (shipper) {
@@ -291,6 +350,15 @@ class KitchenService {
           res.shipperName =
             shipper.user.name || shipper.user.email || shipper.id;
         }
+
+        // Add sequential node number per shipper and remove redundant shipper_id
+        const sId = res.shipperId || "unknown";
+        if (shipperNodeCounters[sId] === undefined) {
+          shipperNodeCounters[sId] = 0;
+        }
+        res.node = shipperNodeCounters[sId]++;
+        delete res.shipper_id;
+
         return res;
       });
 
@@ -298,16 +366,31 @@ class KitchenService {
       await this.#saveDeliveryRoutes(deliverySchedule);
 
       const formattedOrders = await this.#formatOrdersForFrontend(
-        storeId,
+        storeIds,
         targetShippers,
       );
+
+      // Group by shipper
+      const shippersMap = new Map();
+      deliverySchedule.forEach((step) => {
+        const sId = step.shipperId || "unknown";
+        if (!shippersMap.has(sId)) {
+          shippersMap.set(sId, {
+            shipperId: sId,
+            shipperName: step.shipperName || "Unknown Shipper",
+            routes: [],
+          });
+        }
+        const { shipperId, shipperName, ...routeData } = step;
+        shippersMap.get(sId).routes.push(routeData);
+      });
 
       return {
         kitchen: kitchenResult,
         delivery: {
           numShippers: targetShippers.length,
           numOrders: orderIdMap.length,
-          schedule: deliverySchedule,
+          shippers: Array.from(shippersMap.values()),
           formattedOrders,
         },
       };
@@ -320,10 +403,13 @@ class KitchenService {
     }
   }
 
-  async #formatOrdersForFrontend(storeId, targetShippers) {
+  async #formatOrdersForFrontend(storeIds, targetShippers) {
+    if (!Array.isArray(storeIds)) {
+      storeIds = [storeIds];
+    }
     const deliveryOrders = await prisma.deliveryOrder.findMany({
       where: {
-        storeId,
+        storeId: { in: storeIds },
         order: {
           status: {
             in: [
@@ -378,12 +464,22 @@ class KitchenService {
   }
 
   async #saveDeliveryRoutes(schedule) {
-    // Group steps by shipper to handle sequences per shipper
+    // Group steps by shipper to handle sequences and full route persistence
     const shipperSequences = new Map();
+    const shipperRoutes = new Map();
 
     for (const step of schedule) {
+      const shipperId = step.shipperId;
+      if (!shipperId || shipperId === "unknown") continue;
+
+      // 1. Accumulate full route for JSON persistence
+      if (!shipperRoutes.has(shipperId)) {
+        shipperRoutes.set(shipperId, []);
+      }
+      shipperRoutes.get(shipperId).push(step);
+
+      // 2. Handle individual order updates (sequence)
       if (step.type === "DELIVERY" && step.orderId) {
-        const shipperId = step.shipperId;
         const currentSeq = (shipperSequences.get(shipperId) || 0) + 1;
 
         await prisma.deliveryOrder.update({
@@ -397,17 +493,34 @@ class KitchenService {
         shipperSequences.set(shipperId, currentSeq);
       }
     }
+
+    // 3. Persist full route JSON per shipper
+    for (const [sId, routeSteps] of shipperRoutes.entries()) {
+      await prisma.deliveryRoute.upsert({
+        where: { shipperId: sId },
+        update: {
+          route: routeSteps,
+          updatedAt: new Date(),
+        },
+        create: {
+          shipperId: sId,
+          route: routeSteps,
+        },
+      });
+    }
   }
 
-  async getDeliverySchedule(storeId, forceRefresh = false, shipperId = null) {
+  async getDeliverySchedule(storeIds, forceRefresh = false, shipperId = null) {
+    if (storeIds && !Array.isArray(storeIds)) {
+      storeIds = [storeIds];
+    }
     console.log(
-      `[KitchenService] getDeliverySchedule called for store ${storeId}. ForceRefresh: ${forceRefresh}`,
+      `[KitchenService] getDeliverySchedule called for ${storeIds ? `stores ${storeIds.join(", ")}` : "all stores"}. ForceRefresh: ${forceRefresh}, Shipper: ${shipperId || "Global"}`,
     );
 
     if (!forceRefresh) {
       // Fetch current state from DB
       const where = {
-        storeId,
         order: {
           status: {
             in: [
@@ -420,6 +533,10 @@ class KitchenService {
         },
       };
 
+      if (storeIds) {
+        where.storeId = { in: storeIds };
+      }
+
       if (shipperId) {
         where.shipperId = shipperId;
       }
@@ -427,7 +544,11 @@ class KitchenService {
       const deliveryOrders = await prisma.deliveryOrder.findMany({
         where,
         include: {
-          order: true,
+          order: {
+            include: {
+              customer: true,
+            },
+          },
           assignedShipper: { include: { user: true } },
           store: true,
         },
@@ -443,7 +564,6 @@ class KitchenService {
       );
 
       if (deliveryOrders.length > 0) {
-        const schedule = [];
         const uniqueShipperIds = Array.from(
           new Set(deliveryOrders.map((o) => o.shipperId)),
         );
@@ -452,80 +572,115 @@ class KitchenService {
           `[KitchenService] Unique shippers found: ${uniqueShipperIds.join(", ")}`,
         );
 
-        // If no shipperId is assigned, we should force a refresh to solver
+        // If no shippers assigned to ANY order, force a refresh
         if (uniqueShipperIds.length === 1 && uniqueShipperIds[0] === null) {
           console.log(
             "[KitchenService] No shippers assigned to orders. Triggering force refresh...",
           );
-          return this.getDeliverySchedule(storeId, true, shipperId);
+          const targetStoreIds = storeIds || Array.from(new Set(deliveryOrders.map(o => o.storeId)));
+          return this.getDeliverySchedule(targetStoreIds, true, shipperId);
         }
 
-        // Format orders for frontend @kltn-fe
-        const allStaff = await staffRepository.findByStore(storeId);
+        // Fetch persisted routes for assigned shippers
+        const assignedShipperIds = uniqueShipperIds.filter(id => id !== null);
+        const persistedRoutes = await prisma.deliveryRoute.findMany({
+          where: { shipperId: { in: assignedShipperIds } }
+        });
+        const routeMap = new Map(persistedRoutes.map(r => [r.shipperId, r.route]));
+
+        // Format orders for frontend queue
+        const displayStoreIds = storeIds || Array.from(new Set(deliveryOrders.map(o => o.storeId)));
+        const allStaff = await staffRepository.findByStores(displayStoreIds);
         const shippers = allStaff.filter((s) => s.role === StaffRole.SHIPPER);
         const formattedOrders = await this.#formatOrdersForFrontend(
-          storeId,
+          displayStoreIds,
           shippers,
         );
 
+        const shippersList = [];
         for (const sId of uniqueShipperIds) {
           if (!sId) continue;
 
-          const shipperOrders = deliveryOrders.filter(
-            (o) => o.shipperId === sId,
-          );
+          const shipperOrders = deliveryOrders.filter((o) => o.shipperId === sId);
           if (shipperOrders.length === 0) continue;
 
+          // 1. Try to use persisted route
+          if (routeMap.has(sId)) {
+            const savedRoute = routeMap.get(sId);
+            // Optional: Validate if savedRoute still matches current orders
+            shippersList.push({
+              shipperId: sId,
+              shipperName: shipperOrders[0].assignedShipper?.user.name || "Unknown Shipper",
+              routes: savedRoute,
+              isPersisted: true
+            });
+            continue;
+          }
+
+          // 2. Fallback: Manual reconstruction if no persisted route found
           const firstOrder = shipperOrders[0];
           const shipperName =
             firstOrder.assignedShipper?.user.name ||
             firstOrder.assignedShipper?.user.email ||
             "Unknown Shipper";
 
+          let nodeCounter = 0;
+          const routes = [];
+
           // Add Depot Start
-          schedule.push({
-            shipper_id: uniqueShipperIds.indexOf(sId),
-            shipperId: sId,
-            shipperName,
-            node: 0,
+          routes.push({
+            node: nodeCounter++,
             type: "STORE",
             lat: firstOrder.store.lat,
             lng: firstOrder.store.lng,
+            storeId: firstOrder.store.id,
+            storeName: firstOrder.store.name,
+            storeAddress: firstOrder.store.address,
             arrival_datetime: new Date().toISOString(),
           });
 
           for (const o of shipperOrders) {
             // Add Pickup
-            schedule.push({
-              shipper_id: uniqueShipperIds.indexOf(sId),
-              shipperId: sId,
-              shipperName,
-              type: "PICKUP",
+            routes.push({
+              node: nodeCounter++,
+              type: "STORE",
               orderId: o.orderId,
               orderCode: o.order.orderCode,
+              customerName: o.order.customer?.name || "Unknown",
+              customerPhone: o.order.customer?.phone || "Unknown",
+              address: o.addressLine || "Unknown",
               lat: o.store.lat,
               lng: o.store.lng,
+              storeId: o.store.id,
+              storeName: o.store.name,
+              storeAddress: o.store.address,
               arrival_datetime: o.order.expectedReadyAt?.toISOString(),
             });
             // Add Delivery
-            schedule.push({
-              shipper_id: uniqueShipperIds.indexOf(sId),
-              shipperId: sId,
-              shipperName,
+            routes.push({
+              node: nodeCounter++,
               type: "DELIVERY",
               orderId: o.orderId,
               orderCode: o.order.orderCode,
+              customerName: o.order.customer?.name || "Unknown",
+              customerPhone: o.order.customer?.phone || "Unknown",
+              address: o.addressLine || "Unknown",
               lat: o.lat,
               lng: o.lng,
               arrival_datetime: null,
             });
           }
+          shippersList.push({
+            shipperId: sId,
+            shipperName,
+            routes,
+            isPersisted: false
+          });
         }
         return {
-          storeId,
           numShippers: uniqueShipperIds.length,
           numOrders: deliveryOrders.length,
-          schedule,
+          shippers: shippersList,
           formattedOrders,
         };
       }
@@ -533,17 +688,19 @@ class KitchenService {
 
     // If no data or forceRefresh, trigger full unified solve
     try {
-      const result = await this.getSchedule(storeId);
+      // If we don't have storeIds here, we fetch all active stores as a fallback
+      const targetStoreIds = storeIds || await storeRepository.getAllActiveStoreIds();
+      const result = await this.getSchedule(targetStoreIds);
       return result.delivery;
     } catch (e) {
       console.warn(
         `[KitchenService] Auto-solve failed: ${e.message}. Returning empty schedule.`,
       );
       return {
-        storeId,
+        storeIds,
         numShippers: 0,
         numOrders: 0,
-        schedule: [],
+        shippers: [],
         error: e.message,
       };
     }

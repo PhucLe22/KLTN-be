@@ -23,14 +23,16 @@ const locations = [
 async function main() {
   console.log("🚀 Starting order seeding...");
 
-  // 1. Get a store
-  const store = await prisma.store.findFirst();
-  if (!store) {
-    console.error("❌ No stores found. Please run main seed first.");
+  // 1. Get ALL active stores
+  const stores = await prisma.store.findMany({
+    where: { isActive: true, isDeleted: false }
+  });
+
+  if (stores.length === 0) {
+    console.error("❌ No active stores found. Please run main seed first.");
     return;
   }
-  const STORE_ID = store.id;
-  console.log(`Using Store: ${store.name} (${STORE_ID})`);
+  console.log(`Found ${stores.length} stores to distribute orders.`);
 
   // 2. Get a product
   const product = await prisma.product.findFirst();
@@ -40,15 +42,30 @@ async function main() {
   }
   console.log(`Using Product: ${product.name}`);
 
+  // 2.5 Get a customer
+  const customer = await prisma.customer.findFirst({
+    where: { isActive: true }
+  });
+  if (!customer) {
+    console.error("❌ No customers found. Please run main seed first.");
+    return;
+  }
+  console.log(`Using Customer: ${customer.name} (${customer.id})`);
+
   // 3. Create Orders
-  console.log(`Creating ${locations.length} orders...`);
+  console.log(`Creating ${locations.length} orders across ${stores.length} stores...`);
   const orders = [];
-  for (const loc of locations) {
+  
+  for (let i = 0; i < locations.length; i++) {
+    const loc = locations[i];
+    const store = stores[i % stores.length]; // Distribute orders across stores
     const orderCode = `ORD-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    
     const order = await prisma.order.create({
       data: {
         orderCode,
-        storeId: STORE_ID,
+        storeId: store.id,
+        customerId: customer.id, // Link to customer
         type: OrderType.DELIVERY,
         status: OrderStatus.CONFIRMED,
         subtotal: 100000,
@@ -64,7 +81,7 @@ async function main() {
         },
         delivery: {
           create: {
-            storeId: STORE_ID,
+            storeId: store.id,
             receiverName: `Customer ${loc.name}`,
             receiverPhone: "0900000000",
             addressLine: loc.address,
@@ -75,8 +92,9 @@ async function main() {
       }
     });
     orders.push(order);
+    console.log(`- Created ${orderCode} for store: ${store.name}`);
   }
-  console.log(`✅ Created ${orders.length} orders.`);
+  console.log(`✅ Created ${orders.length} orders total.`);
 }
 
 main()

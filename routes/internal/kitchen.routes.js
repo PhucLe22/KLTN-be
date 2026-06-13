@@ -46,4 +46,16 @@ kitchenRouter
     kitchenController.getDeliverySchedule
   );
 
+/**
+ * @route   POST /api/v1/internal/kitchen/solve-network
+ * @desc    Trigger network-wide optimization for ALL active stores
+ * @access  Private (ADMIN, OWNER, MANAGER)
+ */
+kitchenRouter.post(
+  "/solve-network",
+  protect,
+  restrictTo(StaffRole.ADMIN, StaffRole.OWNER, StaffRole.MANAGER),
+  kitchenController.solveNetwork
+);
+
 export default kitchenRouter;

@@ -47,6 +47,10 @@ class StoreService {
     async delete(id) {
         return await storeRepository.update(id, { isDeleted: true });
     }
+
+    async getAllActiveStoreIds() {
+        return await storeRepository.getAllActiveStoreIds();
+    }
 }
 
 export const storeService = new StoreService();

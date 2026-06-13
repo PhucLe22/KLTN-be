@@ -76,3 +76,9 @@ export const StaffOrderSummaryMap = {
     }
   }]
 };
+
+export const OrderActivityMap = {
+  status: true,
+  note: true,
+  createdAt: true,
+};

@@ -64,6 +64,31 @@ class OrderController {
 
     return res.ok(result);
   });
+
+  confirmPickup = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.confirmPickup(id, req.user);
+    const result = mapper(order, OrderMap);
+
+    return res.ok(result);
+  });
+
+  completeDelivery = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.completeDelivery(id, req.user);
+    const result = mapper(order, OrderMap);
+
+    return res.ok(result);
+  });
+
+  getActivities = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const activities = await orderService.getOrderActivities(id, req.user);
+    // You might want to define an OrderActivityMap in output schema
+    // result = mapper(activities, OrderActivityMap);
+    
+    return res.ok(activities);
+  });
 }
 
 export const orderController = new OrderController();
