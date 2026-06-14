@@ -10,9 +10,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   schemas  = ["iam", "catalog", "sales", "store", "audit", "public", "loyalty", "delivery"]
-
 }
-
 
 //////////////////////////////////////////////////////
 // ENUMS (GLOBAL - dùng chung nhiều domain)
@@ -173,30 +171,30 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id     String @id @default(uuid())
   // Token ID (JTI) hoặc Opaque Token string
-  token     String   @unique @db.VarChar(255)
-  userId    String
-  
+  token  String @unique @db.VarChar(255)
+  userId String
+
   // Tracking & Security
-  deviceInfo String?  // User-Agent string
-  ipAddress  String?  @db.VarChar(45) // Hỗ trợ cả IPv6
-  
+  deviceInfo String? // User-Agent string
+  ipAddress  String? @db.VarChar(45) // Hỗ trợ cả IPv6
+
   // Trạng thái & Bảo mật
-  isRevoked  Boolean  @default(false)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  
+
   // Token Rotation (Cực kỳ quan trọng để chống tấn công Replay)
   // Lưu ID của token mới được tạo ra từ token này
-  replacedBy String?  
-  
+  replacedBy String?
+
   // Quan hệ
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([token]) 
+  @@index([token])
   @@schema("iam")
 }
 
@@ -211,6 +209,8 @@ model Staff {
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   store Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
+
+  deliveryRoutes DeliveryRoute[]
 
   createdAt DateTime @default(now())
 
@@ -294,8 +294,8 @@ model Product {
   orderItems OrderItem[]
 
   preparationTime Int? // Time to prepare product (in minutes)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@schema("catalog")
 }
@@ -380,7 +380,7 @@ model Store {
 
   hotline String
 
-  isActive Boolean @default(true)
+  isActive  Boolean @default(true)
   isDeleted Boolean @default(false)
 
   staff          Staff[]
@@ -409,9 +409,9 @@ model Order {
   serviceFee Decimal @default(0) @db.Decimal(14, 2)
   total      Decimal @db.Decimal(14, 2) // total = subtotal - discount + tax + serviceFee
 
-  note String?
+  note        String?
   tableNumber String?
-  createdBy String? // Simple string field to store creator info
+  createdBy   String? // Simple string field to store creator info
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -551,6 +551,20 @@ model DeliveryEvent {
   createdAt DateTime @default(now())
 
   delivery DeliveryOrder @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@schema("delivery")
+}
+
+model DeliveryRoute {
+  id                   String    @id @default(uuid())
+  staffId              String
+  orderSequence        String[] // Array of Order IDs
+  estimatedArrivalTime DateTime?
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@schema("delivery")
 }

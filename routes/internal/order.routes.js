@@ -45,4 +45,28 @@ orderRouter.patch(
   orderController.updateStatus,
 );
 
+/**
+ * @route   POST /internal/orders/:id/confirm
+ * @desc    Xác nhận đơn hàng (staff/manager)
+ * @access  Private (Internal only)
+ */
+orderRouter.post(
+  "/:id/confirm",
+  protect,
+  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.ADMIN),
+  orderController.confirmOrder,
+);
+
+/**
+ * @route   POST /internal/orders/:id/prepare
+ * @desc    Bắt đầu chế biến (kitchen/staff)
+ * @access  Private (Internal only)
+ */
+orderRouter.post(
+  "/:id/prepare",
+  protect,
+  restrictTo(StaffRole.KITCHEN, StaffRole.MANAGER, StaffRole.ADMIN),
+  orderController.startPreparing,
+);
+
 export default orderRouter;
