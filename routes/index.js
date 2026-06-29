@@ -34,5 +34,6 @@ mainRouter.use("/internal", internalRouter);
 mainRouter.use("/categories", categoryRouter);
 mainRouter.use("/promotions", promotionRouter);
 mainRouter.use("/ai", aiRouter);
+mainRouter.use("/addresses", addressRouter);
 
 export default mainRouter;

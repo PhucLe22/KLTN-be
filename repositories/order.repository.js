@@ -14,7 +14,8 @@ class OrderRepository extends BaseRepository {
         customer: true,
         delivery: {
           include: {
-            assignedShipper: { include: { user: true } }
+            assignedShipper: { include: { user: true } },
+            events: { orderBy: { createdAt: 'asc' } },
           }
         },
         assignedChef: { include: { user: true } },
@@ -69,7 +70,7 @@ class OrderRepository extends BaseRepository {
         },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }],
       }),
       this.getModel(tx).count({ where }),
     ]);
@@ -115,7 +116,7 @@ class OrderRepository extends BaseRepository {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }],
     });
   }
 
@@ -135,7 +136,40 @@ class OrderRepository extends BaseRepository {
         customer: true,
         delivery: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
+  async getOrdersByFiltersWithDetails(filters) {
+    const { where, page, limit } = filters;
+
+    return await this.findAll({
+      page,
+      limit,
+      where,
+      include: {
+        store: true,
+        customer: {
+          include: {
+            addresses: {
+              where: { isDefault: true },
+              take: 1,
+            },
+          },
+        },
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } }
+          }
+        },
+        items: {
+          include: {
+            product: true,
+            options: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }],
     });
   }
 

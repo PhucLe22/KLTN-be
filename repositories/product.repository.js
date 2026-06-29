@@ -63,7 +63,7 @@ class ProductRepository extends BaseRepository {
             limit,
             where,
             select,
-            orderBy: { [sortBy]: sortOrder }
+            orderBy: [{ [sortBy]: sortOrder }]
         }, tx);
     }
 
@@ -78,7 +78,8 @@ class ProductRepository extends BaseRepository {
                 description: true,
                 basePrice: true,
                 sku: true,
-                thumbnail: true
+                thumbnail: true,
+                isActive: true
             }
         });
     }

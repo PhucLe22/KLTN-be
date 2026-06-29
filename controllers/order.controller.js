@@ -1,7 +1,7 @@
 import { orderService } from "../services/order.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { mapper } from "../lib/mapper.js";
-import { OrderMap, StaffOrderSummaryMap } from "../contracts/output/order.output.schema.js";
+import { OrderMap, StaffOrderSummaryMap, OrderActivityMap } from "../contracts/output/order.output.schema.js";
 
 class OrderController {
   create = asyncHandler(async (req, res) => {
@@ -84,10 +84,9 @@ class OrderController {
   getActivities = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const activities = await orderService.getOrderActivities(id, req.user);
-    // You might want to define an OrderActivityMap in output schema
-    // result = mapper(activities, OrderActivityMap);
-    
-    return res.ok(activities);
+    const result = mapper(activities, OrderActivityMap);
+
+    return res.ok(result);
   });
 }
 

@@ -8,6 +8,7 @@ import {
   createVoucher,
   updateVoucher,
   deleteVoucher,
+  listVouchers,
 } from "../../contracts/input/promotions.schema.js";
 
 const voucherRouter = express.Router();
@@ -15,6 +16,16 @@ const voucherRouter = express.Router();
 // All internal voucher routes are protected and restricted to ADMIN/OWNER/MANAGER
 voucherRouter.use(protect);
 voucherRouter.use(restrictTo(StaffRole.ADMIN, StaffRole.OWNER, StaffRole.MANAGER));
+
+/**
+ * @route   GET /api/v1/internal/vouchers
+ * @desc    Danh sách voucher (có phân trang, lọc theo store, trạng thái, loại)
+ */
+voucherRouter.get(
+  "/",
+  validate(listVouchers),
+  voucherController.list,
+);
 
 /**
  * @route   POST /api/v1/internal/vouchers

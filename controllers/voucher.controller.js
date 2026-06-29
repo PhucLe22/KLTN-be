@@ -11,6 +11,18 @@ class VoucherController {
     return res.ok(result, vouchers.meta);
   });
 
+  listPublic = asyncHandler(async (req, res) => {
+    const result = await voucherService.getAllPublic(req.query);
+
+    return res.ok(result.items, result.meta);
+  });
+
+  list = asyncHandler(async (req, res) => {
+    const result = await voucherService.getAll(req.query);
+
+    return res.ok(result.items, result.meta);
+  });
+
   create = asyncHandler(async (req, res) => {
     const voucher = await voucherService.createVoucher(req.body);
     const result = mapper(voucher, VoucherMap);

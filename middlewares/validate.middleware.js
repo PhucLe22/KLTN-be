@@ -3,13 +3,13 @@ export const validate =
   (req, res, next) => {
     try {
       if (schema.body) {
-        schema.body.parse(req.body);
+        req.body = schema.body.parse(req.body);
       }
       if (schema.params) {
-        schema.params.parse(req.params);
+        Object.assign(req.params, schema.params.parse(req.params));
       }
       if (schema.query) {
-        schema.query.parse(req.query);
+        Object.assign(req.query, schema.query.parse(req.query));
       }
 
       next();

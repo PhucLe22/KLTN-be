@@ -404,7 +404,7 @@ model Store {
 
 model Order {
   id         String  @id @default(uuid())
-  storeId    String
+  storeId    String?
   customerId String?
   orderCode String @unique
   type   OrderType
@@ -428,7 +428,7 @@ model Order {
 
   assignedChef Staff? @relation("ChefOrders", fields: [chefId], references: [id])
 
-  store    Store     @relation(fields: [storeId], references: [id])
+  store    Store?     @relation(fields: [storeId], references: [id])
 
   customer Customer? @relation(fields: [customerId], references: [id])
 
@@ -525,7 +525,7 @@ model DeliveryOrder {
   id String @id @default(uuid())
 
   orderId       String         @unique // 1-1 với Order (mỗi order tối đa 1 delivery)
-  storeId       String // Chi nhánh xử lý
+  storeId       String? // Chi nhánh xử lý
   status        DeliveryStatus @default(PENDING) // Flow: PENDING → SHIPPER_ASSIGNED → PICKED_UP → DELIVERED (FAILED / CANCELLED)
   // Snapshot 
   receiverName  String
@@ -557,7 +557,7 @@ model DeliveryOrder {
   deliveredAt DateTime? // set khi DELIVERED
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  store Store @relation(fields: [storeId], references: [id])
+  store Store? @relation(fields: [storeId], references: [id])
 
   events DeliveryEvent[] // Log status
   route  DeliveryRoute?

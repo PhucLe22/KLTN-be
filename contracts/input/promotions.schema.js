@@ -10,6 +10,16 @@ export const getAvailableVouchers = {
   }),
 };
 
+// GET /api/v1/promotions (public)
+export const listPublicVouchers = {
+  query: z.object({
+    page: z.coerce.number().int().positive().optional().default(1),
+    limit: z.coerce.number().int().positive().max(100).optional().default(10),
+    storeId: f.id.optional(),
+    discountType: z.nativeEnum(DiscountType).optional(),
+  }),
+};
+
 // Internal API schemas
 export const createVoucher = {
   body: z.object({
@@ -31,6 +41,17 @@ export const updateVoucher = {
     id: f.id,
   }),
   body: createVoucher.body.partial(),
+};
+
+export const listVouchers = {
+  query: z.object({
+    page: z.coerce.number().int().positive().optional().default(1),
+    limit: z.coerce.number().int().positive().max(100).optional().default(10),
+    storeId: f.id.optional(),
+    isActive: z.coerce.boolean().optional(),
+    discountType: z.nativeEnum(DiscountType).optional(),
+    search: z.string().max(20).optional(),
+  }),
 };
 
 export const deleteVoucher = {

@@ -29,7 +29,7 @@ class KitchenService {
     }
 
     const shippers = allStaff.filter((s) => s.role === StaffRole.SHIPPER);
-    const chefs = allStaff.filter((s) => s.role !== StaffRole.SHIPPER);
+    const chefs = allStaff.filter((s) => s.role === StaffRole.KITCHEN);
 
     // For kitchen scheduling, we keep it store-specific by grouping chefs
     const targetChefs = chefs.length > 0 ? chefs : allStaff;
@@ -41,7 +41,10 @@ class KitchenService {
     // 2. Get orders for Kitchen Schedule (CONFIRMED & PREPARING)
     const deliveryOrders = await prisma.deliveryOrder.findMany({
       where: {
-        storeId: { in: storeIds },
+        OR: [
+          { storeId: { in: storeIds } },
+          { storeId: null }
+        ],
         order: {
           status: {
             in: [OrderStatus.CONFIRMED, OrderStatus.PREPARING],
@@ -53,6 +56,7 @@ class KitchenService {
           include: {
             items: { include: { product: true } },
             assignedChef: { include: { user: true } },
+            customer: true, // ADD THIS
           },
         },
       },
@@ -122,10 +126,12 @@ class KitchenService {
 
     let kitchenResult = { schedule: [] };
     try {
+      console.log("[KitchenService] Sending payload...");
+      console.log(JSON.stringify(kitchenPayload));
       const response = await axios.post(
         `${this.pythonBackendUrl}/schedule`,
         kitchenPayload,
-        { timeout: 30000 } // 30s timeout
+        { timeout: 60000 }
       );
       kitchenResult = response.data;
       console.log("[KitchenService] Phase 3 Completed: Kitchen Solver returned results.");
@@ -134,15 +140,23 @@ class KitchenService {
       await this.#saveKitchenAssignments(kitchenResult.schedule, targetChefs);
       console.log("[KitchenService] Phase 3: Kitchen assignments persisted.");
     } catch (error) {
-      console.error("Error calling Kitchen Solver:", error.message);
-      throw ERR.BadRequest("Failed to get kitchen schedule from solver");
+      if (error.response) {
+         console.error("❌ Solver API Error Response:", JSON.stringify(error.response.data, null, 2));
+         console.error("❌ Solver API Status Code:", error.response.status);
+      } else {
+         console.error("❌ Solver API Error (No response):", error.message);
+      }
+      throw ERR.BadRequest("Failed to get kitchen schedule from solver. Check backend logs.");
     }
 
     // 4. Get orders for Delivery Routing (READY)
     console.log("[KitchenService] Phase 4: Fetching READY orders for routing...");
     const deliveryOrdersForRouting = await prisma.deliveryOrder.findMany({
       where: {
-        storeId: { in: storeIds },
+        OR: [
+          { storeId: { in: storeIds } },
+          { storeId: null }
+        ],
         order: {
           status: OrderStatus.READY,
         },
@@ -150,7 +164,7 @@ class KitchenService {
       include: {
         order: {
           include: {
-            customer: true,
+            customer: true, // MUST INCLUDE
           },
         },
         store: true,
@@ -175,7 +189,12 @@ class KitchenService {
         if (!isAlreadyInRouting) {
           order.expectedReadyAt = new Date(schedule.FinishedTime);
           if (order.delivery) {
-            ordersForRouting.push(order.delivery);
+            // Re-fetch delivery with customer relation if needed
+            const deliveryWithCustomer = await prisma.deliveryOrder.findUnique({
+              where: { id: order.delivery.id },
+              include: { order: { include: { customer: true } } }
+            });
+            ordersForRouting.push(deliveryWithCustomer);
           }
         }
       }
@@ -234,7 +253,33 @@ class KitchenService {
           });
         }
 
-        const store = storeMap.get(deliveryOrder.storeId);
+        let store = storeMap.get(deliveryOrder.storeId);
+        
+        // Dynamic store assignment if null
+        if (!store) {
+           // Find closest store to delivery address
+           let minDistance = Infinity;
+           for (const s of stores) {
+               const dist = Math.sqrt((s.lat - orderLat)**2 + (s.lng - orderLng)**2);
+               if (dist < minDistance) {
+                   minDistance = dist;
+                   store = s;
+               }
+           }
+           
+           // Update deliveryOrder with assigned storeId
+           if (store) {
+               await prisma.deliveryOrder.update({
+                   where: { id: deliveryOrder.id },
+                   data: { storeId: store.id }
+               });
+               await prisma.order.update({
+                   where: { id: deliveryOrder.orderId },
+                   data: { storeId: store.id }
+               });
+           }
+        }
+        
         if (!store) continue;
 
         locations.push({ lat: store.lat, lng: store.lng }); // Pickup Node
@@ -247,8 +292,8 @@ class KitchenService {
           id: deliveryOrder.orderId,
           orderCode: deliveryOrder.order?.orderCode || "N/A",
           pickupOffset,
-          customerName: deliveryOrder.order?.customer?.name || "Unknown",
-          customerPhone: deliveryOrder.order?.customer?.phone || "Unknown",
+          customerName: deliveryOrder.order?.customer?.name || (console.log("[DEBUG] Missing customer name for:", deliveryOrder.orderId) || "Unknown"),
+          customerPhone: deliveryOrder.order?.customer?.phone || (console.log("[DEBUG] Missing customer phone for:", deliveryOrder.orderId) || "Unknown"),
           address: deliveryOrder.addressLine || "Unknown",
         });
       } catch (e) {
@@ -314,6 +359,7 @@ class KitchenService {
         const res = {
           ...entry,
           type: "STORE",
+          status: "PENDING", // Added
           orderId: null,
           orderCode: null,
           lat: location.lat,
@@ -476,7 +522,21 @@ class KitchenService {
       if (!shipperRoutes.has(shipperId)) {
         shipperRoutes.set(shipperId, []);
       }
-      shipperRoutes.get(shipperId).push(step);
+      
+      // Map order details to the route steps if not already present
+      const stepWithDetails = { ...step };
+      if (step.orderId) {
+        const order = await prisma.order.findUnique({
+          where: { id: step.orderId },
+          include: { items: true }
+        });
+        if (order) {
+            stepWithDetails.items = order.items;
+            stepWithDetails.total = order.total;
+        }
+      }
+      
+      shipperRoutes.get(shipperId).push(stepWithDetails);
 
       // 2. Handle individual order updates (sequence)
       if (step.type === "DELIVERY" && step.orderId) {
@@ -631,6 +691,7 @@ class KitchenService {
           routes.push({
             node: nodeCounter++,
             type: "STORE",
+            status: "PENDING", // Added
             lat: firstOrder.store.lat,
             lng: firstOrder.store.lng,
             storeId: firstOrder.store.id,
@@ -644,6 +705,7 @@ class KitchenService {
             routes.push({
               node: nodeCounter++,
               type: "STORE",
+              status: "PENDING", // Added
               orderId: o.orderId,
               orderCode: o.order.orderCode,
               customerName: o.order.customer?.name || "Unknown",
@@ -655,11 +717,16 @@ class KitchenService {
               storeName: o.store.name,
               storeAddress: o.store.address,
               arrival_datetime: o.order.expectedReadyAt?.toISOString(),
+              
+              // New details for shipper
+              items: o.order.items,
+              total: o.order.total,
             });
             // Add Delivery
             routes.push({
               node: nodeCounter++,
               type: "DELIVERY",
+              status: "PENDING", // Added
               orderId: o.orderId,
               orderCode: o.order.orderCode,
               customerName: o.order.customer?.name || "Unknown",
@@ -668,6 +735,10 @@ class KitchenService {
               lat: o.lat,
               lng: o.lng,
               arrival_datetime: null,
+
+              // New details for shipper
+              items: o.order.items,
+              total: o.order.total,
             });
           }
           shippersList.push({

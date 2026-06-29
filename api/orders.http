@@ -1,10 +1,13 @@
-@customer_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMjJmNGViZi1lZDcxLTQ4NjUtOWM2MC0wNTM0NzY5NDVlZjYiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyY2I5NDhlYy01YTc1LTRiYmQtYWQ1Yi0xYTA2YzdhMTU5NzAiLCJpYXQiOjE3ODA5MDA5MDYsImV4cCI6MTc4MDkwNDUwNn0.r1efOuatwb6ez3QNRuklsGc-3cwDm1XoGhEm67GCqkY
+@customer_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxYWQxZmM2ZS05YTQ4LTQ0MTItOTVmNS0wMTk3YjMwOGI0NmMiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyYWUwZWJmYy03NmQ1LTRlNjQtOTU2ZC02MDdiMWY5ZmM2MzYiLCJpYXQiOjE3ODI1NTgzNjEsImV4cCI6MTc4MzE2MzE2MX0.yc6oWV9P7Cgiy8a0CEV0bQTKZI8jO97HBpmoIKhB0yA
 @staff_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTYyZmY4Mi0zOTFiLTQwMzMtOTIyNC04NWMxNGU5ZjhhYTIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImUyZTI4YjEzLWIxMjktNGU4ZC1iMGUzLTYyNzM1YjNmZTIwZSIsInN0b3JlSWQiOiIyOWQxMDZhZC1lNWNmLTQwNWItYThkYi1jZDJlODQzOGRhOGQiLCJpYXQiOjE3ODEwODU2NzQsImV4cCI6MTc4MTY5MDQ3NH0.Cg98MQ5-dSsDkxiHx0CDqEFgIDs8nAdx-fVkhIk7k5g
 @product_id=7ac362a9-8163-4fee-badf-26ac12e94eb5
 @product_id_2=322ce951-9dfc-4833-9fa8-f30481427651
 @option_id_1=550e8400-e29b-41d4-a716-446655440103
 @option_id_2=550e8400-e29b-41d4-a716-446655440303
 @managerToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTYyZmY4Mi0zOTFiLTQwMzMtOTIyNC04NWMxNGU5ZjhhYTIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImUyZTI4YjEzLWIxMjktNGU4ZC1iMGUzLTYyNzM1YjNmZTIwZSIsInN0b3JlSWQiOiJiNDFiOWU2YS01MzM5LTQyZjQtOGY5YS0wNTU1OWViNWQwZTgiLCJpYXQiOjE3ODEwOTAxNjQsImV4cCI6MTc4MTY5NDk2NH0.ANPTVjdzUiDX-AAgB9OFbKVzNTs7j_40QDI_SJb09ak
+
+### Get Available Vouchers
+GET http://localhost:5001/api/v1/promotions/available?storeId={{store_id}}&orderAmount=100000
 
 ### Get All Order
 GET http://localhost:5001/api/v1/orders
@@ -31,7 +34,7 @@ GET http://localhost:5001/api/v1/orders/550e8400-e29b-41d4-a716-446655440010
 Authorization: Bearer {{customer_access_token}}
 
 ### Get Order by Code
-GET http://localhost:5001/api/v1/orders/code/VD-DI-1780900969487
+GET http://localhost:5001/api/v1/orders/code/VD-DE-1781686072908
 Authorization: Bearer {{customer_access_token}}
 
 ### Create Order as Customer (DINE_IN)
@@ -62,15 +65,53 @@ Content-Type: application/json
   ]
 }
 
-### Create Order as Customer (DELIVERY)
+### Create Order as Customer with Voucher Code
 POST http://localhost:5001/api/v1/orders
 Authorization: Bearer {{customer_access_token}}
 Content-Type: application/json
 
 {
   "storeId": "{{store_id}}",
+  "type": "DINE_IN",
+  "tableNumber": "A10",
+  "note": "Order with voucher applied",
+  "voucherCode": "VOUCHER10",
+  "items": [
+    {
+      "productId": "{{product_id}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Create Order as Customer with Invalid Voucher (should fail)
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer {{customer_access_token}}
+Content-Type: application/json
+
+{
+  "storeId": "{{store_id}}",
+  "type": "DINE_IN",
+  "tableNumber": "A10",
+  "note": "Order with invalid voucher",
+  "voucherCode": "INVALID_CODE_XYZ",
+  "items": [
+    {
+      "productId": "{{product_id}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Create Order as Customer (DELIVERY - Store Optional)
+POST http://localhost:5001/api/v1/orders
+Authorization: Bearer {{customer_access_token}}
+Content-Type: application/json
+
+{
+  // "storeId": "Optional, leave out to let solver assign",
   "type": "DELIVERY",
-  "note": "Delivery order",
+  "note": "Delivery order (Solver assigns store)",
   "deliveryInfo": {
     "receiverName": "John Doe",
     "receiverPhone": "0912345678",
@@ -124,6 +165,24 @@ Content-Type: application/json
   ]
 }
 
+### Create Order as Staff for Customer with Voucher Code
+POST http://localhost:5001/api/v1/internal/orders
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "type": "TAKEAWAY",
+  "phone": "09337104446",
+  "note": "Staff order with voucher applied",
+  "voucherCode": "VOUCHER10",
+  "items": [
+    {
+      "productId": "322ce951-9dfc-4833-9fa8-f30481427651",
+      "quantity": 1
+    }
+  ]
+}
+
 ### Get orders for staff (filter by store)
 GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=1&limit=10
 Authorization: Bearer {{staff_access_token}}
@@ -137,3 +196,6 @@ Content-Type: application/json
   "status": "PREPARING"
 }
 
+### Get Order Timeline / Activities
+GET http://localhost:5001/api/v1/orders/5d2a47b3-8f12-40b5-9ee6-aa3e0dae37b2/activities
+Authorization: Bearer {{customer_access_token}}

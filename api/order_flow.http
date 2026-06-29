@@ -1,4 +1,3 @@
-
 @customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMjJmNGViZi1lZDcxLTQ4NjUtOWM2MC0wNTM0NzY5NDVlZjYiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyY2I5NDhlYy01YTc1LTRiYmQtYWQ1Yi0xYTA2YzdhMTU5NzAiLCJpYXQiOjE3ODA4MjI3MzUsImV4cCI6MTc4MDgyNjMzNX0.54pBunFSzgLTHR4KUh05qx7GnPIPn3i1t2ubXc7UyR0
 @staffToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNGQ3YzIyMS1mZmRlLTQ4NmMtOWYzNC1hMzZiZWE0YzUxZmUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiS0lUQ0hFTiIsInNpZCI6ImM0MWNmN2ZhLTJiODktNDJjMi1iMWFlLTg2YzM2YzM1ZDI4MiIsInN0b3JlSWQiOiIyOWQxMDZhZC1lNWNmLTQwNWItYThkYi1jZDJlODQzOGRhOGQiLCJpYXQiOjE3ODA4MjI4OTEsImV4cCI6MTc4MDgyNjQ5MX0.lM1ccKmEISww_w2td5r2-cGS9FIxsAMITg7HCbBEKXI
 @storeId = 29d106ad-e5cf-405b-a8db-cd2e8438da8d
@@ -31,9 +30,9 @@ Authorization: Bearer {{customerToken}}
 Content-Type: application/json
 
 {
-  "storeId": "{{storeId}}",
+  // "storeId": "{{storeId}}",
   "type": "DELIVERY",
-  "note": "Please deliver to my home",
+  "note": "Please deliver to my home (Solver assigns store)",
   "deliveryInfo": {
     "receiverName": "Customer Name",
     "receiverPhone": "0987654321",

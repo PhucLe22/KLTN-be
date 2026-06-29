@@ -21,7 +21,12 @@ class ProductService  {
     }
 
     async create(data) {
-        const productData = { ...data };
+        const productData = { 
+            ...data,
+            basePrice: data.basePrice ? Number(data.basePrice) : undefined,
+            taxRate: data.taxRate ? Number(data.taxRate) : undefined,
+            sortOrder: data.sortOrder ? Number(data.sortOrder) : undefined
+        };
         
         // Generate slug from name if not provided
         if (productData.name && !productData.slug) {
@@ -29,13 +34,30 @@ class ProductService  {
         }
 
         // Convert nested category object to categoryId for Prisma
-        if (productData.category && productData.category.id) {
-            productData.categoryId = productData.category.id;
+        let category = productData.category;
+        if (typeof category === 'string') {
+            try {
+                category = JSON.parse(category);
+            } catch (e) {
+                category = null;
+            }
+        }
+        if (category && category.id) {
+            productData.categoryId = category.id;
+            delete productData.category;
+        } else {
             delete productData.category;
         }
         
         // Extract optionGroups
         let optionGroups = productData.optionGroups || [];
+        if (typeof optionGroups === 'string') {
+            try {
+                optionGroups = JSON.parse(optionGroups);
+            } catch (e) {
+                optionGroups = [];
+            }
+        }
         delete productData.optionGroups;
 
         // Ensure every product has default "Size" option group
@@ -109,6 +131,12 @@ class ProductService  {
 
     async updateProductOptionGroup(productId, optionGroupId, data) {
         return await optionGroupRepository.updateProductOptionGroup(productId, optionGroupId, data);
+    }
+
+    async toggleActive(id) {
+        const product = await productRepository.findById(id);
+        if (!product) throw ERR.NotFound(`Product ${id} not found`);
+        return await productRepository.update(id, { isActive: !product.isActive });
     }
 
     async delete(id) {

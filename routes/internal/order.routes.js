@@ -19,7 +19,7 @@ const orderRouter = express.Router();
 orderRouter.post(
   "/",
   protect,
-  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER),
+  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.KITCHEN),
   validate(createStaffOrder),
   orderController.createForStaff,
 );
@@ -61,7 +61,7 @@ orderRouter.patch(
   "/:id/pickup",
   protect,
   restrictTo(StaffRole.SHIPPER),
-  orderController.confirmPickup
+  orderController.confirmPickup,
 );
 
 /**
@@ -73,7 +73,7 @@ orderRouter.patch(
   "/:id/complete",
   protect,
   restrictTo(StaffRole.SHIPPER),
-  orderController.completeDelivery
+  orderController.completeDelivery,
 );
 
 export default orderRouter;

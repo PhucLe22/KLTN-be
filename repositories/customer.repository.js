@@ -12,7 +12,7 @@ class CustomerRepository extends BaseRepository {
       where: { id: customerId },
       include: {
         pointTransactions: {
-          orderBy: { createdAt: "desc" },
+          orderBy: [{ createdAt: "desc" }],
           take: 10,
         },
       },
@@ -56,6 +56,23 @@ class CustomerRepository extends BaseRepository {
       include: {
         user: true,
       },
+    });
+  }
+
+  // Tìm kiếm khách hàng theo tên hoặc điện thoại
+  async search(query, tx = null) {
+    return await this.getModel(tx).findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { phone: { contains: query } }
+        ]
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+      }
     });
   }
 

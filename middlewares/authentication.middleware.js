@@ -22,7 +22,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   const decoded = JwtHelper.verifyAccessToken(token);
 
   // 3. Kiểm tra User còn tồn tại trong Database không
-  const currentUser = await userRepository.findById(decoded.sub);
+  const currentUser = await userRepository.findByIdWithProfile(decoded.sub);
   if (!currentUser) {
     throw ERR.Unauthorized(
       "Người dùng sở hữu token này không còn tồn tại.",

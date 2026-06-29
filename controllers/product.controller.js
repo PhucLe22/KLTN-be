@@ -72,6 +72,14 @@ class ProductController {
         return res.ok(product, null, "Product option group updated successfully");
     });
 
+    toggleActive = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const product = await productService.toggleActive(id);
+        const result = mapper(product, ProductMap);
+
+        return res.ok(result);
+    });
+
     remove = asyncHandler(async (req, res) => {
         const { id } = req.params;
         await productService.delete(id);

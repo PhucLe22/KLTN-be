@@ -6,7 +6,7 @@ import * as f from "../common.schema.js";
 // POST /api/v1/orders - Customer orders (authenticated)
 export const createOrder = {
   body: z.object({
-    storeId: f.id,
+    storeId: f.id.optional(),
     type: z.nativeEnum(OrderType),
     note: z.string().max(255).optional(),
     voucherCode: z.string().optional(), // Mã giảm giá nếu có
@@ -27,6 +27,8 @@ export const createOrder = {
         receiverName: z.string(),
         receiverPhone: z.string(),
         addressLine: z.string(),
+        lat: z.number().optional().nullable(),
+        lng: z.number().optional().nullable(),
       })
       .optional(),
 
@@ -161,6 +163,8 @@ export const createStaffOrder = {
         receiverName: z.string(),
         receiverPhone: z.string(),
         addressLine: z.string(),
+        lat: z.number().optional().nullable(),
+        lng: z.number().optional().nullable(),
       })
       .optional(),
 
@@ -168,14 +172,14 @@ export const createStaffOrder = {
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+          productId: f.id,
           quantity: z.number().int().min(1),
           note: z.string().optional(),
           // Product options (Size/Topping)
           options: z
             .array(
               z.object({
-                optionId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+                optionId: f.id,
               }),
             )
             .optional(),

@@ -1,6 +1,7 @@
-@staff_access_token=YOUR_STAFF_TOKEN_HERE
+@staff_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTYyZmY4Mi0zOTFiLTQwMzMtOTIyNC04NWMxNGU5ZjhhYTIiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6ImUyZTI4YjEzLWIxMjktNGU4ZC1iMGUzLTYyNzM1YjNmZTIwZSIsInN0b3JlSWQiOiIzYzdhNGE0Zi1lNTUxLTQzNDQtOGJhYi0yMDg2MjYyMjc0ZmYiLCJpYXQiOjE3ODEwOTI4MjgsImV4cCI6MTc4MTY5NzYyOH0.QxvlSTcN3VMYmE66HFCf1RnB9x4VD2EbMUnjcNdKXw8
 @order_id=YOUR_ORDER_ID_HERE
 @store_id=YOUR_STORE_ID_HERE
+@voucher_code=VOUCHER10
 
 ### Get New Orders (Staff)
 GET http://localhost:5001/api/v1/internal/orders?status=NEW&page=1&limit=10
@@ -43,4 +44,63 @@ Content-Type: application/json
 
 {
   "status": "DELIVERING"
+}
+
+### Create DINE_IN Order (Staff)
+POST http://localhost:5001/api/v1/internal/orders
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "type": "DINE_IN",
+  "tableNumber": "A01",
+  "phone": "09337104446",
+  "items": [
+    {
+      "productId": "44f50ace-b572-4019-a5b0-ddc0ed78bff8",
+      "quantity": 1,
+      "options": [
+        { "optionId": "550e8400-e29b-41d4-a716-446655440103" }
+      ]
+    }
+  ]
+}
+
+### Create TAKEAWAY Order (Staff)
+POST http://localhost:5001/api/v1/internal/orders
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "type": "TAKEAWAY",
+  "phone": "09337104446",
+  "items": [
+    {
+      "productId": "44f50ace-b572-4019-a5b0-ddc0ed78bff8",
+      "quantity": 1,
+      "options": [
+        { "optionId": "550e8400-e29b-41d4-a716-446655440103" }
+      ]
+    }
+  ]
+}
+
+### Create TAKEAWAY Order with Voucher (Staff)
+POST http://localhost:5001/api/v1/internal/orders
+Authorization: Bearer {{staff_access_token}}
+Content-Type: application/json
+
+{
+  "type": "TAKEAWAY",
+  "phone": "09337104446",
+  "voucherCode": "{{voucher_code}}",
+  "items": [
+    {
+      "productId": "44f50ace-b572-4019-a5b0-ddc0ed78bff8",
+      "quantity": 1,
+      "options": [
+        { "optionId": "550e8400-e29b-41d4-a716-446655440103" }
+      ]
+    }
+  ]
 }

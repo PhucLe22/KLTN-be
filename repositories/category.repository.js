@@ -37,7 +37,7 @@ class CategoryRepository extends BaseRepository {
       limit,
       where,
       select,
-      orderBy: { [sortBy]: sortOrder }
+      orderBy: [{ [sortBy]: sortOrder }]
     }, tx);
   }
 

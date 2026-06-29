@@ -28,6 +28,7 @@ export const RouteOptimizationMap = {
 export const InternalDeliveryQueueMap = {
   id: 'order.orderCode',
   customer: (s) => s.order.customer?.name || "Khách hàng",
+  customerPhone: (s) => s.order.customer?.phone || "Không có SĐT",
   status: (s) => {
     const statusMap = {
       NEW: "MỚI",

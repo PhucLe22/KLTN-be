@@ -34,7 +34,7 @@ class AuthController {
   registerGuest = asyncHandler(async (req, res) => {
     const data = req.body;
     const customer = await authService.registerGuest(data);
-    const result = mapper(customer, GuestMap);
+    const result = mapper(customer.customer, GuestMap);
 
     return res.ok(result);
   });

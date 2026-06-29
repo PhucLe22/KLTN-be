@@ -1,9 +1,23 @@
 import express from "express";
 import { voucherController } from "../controllers/voucher.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
-import { getAvailableVouchers } from "../contracts/input/promotions.schema.js";
+import {
+  getAvailableVouchers,
+  listPublicVouchers,
+} from "../contracts/input/promotions.schema.js";
 
 const promotionRouter = express.Router();
+
+/**
+ * @route   GET /api/v1/promotions
+ * @desc    Danh sách voucher khả dụng cho khách hàng (có phân trang)
+ * @access  Public
+ */
+promotionRouter.get(
+  "/",
+  validate(listPublicVouchers),
+  voucherController.listPublic,
+);
 
 /**
  * @route   GET /api/v1/promotions/available

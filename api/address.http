@@ -1,4 +1,4 @@
-@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5MjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxYWQxZmM2ZS05YTQ4LTQ0MTItOTVmNS0wMTk3YjMwOGI0NmMiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyYWUwZWJmYy03NmQ1LTRlNjQtOTU2ZC02MDdiMWY5ZmM2MzYiLCJpYXQiOjE3ODE1MDEzNzUsImV4cCI6MTc4MjEwNjE3NX0.xowz9l1QUFAmSErkMGMNS9t2OE2vAZz7kkslH08Oy5c
 
 ### Create Address for Customer
 POST http://localhost:5001/api/v1/addresses
@@ -6,12 +6,25 @@ Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
-  "customerId": "50682m68-9c02-4a6b-97a2-33010792b7e6",
-  "receiverName": "Nguyen Van A",
-  "receiverPhone": "0909123456",
-  "addressLine": "123 Nguyen Hue, District 1, Ho Chi Minh City",
-  "label": "Home",
-  "isDefault": true
+  "receiverName": "Nguyen B",
+  "receiverPhone": "0975123654",
+  "addressLine": "1 Vo Van Ngan, Thu Duc District, Ho Chi Minh City",
+  "label": "Work",
+  "isDefault": false
+}
+
+### Create Address with Coordinates
+POST http://localhost:5001/api/v1/addresses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "receiverName": "Nguyen Van C",
+  "receiverPhone": "0909123457",
+  "addressLine": "Bitexco Financial Tower, 2 Hai Trieu, District 1, HCMC",
+  "lat": 10.7715,
+  "lng": 106.7042,
+  "label": "Office"
 }
 
 ### Create Address for Store
@@ -26,17 +39,21 @@ Authorization: Bearer {{accessToken}}
 }
 
 ### Update Address
-PUT http://localhost:5001/api/v1/addresses/address-uuid-here
+PUT http://localhost:5001/api/v1/addresses/38685762-ce93-40d3-bc42-b90411598f2b
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
-  "receiverName": "Nguyen Van B",
-  "addressLine": "789 Pastuer, District 3, Ho Chi Minh City"
+  "receiverName": "Nguyen Van CDCDCD",
+  "addressLine": "1 Vo Van Ngan, Thu Duc District, Ho Chi Minh City"
 }
 
 ### Set Default Address
 PATCH http://localhost:5001/api/v1/addresses/address-uuid-here/default
+Authorization: Bearer {{accessToken}}
+
+### List My Addresses
+GET http://localhost:5001/api/v1/addresses/mine
 Authorization: Bearer {{accessToken}}
 
 ### List Addresses by Customer
@@ -48,5 +65,5 @@ GET http://localhost:5001/api/v1/addresses/store/fd102949-677b-4843-ada1-8a940c7
 Authorization: Bearer {{accessToken}}
 
 ### Delete Address
-DELETE http://localhost:5001/api/v1/addresses/address-uuid-here
+DELETE http://localhost:5001/api/v1/addresses/f1c3587b-7d3b-4808-8f79-c8d2f14e746a
 Authorization: Bearer {{accessToken}}

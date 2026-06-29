@@ -1,4 +1,6 @@
 import { orderRepository } from "../repositories/order.repository.js";
+import { voucherRepository } from "../repositories/voucher.repository.js";
+import { voucherService } from "./voucher.service.js"; // <-- Add this
 import { customerRepository } from "../repositories/customer.repository.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
@@ -8,6 +10,7 @@ import { ERR } from "../lib/httpExceptions.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import { OrderType, OrderStatus, StaffRole, DeliveryStatus, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
+import { geocodeAddress } from "../lib/geocoding.js";
 
 class OrderService  {
 
@@ -21,10 +24,9 @@ class OrderService  {
 
   async createOrder(body, user) {
     return await prisma.$transaction(async (tx) => {
-      const { storeId, type, items, note, tableNumber, deliveryInfo } = body;
+      const { storeId, type, items, note, tableNumber, deliveryInfo, voucherCode } = body;
 
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
-      const totals = this.#calculateTotals(subtotal, type);
 
       const customer = await customerRepository.findCustomerByUserId(user.id, tx);
       if (!customer) {
@@ -32,9 +34,29 @@ class OrderService  {
       }
       const customerId = customer.id;
 
+      let discountAmount = 0;
+      let voucher = null;
+      if (voucherCode) {
+        voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
+        // Calculate discount
+        if (voucher.discountType === 'PERCENT') {
+          discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
+          if (voucher.maxDiscount !== null) {
+            discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
+          }
+        } else {
+          discountAmount = Number(voucher.discountValue);
+        }
+        // Cap discount at subtotal
+        discountAmount = Math.min(discountAmount, Number(subtotal));
+      }
+
+      const totals = this.#calculateTotals(subtotal, type, discountAmount);
+
       const orderData = {
         orderCode: this.#generateOrderCode(type),
-        storeId,
+        storeId: type === OrderType.DELIVERY ? null : storeId,
+        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + 90 * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -45,21 +67,73 @@ class OrderService  {
         createdBy: user.id, // Set createdBy to the user ID (Customer)
       };
 
+      if (voucher) {
+        orderData.vouchers = {
+          create: [{
+            voucherId: voucher.id,
+            discount: discountAmount
+          }]
+        };
+      }
+
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
         console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
+        
+        let lat = deliveryInfo.lat;
+        let lng = deliveryInfo.lng;
+
+        if (deliveryInfo.addressLine && (lat === undefined || lat === null || lng === undefined || lng === null)) {
+          try {
+            console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
+            const geocoded = await geocodeAddress(deliveryInfo.addressLine);
+            if (geocoded) {
+              lat = geocoded.lat;
+              lng = geocoded.lng;
+              console.log(`[OrderService] Geocoding success: lat=${lat}, lng=${lng}`);
+            }
+          } catch (error) {
+            console.error("Geocoding failed during order delivery creation:", error.message);
+          }
+        }
+
         orderData.delivery = {
           create: {
-            storeId,
+            storeId: null, // Delivery storeId is assigned by solver
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
+            lat: lat,
+            lng: lng,
           }
         };
       }
 
       console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
+
+      if (voucher) {
+        // Increment usedCount
+        await tx.voucher.update({
+          where: { id: voucher.id },
+          data: {
+            usedCount: { increment: 1 }
+          }
+        });
+
+        // If customer-scoped, mark as used
+        if (voucher.scope === 'CUSTOMER') {
+          await tx.customerVoucher.update({
+            where: {
+              customerId_voucherId: {
+                customerId,
+                voucherId: voucher.id
+              }
+            },
+            data: { isUsed: true }
+          });
+        }
+      }
 
       // Record initial event for delivery order
       if (type === OrderType.DELIVERY) {
@@ -83,21 +157,39 @@ class OrderService  {
 
   async createOrderForStaff(storeId, body, user) {
     return await prisma.$transaction(async (tx) => {
-      const { type, items, note, tableNumber, phone, deliveryInfo } = body;
+      const { type, items, note, tableNumber, phone, deliveryInfo, voucherCode } = body;
 
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
-      const totals = this.#calculateTotals(subtotal, type);
 
       const customer = await customerRepository.findByPhone(phone, tx);
       if (!customer) {
         throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
       }
-      
       const customerId = customer.id;
+      
+      let discountAmount = 0;
+      let voucher = null;
+      if (voucherCode) {
+        voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
+        // Calculate discount
+        if (voucher.discountType === 'PERCENT') {
+          discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
+          if (voucher.maxDiscount !== null) {
+            discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
+          }
+        } else {
+          discountAmount = Number(voucher.discountValue);
+        }
+        // Cap discount at subtotal
+        discountAmount = Math.min(discountAmount, Number(subtotal));
+      }
+      
+      const totals = this.#calculateTotals(subtotal, type, discountAmount);
 
       const orderData = {
         orderCode: this.#generateOrderCode(type),
-        storeId,
+        storeId: type === OrderType.DELIVERY ? null : storeId,
+        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + 90 * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -108,21 +200,73 @@ class OrderService  {
         createdBy: user?.id, // Set createdBy to the user ID (Staff)
       };
 
+      if (voucher) {
+        orderData.vouchers = {
+          create: [{
+            voucherId: voucher.id,
+            discount: discountAmount
+          }]
+        };
+      }
+
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
         console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
+        
+        let lat = deliveryInfo.lat;
+        let lng = deliveryInfo.lng;
+
+        if (deliveryInfo.addressLine && (lat === undefined || lat === null || lng === undefined || lng === null)) {
+          try {
+            console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
+            const geocoded = await geocodeAddress(deliveryInfo.addressLine);
+            if (geocoded) {
+              lat = geocoded.lat;
+              lng = geocoded.lng;
+              console.log(`[OrderService] Geocoding success: lat=${lat}, lng=${lng}`);
+            }
+          } catch (error) {
+            console.error("Geocoding failed during order delivery creation:", error.message);
+          }
+        }
+
         orderData.delivery = {
           create: {
-            storeId,
+            storeId: null, // Delivery storeId is assigned by solver
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
+            lat: lat,
+            lng: lng,
           }
         };
       }
 
       console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
       const order = await orderRepository.create(orderData, tx);
+
+      if (voucher) {
+        // Increment usedCount
+        await tx.voucher.update({
+          where: { id: voucher.id },
+          data: {
+            usedCount: { increment: 1 }
+          }
+        });
+
+        // If customer-scoped, mark as used
+        if (voucher.scope === 'CUSTOMER') {
+          await tx.customerVoucher.update({
+            where: {
+              customerId_voucherId: {
+                customerId,
+                voucherId: voucher.id
+              }
+            },
+            data: { isUsed: true }
+          });
+        }
+      }
 
       // Record initial event for delivery order
       if (type === OrderType.DELIVERY) {
@@ -162,7 +306,7 @@ class OrderService  {
 
   async getOrders(userId, query = {}) {
     const filters = buildOrderFilters({ userId, query });
-    const result = await orderRepository.getOrdersByFilters(filters);
+    const result = await orderRepository.getOrdersByFiltersWithDetails(filters);
 
     const enrichedItems = await this.#enrichOrdersWithStaffInfo(result.items);
 
@@ -271,29 +415,93 @@ class OrderService  {
       throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
     }
 
-    // Security check: Only customer who own the order or staff can see activities
     if (order.customerId !== user.customer?.id && !user.staff) {
       throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
     }
 
-    if (!order.delivery) {
-      // For non-delivery orders, synthesized timeline from order createdAt/updatedAt
-      // or return just the basic placed event
-      return [
-        {
-          status: OrderStatus.NEW,
-          createdAt: order.createdAt,
-          note: "Đơn hàng đã được đặt thành công",
-        }
-      ];
+    return this.#buildTimeline(order);
+  }
+
+  #buildTimeline(order) {
+    const statusFlow = [
+      OrderStatus.NEW,
+      OrderStatus.CONFIRMED,
+      OrderStatus.PREPARING,
+      OrderStatus.READY,
+      OrderStatus.DELIVERING,
+      OrderStatus.COMPLETED,
+    ];
+
+    const eventMap = {};
+    for (const evt of (order.delivery?.events || [])) {
+      if (!eventMap[evt.status]) eventMap[evt.status] = evt;
     }
 
-    const events = await prisma.deliveryEvent.findMany({
-      where: { deliveryId: order.delivery.id },
-      orderBy: { createdAt: "asc" },
-    });
+    const currentIdx = statusFlow.indexOf(order.status);
+    const timeline = [];
 
-    return events;
+    for (const status of statusFlow) {
+      if (status === OrderStatus.DELIVERING && order.type !== OrderType.DELIVERY) continue;
+
+      const event = eventMap[status];
+      const reached = statusFlow.indexOf(status) <= currentIdx;
+
+      if (!event && !reached) continue;
+
+      const time = event?.createdAt ?? this.#statusTime(order, status);
+      const item = { status, time: time || null, isPast: reached };
+
+      switch (status) {
+        case OrderStatus.NEW:
+          item.label = 'Order Placed';
+          item.description = 'Your order has been acknowledged by the collective.';
+          break;
+        case OrderStatus.CONFIRMED:
+          item.label = 'Confirmed';
+          item.description = 'Your order has been confirmed.';
+          break;
+        case OrderStatus.PREPARING:
+          item.label = 'Preparing';
+          item.description = 'Our artisans are meticulously crafting your ritual.';
+          break;
+        case OrderStatus.READY:
+          item.label = order.type === OrderType.DELIVERY ? 'Ready for pickup' : 'Ready';
+          item.description = order.type === OrderType.DELIVERY
+            ? 'Your order is ready for the courier.'
+            : 'Your order is ready to be served.';
+          break;
+        case OrderStatus.DELIVERING:
+          item.label = 'Out for delivery';
+          item.description = 'Your courier is navigating the city to your doorstep.';
+          break;
+        case OrderStatus.COMPLETED:
+          item.label = 'Delivered';
+          item.description = 'The warmth has arrived.';
+          break;
+      }
+
+      timeline.push(item);
+    }
+
+    // Estimated delivery if not yet delivered
+    if (order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED && order.expectedReadyAt) {
+      timeline.push({
+        status: 'ESTIMATED',
+        label: 'Delivered',
+        time: order.expectedReadyAt,
+        isPast: false,
+        isEstimate: true,
+        description: 'Estimated delivery time.',
+      });
+    }
+
+    return timeline;
+  }
+
+  #statusTime(order, status) {
+    if (status === OrderStatus.COMPLETED) return order.delivery?.deliveredAt ?? order.updatedAt;
+    if (status === OrderStatus.NEW) return order.createdAt;
+    return order.updatedAt;
   }
 
 
@@ -471,11 +679,11 @@ class OrderService  {
     return { orderItems, subtotal };
   }
 
-  #calculateTotals(subtotal, type) {
+  #calculateTotals(subtotal, type, discountAmount = 0) {
     const serviceFee = type === OrderType.DELIVERY ? 15000 : 0;
     const tax = Number(subtotal) * 0.08; // 8% VAT
-    const discount = 0;
-    const total = Number(subtotal) - discount + tax + serviceFee;
+    const discount = Number(discountAmount);
+    const total = Math.max(0, Number(subtotal) - discount + tax + serviceFee);
 
     return { serviceFee, tax, discount, total };
   }

@@ -16,7 +16,7 @@ export class BaseRepository {
       where = {},
       include = null,
       select = null,
-      orderBy = { createdAt: "desc" },
+      orderBy = [{ createdAt: "desc" }],
     },
     tx = null,
   ) {
@@ -41,6 +41,7 @@ export class BaseRepository {
       meta: {
         totalItems: total,
         currentPage: Number(page),
+        pageSize: Number(limit),
         totalPages,
         hasNext: Number(page) < totalPages,
       },

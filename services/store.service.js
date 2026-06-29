@@ -14,7 +14,7 @@ class StoreService {
             limit,
             where,
             select: STORE_SELECT_FIELDS,
-            orderBy: { [sortBy]: sortOrder }
+            orderBy: [{ [sortBy]: sortOrder }]
         });
     }
 

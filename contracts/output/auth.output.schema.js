@@ -27,10 +27,12 @@ export const LoginMap = {
 };
 
 export const GuestMap = {
-  customerId: 'id',
+  id: true,
   name: true,
   phone: true,
+  email: true,
   tier: (s) => s.tier || "BRONZE",
+  points: true,
 };
 
 export const ProfileMap = {

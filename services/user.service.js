@@ -8,17 +8,17 @@ class UserService  {
         
         const { where, sortBy, sortOrder } = buildUserFilters(query);
 
-        return await storeRepository.findAll({
+        return await userRepository.findAll({
             page,
             limit,
             where,
             select: USER_SELECT_FIELDS,
-            orderBy: { [sortBy]: sortOrder }
+            orderBy: [{ [sortBy]: sortOrder }]
         });
     }
 
     async create(data) {
-        return await storeRepository.create(data);
+        return await userRepository.create(data);
     }
 
     async update(id, data) {
@@ -45,11 +45,11 @@ class UserService  {
             }
         }
 
-        return await storeRepository.update(id, updateData);
+        return await userRepository.update(id, updateData);
     }
 
     async remove(id) {
-        return await storeRepository.update(id, { isActive: false });
+        return await userRepository.update(id, { isActive: false });
     }
 }
 

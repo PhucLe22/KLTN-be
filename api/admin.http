@@ -201,3 +201,15 @@ Authorization: Bearer {{accessToken}}
 ### Delete Category
 DELETE http://localhost:5001/api/v1/internal/admin/categories/cat-123
 Authorization: Bearer {{accessToken}}
+
+### Get All Shipper Routes (Admin Dashboard)
+GET http://localhost:5001/api/v1/internal/admin/shipper-routes
+Authorization: Bearer {{accessToken}}
+
+### Get Shipper Routes by Shipper ID (filter by specific shipper)
+GET http://localhost:5001/api/v1/internal/admin/shipper-routes?shipperId=SHIPPER_STAFF_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Force Refresh All Shipper Routes (Admin Dashboard - triggers solver)
+POST http://localhost:5001/api/v1/internal/admin/shipper-routes
+Authorization: Bearer {{accessToken}}

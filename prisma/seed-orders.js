@@ -50,21 +50,27 @@ async function main() {
     console.error("❌ No customers found. Please run main seed first.");
     return;
   }
-  console.log(`Using Customer: ${customer.name} (${customer.id})`);
+  
+  // Ensure customer has name/phone
+  const updatedCustomer = await prisma.customer.update({
+      where: { id: customer.id },
+      data: { name: "Test Customer", phone: "0900000000" }
+  });
+  console.log(`Using Customer: ${updatedCustomer.name} (${updatedCustomer.id})`);
 
   // 3. Create Orders
-  console.log(`Creating ${locations.length} orders across ${stores.length} stores...`);
+  console.log(`Creating ${locations.length} orders...`);
   const orders = [];
   
   for (let i = 0; i < locations.length; i++) {
     const loc = locations[i];
-    const store = stores[i % stores.length]; // Distribute orders across stores
     const orderCode = `ORD-${Math.random().toString(36).substring(7).toUpperCase()}`;
     
     const order = await prisma.order.create({
       data: {
         orderCode,
-        storeId: store.id,
+        createdAt: new Date(Date.now() - (Math.floor(Math.random() * 56) + 5) * 60 * 1000),
+        storeId: null, // <--- TESTED CONDITION: Null Store for Solver Assignment
         customerId: customer.id, // Link to customer
         type: OrderType.DELIVERY,
         status: OrderStatus.CONFIRMED,
@@ -81,7 +87,7 @@ async function main() {
         },
         delivery: {
           create: {
-            storeId: store.id,
+            storeId: null, // <--- TESTED CONDITION: Null Store for Solver Assignment
             receiverName: `Customer ${loc.name}`,
             receiverPhone: "0900000000",
             addressLine: loc.address,
@@ -92,7 +98,7 @@ async function main() {
       }
     });
     orders.push(order);
-    console.log(`- Created ${orderCode} for store: ${store.name}`);
+    console.log(`- Created ${orderCode} with NULL storeId`);
   }
   console.log(`✅ Created ${orders.length} orders total.`);
 }

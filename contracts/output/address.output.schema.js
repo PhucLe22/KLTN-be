@@ -7,8 +7,8 @@ export const AddressMap = {
   lng: true,
   isDefault: true,
   label: true,
-  customerId: true,
-  storeId: true,
+  customerId: (s) => s.customerId || undefined,
+  storeId: (s) => s.storeId || undefined,
   createdAt: true,
   updatedAt: true,
 };

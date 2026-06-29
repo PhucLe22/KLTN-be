@@ -16,19 +16,19 @@ async function seedManager() {
       return;
     }
 
-    // 1. Create Store (required for Staff)
-    const store = await prisma.store.create({
-      data: {
-        code: "MAIN",
-        name: "Main Store",
-        address: "720A Dien Bien Phu, Binh Thanh, HCMC",
-        lat: 10.7950,
-        lng: 106.7219,
-        hotline: "0901234567",
-        isActive: true,
-      },
-    });
-    console.log("✅ Store created:", store.name);
+    // 1. Create Stores
+    const storesData = [
+      { code: "HCM_BINH_THANH", name: "Binh Thanh Store", address: "720A Dien Bien Phu, Binh Thanh, HCMC", lat: 10.7950, lng: 106.7219, hotline: "0901234567", isActive: true },
+      { code: "HCM_DIST1", name: "District 1 Store", address: "123 Nguyen Hue, District 1, HCMC", lat: 10.7757, lng: 106.7009, hotline: "0901234568", isActive: true },
+      { code: "HCM_DIST7", name: "District 7 Store", address: "456 Nguyen Van Linh, District 7, HCMC", lat: 10.7300, lng: 106.7100, hotline: "0901234569", isActive: true },
+    ];
+    
+    const stores = [];
+    for (const data of storesData) {
+        const store = await prisma.store.create({ data });
+        stores.push(store);
+        console.log("✅ Store created:", store.name);
+    }
 
     // 2. Create User with hashed password
     const hashedPassword = await bcrypt.hash("manager123", 10);
@@ -41,11 +41,11 @@ async function seedManager() {
     });
     console.log("✅ User created:", user.email);
 
-    // 3. Create Staff with MANAGER role
+    // 3. Create Staff with MANAGER role (assigned to the first store)
     const staff = await prisma.staff.create({
       data: {
         userId: user.id,
-        storeId: store.id,
+        storeId: stores[0].id,
         role: "MANAGER",
         isActive: true,
       },
