@@ -15,124 +15,41 @@ Content-Type: application/json
   "email": "phuclnt22@gmail.com"
 }
 
-###
 POST http://localhost:5001/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "phone": "0123456789",
-  "password": "admin@123",
-  "name": "Admin",
-  "email": "admin@gmail.com"
+  "phone": "09337104445",
+  "password": "Password@123",
+  "name": "Thien Phuc",
+  "email": "22110201@student.hcmute.edu.vn"
 }
 
-###
-POST http://localhost:5001/api/v1/internal/auth/register/guest
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "phone": "0988888888",
-  "name": "Nguyen Van Guest"
-}
-
-###
-/*
-tạo user + staff
-*/
-POST http://localhost:5001/api/v1/internal/auth/register/staff
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "email": "cashier2.hcm01@trasua.com",
-  "phone": "0988111223",
-  "password": "StaffPassword789",
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10", 
-  "role": "CASHIER"
-}
-
-###
-POST http://localhost:5001/api/v1/internal/auth/register/staff
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "email": "admin@foodapp.com",
-  "password": "admin@123",
-  "storeId": "58660bb9-cfd8-41f3-9cc6-989485b26d10",
-  "role": "ADMIN"
-}
-
-
-###
-/*
-login as customer
-*/
 POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
-
 {
-  "identifier": "0917630445",
-  "password": "123456"
+  "identifier": "22110201@student.hcmute.edu.vn",
+  "password": "New@123"
 }
 
-###
-/*
-login as staff
-*/
-POST http://localhost:5001/api/v1/auth/login
+POST http://localhost:5001/api/v1/auth/forgot_password_otp
 Content-Type: application/json
-
 {
-  "identifier": "cashier2.hcm01@trasua.com",
-  "password": "StaffPassword789"
+  "email": "22110201@student.hcmute.edu.vn"
 }
 
-###
-/*
-login as manager
-*/
-POST http://localhost:5001/api/v1/auth/login
+
+POST http://localhost:5001/api/v1/auth/reset_password_otp
 Content-Type: application/json
-
 {
-  "identifier": "manager@foodapp.com",
-  "password": "manager123"
+  "email": "22110201@student.hcmute.edu.vn",
+  "code": "770000",
+  "newPassword": "New@123"
 }
 
-###
-/*
-login as admin
-*/
-POST http://localhost:5001/api/v1/auth/login
+POST http://localhost:5001/api/v1/auth/verify_forgot_password_otp
 Content-Type: application/json
-
 {
-  "identifier": "admin@foodapp.com",
-  "password": "admin123"
+  "email": "22110201@student.hcmute.edu.vn",
+  "code": "770000"
 }
-
-###
-/*
-logout
-*/
-# @name logout
-POST http://localhost:5001/api/v1/auth/logout
-Authorization: Bearer {{accessToken}}
-Cookie: refreshToken={{refreshToken}}
-Content-Type: application/json
-
-{
-  "refreshToken": "{{refreshToken}}"
-}
-
-###
-# @name getCustomerProfile
-GET http://localhost:5001/api/v1/auth/profile
-Authorization: Bearer {{accessToken}}
-
-###
-# @name getInternalProfile
-GET http://localhost:5001/api/v1/internal/profile
-Authorization: Bearer {{accessToken}}

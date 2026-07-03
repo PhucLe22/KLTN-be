@@ -164,10 +164,15 @@ model User {
   customer      Customer?
   refreshTokens RefreshToken[]
 
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@schema("iam")
+
+
 }
 
 model RefreshToken {
@@ -195,6 +200,17 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+  @@schema("iam")
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  email     String
+  code      String   // Hashed code
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
   @@schema("iam")
 }
 

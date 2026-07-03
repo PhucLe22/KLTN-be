@@ -1,10 +1,9 @@
-import { BaseController } from "./base.controller.js";
-import { authService } from "../services/auth.service.js";
-import { asyncHandler } from "../lib/asyncHandler.js";
-import { AuthMapper } from "../mappers/auth.mapper.js";
-import { CookieHelper } from "../lib/cookieHelper.js";
 import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { UserType } from "../constants/enum.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
+import { CookieHelper } from "../lib/cookieHelper.js";
+import { AuthMapper } from "../mappers/auth.mapper.js";
+import { authService } from "../services/auth.service.js";
+import { BaseController } from "./base.controller.js";
 
 class AuthController extends BaseController {
   constructor() {
@@ -119,6 +118,24 @@ class AuthController extends BaseController {
     return this.success(res, {
       data: profileData,
     });
+  });
+
+  forgotPasswordOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const result = await this.service.forgotPasswordOtp(email);
+    return this.success(res, { message: SUCCESS_MESSAGES.SEND_FORGOT_PASSWORD_OTP, data: result });
+  });
+
+  verifyForgotPasswordOtp = asyncHandler(async(req, res) => {
+    const { email, code } = req.body;
+    const result = await this.service.verifyForgotPasswordOtp(email, code);
+    return this.success(res, { message: SUCCESS_MESSAGES.VERIFY_FORGOT_PASSWORD_OTP, data: result });
+  });
+
+  resetPasswordOtp = asyncHandler(async (req, res) => {
+    const { email, code, newPassword } = req.body;
+    const result = await this.service.resetPasswordOtp(email, code, newPassword);
+    return this.success(res, { message: SUCCESS_MESSAGES.RESET_PASSWORD, data: result });
   });
 }
 

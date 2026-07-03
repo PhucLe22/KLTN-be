@@ -1,8 +1,8 @@
 import express from "express";
+import { registerCustomerSchema } from "../contracts/input/auth.schema.js";
 import { authController } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/authentication.middleware.js";
 import { validateData } from "../middlewares/validate.middleware.js";
-import { registerCustomerSchema } from "../contracts/input/auth.schema.js";
 
 const authRouter = express.Router();
 
@@ -38,5 +38,9 @@ authRouter.post("/logout", authController.logout);
  * @access  Private (Cần Access Token)
  */
 authRouter.get("/profile", protect, authController.getProfile);
+
+authRouter.post("/forgot_password_otp", authController.forgotPasswordOtp);
+authRouter.post("/verify_forgot_password_otp", authController.verifyForgotPasswordOtp);
+authRouter.post("/reset_password_otp", authController.resetPasswordOtp);
 
 export default authRouter;

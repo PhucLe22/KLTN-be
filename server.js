@@ -1,15 +1,19 @@
-import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import dotenv from "dotenv";
+import express from "express";
 import morgan from "morgan";
-import mainRouter from "./routes/index.js";
 import connectToDB from "./config/connectToDB.js";
-import { errorHandler } from "./middlewares/error.middleware.js";
-import logger from "./lib/logger.js";
 import { corsOptions } from "./config/cors.js";
+import logger from "./lib/logger.js";
+import { errorHandler } from "./middlewares/error.middleware.js";
+import mainRouter from "./routes/index.js";
 
 dotenv.config({ path: ".env" });
+
+console.log("JWT_ACCESS_SECRET", process.env.JWT_ACCESS_SECRET);
+console.log("JWT_REFRESH_SECRET", process.env.JWT_REFRESH_SECRET);
+console.log("JWT_RESET_PASSWORD_SECRET", process.env.JWT_RESET_PASSWORD_SECRET);
 
 const app = express();
 const PORT = process.env.PORT || 5001;

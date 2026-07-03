@@ -1,20 +1,23 @@
 // services/auth.service.js
 import bcrypt from "bcrypt";
 
-import { BaseService } from "./base.service.js";
-import { userRepository } from "../repositories/user.repository.js";
 import { customerRepository } from "../repositories/customer.repository.js";
 import { staffRepository } from "../repositories/staff.repository.js";
 import { tokenRepository } from "../repositories/token.repository.js";
+import { userRepository } from "../repositories/user.repository.js";
+import { BaseService } from "./base.service.js";
 
+import { UserType } from "../constants/enum.js";
+import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import {
   BadRequestException,
   UnauthorizedException,
 } from "../lib/httpExceptions.js";
-import { prisma } from "../lib/prisma.js";
 import { JwtHelper } from "../lib/jwt.js";
-import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
-import { UserType } from "../constants/enum.js";
+import jwt from "jsonwebtoken";
+import { EmailHelper } from "../lib/emailHelper.js";
+import { createOtp, verifyOtp } from "./otp.service.js";
+import { prisma } from "../lib/prisma.js";
 class AuthService extends BaseService {
   constructor() {
     super(userRepository);
@@ -263,9 +266,41 @@ class AuthService extends BaseService {
     ) {
       const manager = await this.staffRepo.findManagerByStore(user.staff.storeId);
       user.staff.manager = manager;
-    }
+}
 
     return user;
+  }
+
+
+  // OTP based forgot password flow
+  async forgotPasswordOtp(email) {
+    // Generate OTP and send via email
+    const { code } = await createOtp(email, Number(process.env.OTP_LENGTH) || 6, process.env.OTP_EXPIRES_IN || "5m");
+    const subject = "Password Reset OTP";
+    const body = `Your OTP code is ${code}. It expires in ${process.env.OTP_EXPIRES_IN || "5 minutes"}.`;
+    await EmailHelper.sendSimple(email, subject, body);
+    return { message: "OTP sent" };
+  }
+
+  async verifyForgotPasswordOtp(email, code) {
+    await verifyOtp(email, code);
+    return { valid: true };
+  }
+
+  async resetPasswordOtp(email, code, newPassword) {
+    await verifyOtp(email, code);
+
+    const user = await this.userRepo.findByIdentifier(email);
+    if (!user) {
+      throw new BadRequestException("Người dùng không tồn tại");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.update(user.id, {
+      password: hashedPassword,
+    });
+
+    return { message: "Mật khẩu đã được cập nhật thành công" };
   }
 }
 
