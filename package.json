@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "seed": "node prisma/seed.js",
     "seed:manager": "node prisma/seed-manager.js",
-    "seed:products": "node prisma/seed-products.js"
+    "seed:products": "node prisma/seed-products.js",
+    "postinstall": "prisma generate"
   },
   "repository": {
     "type": "git",

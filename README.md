@@ -561,3 +561,9 @@ pnpm dev
 ```
 
 Server will run on `http://localhost:5001`
+
+
+
+## db - prisma 
+npx prisma db push
+pnpm run seed
