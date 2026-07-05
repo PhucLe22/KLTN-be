@@ -11,6 +11,34 @@ class VoucherController {
     return res.ok(result, vouchers.meta);
   });
 
+  validate = asyncHandler(async (req, res) => {
+    const { code, orderAmount, storeId, customerId } = req.body;
+    const voucher = await voucherService.validateVoucher(code, orderAmount, storeId, customerId);
+
+    // Calculate discount amount
+    let discountAmount;
+    if (voucher.discountType === 'PERCENT') {
+      discountAmount = (Number(orderAmount) * Number(voucher.discountValue)) / 100;
+      if (voucher.maxDiscount !== null) {
+        discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
+      }
+    } else {
+      discountAmount = Number(voucher.discountValue);
+    }
+    discountAmount = Math.min(discountAmount, Number(orderAmount));
+
+    // Return essential info for frontend display
+    return res.ok({
+      id: voucher.id,
+      code: voucher.code,
+      discountType: voucher.discountType,
+      discountValue: voucher.discountValue,
+      discountAmount,
+      maxDiscount: voucher.maxDiscount,
+      minOrderAmount: voucher.minOrderAmount,
+    });
+  });
+
   listPublic = asyncHandler(async (req, res) => {
     const result = await voucherService.getAllPublic(req.query);
 

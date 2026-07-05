@@ -4,6 +4,7 @@ import { validate } from "../middlewares/validate.middleware.js";
 import {
   getAvailableVouchers,
   listPublicVouchers,
+  validateVoucherInput,
 } from "../contracts/input/promotions.schema.js";
 
 const promotionRouter = express.Router();
@@ -28,6 +29,17 @@ promotionRouter.get(
   "/available",
   validate(getAvailableVouchers),
   voucherController.listAvailable,
+);
+
+/**
+ * @route   POST /api/v1/promotions/validate
+ * @desc    Kiểm tra mã giảm giá và trả về số tiền giảm
+ * @access  Public
+ */
+promotionRouter.post(
+  "/validate",
+  validate(validateVoucherInput),
+  voucherController.validate,
 );
 
 export default promotionRouter;

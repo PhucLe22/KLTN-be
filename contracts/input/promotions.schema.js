@@ -10,6 +10,16 @@ export const getAvailableVouchers = {
   }),
 };
 
+// POST /api/v1/promotions/validate
+export const validateVoucherInput = {
+  body: z.object({
+    code: z.string().min(1),
+    orderAmount: z.number().nonnegative(),
+    storeId: f.id.optional(),
+    customerId: f.id.optional(),
+  }),
+};
+
 // GET /api/v1/promotions (public)
 export const listPublicVouchers = {
   query: z.object({
