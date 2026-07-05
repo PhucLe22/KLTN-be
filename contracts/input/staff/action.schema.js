@@ -1,5 +1,5 @@
 import { z } from "zod";
-import * as f from "../common.schema.js";
+import * as f from "../../common.schema.js";
 
 // Cập nhật tồn kho nhanh (Bật/Tắt sản phẩm tại chi nhánh)
 export const updateProductStock = {

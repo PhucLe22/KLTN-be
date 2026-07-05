@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const getOptionGroups = {
+  query: z.object({
+    page: z.string().optional().default("1"),
+    limit: z.string().optional().default("20"),
+  }),
+};
+
 export const createOptionGroup = {
   body: z.object({
     name: z.string().min(1, "Name is required"),

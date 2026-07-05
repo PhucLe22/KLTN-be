@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { OrderType, OrderStatus } from "../../constants/enum.js";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
-import * as f from "../common.schema.js";
+import * as f from "../../common.schema.js";
 
 export const staffCreateOrder = {
   body: z.object({

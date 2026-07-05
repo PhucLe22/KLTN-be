@@ -71,8 +71,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "09337104446",
-  "password": "Password123@"
+  "identifier": "giabao23479@gmail.com",
+  "password": "noufo123"
 }
 
 ###

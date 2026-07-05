@@ -18,9 +18,9 @@ async function seedManager() {
 
     // 1. Create Stores
     const storesData = [
-      { code: "HCM_BINH_THANH", name: "Binh Thanh Store", address: "720A Dien Bien Phu, Binh Thanh, HCMC", lat: 10.7950, lng: 106.7219, hotline: "0901234567", isActive: true },
-      { code: "HCM_DIST1", name: "District 1 Store", address: "123 Nguyen Hue, District 1, HCMC", lat: 10.7757, lng: 106.7009, hotline: "0901234568", isActive: true },
-      { code: "HCM_DIST7", name: "District 7 Store", address: "456 Nguyen Van Linh, District 7, HCMC", lat: 10.7300, lng: 106.7100, hotline: "0901234569", isActive: true },
+      { code: "HCM_BINH_THANH", name: "Chi Nhánh Bình Thạnh", address: "720A Điện Biên Phủ, Phường 22, Bình Thạnh, TP. Hồ Chí Minh", lat: 10.7950, lng: 106.7219, hotline: "0901234567", isActive: true },
+      { code: "HCM_DIST1", name: "Chi Nhánh Quận 1", address: "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh", lat: 10.7757, lng: 106.7009, hotline: "0901234568", isActive: true },
+      { code: "HCM_DIST7", name: "Chi Nhánh Quận 7", address: "456 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP. Hồ Chí Minh", lat: 10.7300, lng: 106.7100, hotline: "0901234569", isActive: true },
     ];
     
     const stores = [];
@@ -34,6 +34,7 @@ async function seedManager() {
     const hashedPassword = await bcrypt.hash("manager123", 10);
     const user = await prisma.user.create({
       data: {
+        name: "Quản Lý",
         email: "manager@foodapp.com",
         password: hashedPassword,
         isActive: true,

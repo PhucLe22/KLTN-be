@@ -50,6 +50,7 @@ export const createOrder = {
         }),
       )
       .min(1, VALIDATION_MESSAGES.ITEMS_MIN),
+
   }),
 };
 
@@ -89,6 +90,7 @@ export const createGuestOrder = {
         }),
       )
       .min(1, VALIDATION_MESSAGES.ITEMS_MIN),
+
   }),
 };
 

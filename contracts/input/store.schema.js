@@ -10,6 +10,7 @@ export const getStores = {
     page: z.string().transform(Number).optional().default("1"),
     lat: z.string().transform(Number).optional(),
     lng: z.string().transform(Number).optional(),
+    isDeleted: z.string().optional(),
   }),
 };
 
@@ -38,6 +39,7 @@ export const updateStores = {
     lat: f.lat,
     lng: f.lng,
     isActive: z.boolean().optional(),
+    isDeleted: z.boolean().optional(),
   }),
 };
 

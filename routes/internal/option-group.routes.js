@@ -5,9 +5,21 @@ import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
-import { createOptionGroup } from "../../contracts/input/option.schema.js";
+import { getOptionGroups, createOptionGroup } from "../../contracts/input/option.schema.js";
 
 const optionGroupRouter = express.Router();
+
+/**
+ * @route   GET /api/v1/internal/option-groups
+ * @desc    Lấy danh sách tất cả Option Groups
+ */
+optionGroupRouter.get(
+  "/",
+  protect,
+  restrictTo(StaffRole.ADMIN, StaffRole.MANAGER),
+  validate(getOptionGroups),
+  optionGroupController.list,
+);
 
 /**
  * @route   POST /api/v1/internal/option-groups

@@ -1,4 +1,5 @@
 import { categoryRepository } from "../repositories/category.repository.js";
+import { prisma } from "../lib/prisma.js";
 import {  createSlug } from "../lib/helpers.js";
 
 class CategoryService {
@@ -14,7 +15,7 @@ class CategoryService {
         // Use provided slug, generate from name only if not provided
         const categoryData = {
             ...data,
-            slug: await createSlug(categoryRepository, data.name)
+            slug: await createSlug(prisma.category, data.name)
         };
         
         return await categoryRepository.create(categoryData);

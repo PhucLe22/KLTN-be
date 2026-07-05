@@ -3,21 +3,21 @@ import { prisma } from "../lib/prisma.js";
 import { OrderStatus, OrderType } from "../constants/enum.js";
 
 const locations = [
-  { name: "Bitexco Financial Tower", lat: 10.7715, lng: 106.7042, address: "2 Hai Trieu, District 1, HCMC" },
-  { name: "Landmark 81", lat: 10.7950, lng: 106.7219, address: "720A Dien Bien Phu, Binh Thanh, HCMC" },
-  { name: "Notre Dame Cathedral", lat: 10.7797, lng: 106.6990, address: "1 Cong xa Paris, District 1, HCMC" },
-  { name: "Ben Thanh Market", lat: 10.7725, lng: 106.6980, address: "Le Loi, District 1, HCMC" },
-  { name: "War Remnants Museum", lat: 10.7795, lng: 106.6921, address: "28 Vo Van Tan, District 3, HCMC" },
-  { name: "Vinhomes Central Park", lat: 10.7936, lng: 106.7203, address: "208 Nguyen Huu Canh, Binh Thanh, HCMC" },
-  { name: "Dragon Wharf", lat: 10.7681, lng: 106.7068, address: "1 Nguyen Tat Thanh, District 4, HCMC" },
-  { name: "Tao Dan Park", lat: 10.7745, lng: 106.6922, address: "Truong Dinh, District 1, HCMC" },
-  { name: "Saigon Zoo", lat: 10.7875, lng: 106.7052, address: "2 Nguyen Binh Khiem, District 1, HCMC" },
-  { name: "Tan Dinh Church", lat: 10.7884, lng: 106.6908, address: "281 Hai Ba Trung, District 3, HCMC" },
-  { name: "Independence Palace", lat: 10.7770, lng: 106.6953, address: "135 Nam Ky Khoi Nghia, District 1, HCMC" },
-  { name: "Saigon Opera House", lat: 10.7766, lng: 106.7032, address: "7 Cong Truong Lam Son, District 1, HCMC" },
-  { name: "Turtle Lake", lat: 10.7827, lng: 106.6960, address: "Cong Truong Quoc Te, District 3, HCMC" },
-  { name: "Gia Dinh Park", lat: 10.8116, lng: 106.6778, address: "Hoang Minh Giam, Phu Nhuan, HCMC" },
-  { name: "HCMC Fine Arts Museum", lat: 10.7698, lng: 106.6994, address: "97A Pho Duc Chinh, District 1, HCMC" },
+  { name: "Tháp Bitexco", lat: 10.7715, lng: 106.7042, address: "2 Hai Triều, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Landmark 81", lat: 10.7950, lng: 106.7219, address: "720A Điện Biên Phủ, Bình Thạnh, TP. Hồ Chí Minh" },
+  { name: "Nhà Thờ Đức Bà", lat: 10.7797, lng: 106.6990, address: "1 Công Xã Paris, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Chợ Bến Thành", lat: 10.7725, lng: 106.6980, address: "Lê Lợi, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Bảo Tàng Chứng Tích Chiến Tranh", lat: 10.7795, lng: 106.6921, address: "28 Võ Văn Tần, Quận 3, TP. Hồ Chí Minh" },
+  { name: "Vinhomes Central Park", lat: 10.7936, lng: 106.7203, address: "208 Nguyễn Hữu Cảnh, Bình Thạnh, TP. Hồ Chí Minh" },
+  { name: "Bến Nhà Rồng", lat: 10.7681, lng: 106.7068, address: "1 Nguyễn Tất Thành, Quận 4, TP. Hồ Chí Minh" },
+  { name: "Công Viên Tao Đàn", lat: 10.7745, lng: 106.6922, address: "Trương Định, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Thảo Cầm Viên Sài Gòn", lat: 10.7875, lng: 106.7052, address: "2 Nguyễn Bỉnh Khiêm, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Nhà Thờ Tân Định", lat: 10.7884, lng: 106.6908, address: "281 Hai Bà Trưng, Quận 3, TP. Hồ Chí Minh" },
+  { name: "Dinh Độc Lập", lat: 10.7770, lng: 106.6953, address: "135 Nam Kỳ Khởi Nghĩa, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Nhà Hát Lớn", lat: 10.7766, lng: 106.7032, address: "7 Công Trường Lam Sơn, Quận 1, TP. Hồ Chí Minh" },
+  { name: "Hồ Con Rùa", lat: 10.7827, lng: 106.6960, address: "Công Trường Quốc Tế, Quận 3, TP. Hồ Chí Minh" },
+  { name: "Công Viên Gia Định", lat: 10.8116, lng: 106.6778, address: "Hoàng Minh Giám, Phú Nhuận, TP. Hồ Chí Minh" },
+  { name: "Bảo Tàng Mỹ Thuật", lat: 10.7698, lng: 106.6994, address: "97A Phó Đức Chính, Quận 1, TP. Hồ Chí Minh" },
 ];
 
 async function main() {
@@ -54,7 +54,7 @@ async function main() {
   // Ensure customer has name/phone
   const updatedCustomer = await prisma.customer.update({
       where: { id: customer.id },
-      data: { name: "Test Customer", phone: "0900000000" }
+      data: { name: "Khách Hàng Test", phone: "0900000000" }
   });
   console.log(`Using Customer: ${updatedCustomer.name} (${updatedCustomer.id})`);
 

@@ -12,12 +12,12 @@ async function seedStaff() {
     });
 
     if (!store) {
-      console.log("⚠️ Main store not found. Creating it...");
+      console.log("⚠️ Cửa hàng chính không tồn tại. Đang tạo...");
       store = await prisma.store.create({
         data: {
           code: "MAIN",
-          name: "Main Store",
-          address: "123 Main Street, District 1, Ho Chi Minh City",
+          name: "Cửa Hàng Chính",
+          address: "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
           hotline: "0901234567",
           isActive: true,
           lat: 10.7757,
@@ -29,25 +29,25 @@ async function seedStaff() {
     const staffMembers = [
       {
         email: "kitchen1@foodapp.com",
-        name: "Chef One",
+        name: "Đầu Bếp Một",
         role: "KITCHEN",
         password: "password123",
       },
       {
         email: "kitchen2@foodapp.com",
-        name: "Chef Two",
+        name: "Đầu Bếp Hai",
         role: "KITCHEN",
         password: "password123",
       },
       {
         email: "shipper1@foodapp.com",
-        name: "Shipper One",
+        name: "Giao Hàng Một",
         role: "SHIPPER",
         password: "password123",
       },
       {
         email: "shipper2@foodapp.com",
-        name: "Shipper Two",
+        name: "Giao Hàng Hai",
         role: "SHIPPER",
         password: "password123",
       },

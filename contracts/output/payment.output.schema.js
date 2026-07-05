@@ -4,6 +4,7 @@ export const PaymentMap = {
   amount: true,
   status: true,
   method: true,
-  transactionId: true,
+  providerRef: true,
+  paidAt: true,
   createdAt: true,
 };

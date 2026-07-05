@@ -316,9 +316,26 @@ class OrderService  {
     };
   }
 
-  async getOrdersForStaff(storeId, query = {}) {
+  async getOrdersForStaff(storeId, query = {}, user = null) {
     const filters = buildOrderFilters({ storeId, query });
-    const result = await orderRepository.getOrdersByFilters(filters);
+
+    const role = user?.staff?.role;
+    const staffId = user?.staff?.id;
+
+    if (role === StaffRole.KITCHEN && staffId) {
+      filters.where.OR = [
+        { storeId, type: { in: [OrderType.DINE_IN, OrderType.TAKEAWAY] } },
+        { type: OrderType.DELIVERY, chefId: staffId },
+      ];
+      delete filters.where.storeId;
+    } else if (role === StaffRole.SHIPPER && staffId) {
+      filters.where = {
+        type: OrderType.DELIVERY,
+        delivery: { shipperId: staffId },
+      };
+    }
+
+    const result = await orderRepository.getOrdersByFiltersWithDetails(filters);
 
     const enrichedItems = await this.#enrichOrdersWithStaffInfo(result.items);
 
@@ -366,12 +383,18 @@ class OrderService  {
         throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
       }
 
-      // Nếu là STAFF/MANAGER/CASHIER, chỉ được update order của store mình
       if (user.staff && 
           user.staff.role !== StaffRole.ADMIN && 
-          user.staff.role !== StaffRole.OWNER && 
-          order.storeId !== user.staff.storeId) {
-        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+          user.staff.role !== StaffRole.OWNER) {
+
+        const canUpdate =
+          order.storeId === user.staff.storeId ||
+          (order.type === OrderType.DELIVERY && order.chefId === user.staff.id) ||
+          (order.type === OrderType.DELIVERY && order.delivery?.shipperId === user.staff.id);
+
+        if (!canUpdate) {
+          throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+        }
       }
 
       const updatedOrder = await tx.order.update({
@@ -419,10 +442,20 @@ class OrderService  {
       throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
     }
 
-    return this.#buildTimeline(order);
+    let routeData = null;
+    if (order.type === OrderType.DELIVERY && order.delivery?.shipperId) {
+      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+        where: { shipperId: order.delivery.shipperId }
+      });
+      if (deliveryRoute?.route) {
+        routeData = deliveryRoute.route;
+      }
+    }
+
+    return this.#buildTimeline(order, routeData);
   }
 
-  #buildTimeline(order) {
+  #buildTimeline(order, routeData = null) {
     const statusFlow = [
       OrderStatus.NEW,
       OrderStatus.CONFIRMED,
@@ -451,48 +484,65 @@ class OrderService  {
       const time = event?.createdAt ?? this.#statusTime(order, status);
       const item = { status, time: time || null, isPast: reached };
 
+      if (event?.note) {
+        item.description = event.note;
+      }
+
       switch (status) {
         case OrderStatus.NEW:
           item.label = 'Order Placed';
-          item.description = 'Your order has been acknowledged by the collective.';
+          item.description ??= 'Your order has been acknowledged by the collective.';
           break;
         case OrderStatus.CONFIRMED:
           item.label = 'Confirmed';
-          item.description = 'Your order has been confirmed.';
+          item.description ??= 'Your order has been confirmed.';
           break;
         case OrderStatus.PREPARING:
           item.label = 'Preparing';
-          item.description = 'Our artisans are meticulously crafting your ritual.';
+          item.description ??= 'Our artisans are meticulously crafting your ritual.';
           break;
         case OrderStatus.READY:
           item.label = order.type === OrderType.DELIVERY ? 'Ready for pickup' : 'Ready';
-          item.description = order.type === OrderType.DELIVERY
+          item.description ??= order.type === OrderType.DELIVERY
             ? 'Your order is ready for the courier.'
             : 'Your order is ready to be served.';
           break;
         case OrderStatus.DELIVERING:
           item.label = 'Out for delivery';
-          item.description = 'Your courier is navigating the city to your doorstep.';
+          item.description ??= 'Your courier is navigating the city to your doorstep.';
           break;
         case OrderStatus.COMPLETED:
           item.label = 'Delivered';
-          item.description = 'The warmth has arrived.';
+          item.description ??= 'The warmth has arrived.';
           break;
       }
 
       timeline.push(item);
     }
 
-    // Estimated delivery if not yet delivered
-    if (order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED && order.expectedReadyAt) {
-      timeline.push({
-        status: 'ESTIMATED',
-        label: 'Delivered',
-        time: order.expectedReadyAt,
-        isPast: false,
-        isEstimate: true,
-        description: 'Estimated delivery time.',
-      });
+    // Estimated delivery ETA from route data or fallback to expectedReadyAt
+    if (order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED) {
+      let eta = order.expectedReadyAt;
+
+      if (routeData && order.delivery?.shipperId) {
+        const routeStep = Array.isArray(routeData)
+          ? routeData.find(s => s.orderId === order.id && s.type === 'DELIVERY')
+          : null;
+        if (routeStep?.arrival_datetime) {
+          eta = new Date(routeStep.arrival_datetime);
+        }
+      }
+
+      if (eta) {
+        timeline.push({
+          status: 'ESTIMATED',
+          label: 'Delivered',
+          time: eta,
+          isPast: false,
+          isEstimate: true,
+          description: 'Estimated delivery time.',
+        });
+      }
     }
 
     return timeline;
@@ -556,6 +606,64 @@ class OrderService  {
         }
       });
 
+      // Update DeliveryRoute step statuses
+      const deliveryRoute = await tx.deliveryRoute.findUnique({
+        where: { shipperId: user.staff.id }
+      });
+      if (deliveryRoute) {
+        const updatedRoute = deliveryRoute.route.map(step => {
+          if (step.orderId === id) {
+            if (step.type === "STORE") {
+              return { ...step, status: "COMPLETED" };
+            }
+            if (step.type === "DELIVERY") {
+              return { ...step, status: "IN_PROGRESS" };
+            }
+          }
+          return step;
+        });
+        await tx.deliveryRoute.update({
+          where: { shipperId: user.staff.id },
+          data: { route: updatedRoute }
+        });
+      }
+
+      return updatedOrder;
+    });
+  }
+
+  async completeOrder(id, user) {
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) {
+        throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+
+      if (order.type === OrderType.DELIVERY) {
+        throw ERR.BadRequest("Dùng API complete cho đơn giao hàng");
+      }
+
+      if (order.status !== OrderStatus.READY) {
+        throw ERR.BadRequest(ERROR_MESSAGES.ORDER_STATUS_INVALID);
+      }
+
+      if (user.staff && user.staff.role !== StaffRole.ADMIN && user.staff.role !== StaffRole.OWNER && order.storeId !== user.staff.storeId) {
+        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+      }
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status: OrderStatus.COMPLETED },
+        include: {
+          store: true,
+          customer: true,
+          items: { include: { product: true, options: true } },
+          delivery: true,
+          assignedChef: { include: { user: true } },
+        },
+      });
+
       return updatedOrder;
     });
   }
@@ -607,6 +715,23 @@ class OrderService  {
           note: `Đơn hàng đã được giao thành công bởi shipper ${user.name || user.id}`,
         }
       });
+
+      // Update DeliveryRoute step status
+      const deliveryRoute = await tx.deliveryRoute.findUnique({
+        where: { shipperId: user.staff.id }
+      });
+      if (deliveryRoute) {
+        const updatedRoute = deliveryRoute.route.map(step => {
+          if (step.orderId === id && step.type === "DELIVERY") {
+            return { ...step, status: "COMPLETED" };
+          }
+          return step;
+        });
+        await tx.deliveryRoute.update({
+          where: { shipperId: user.staff.id },
+          data: { route: updatedRoute }
+        });
+      }
 
       return updatedOrder;
     });
@@ -698,6 +823,44 @@ class OrderService  {
     const typeCode = typeMapping[type] || "OR";
     const timestamp = Date.now();
     return `${prefix}-${typeCode}-${timestamp}`;
+  }
+
+  async remove(id, user) {
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) {
+        throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      }
+
+      if (user.staff && user.staff.role !== StaffRole.ADMIN && user.staff.role !== StaffRole.OWNER && order.storeId !== user.staff.storeId) {
+        throw ERR.Forbidden(ERROR_MESSAGES.FORBIDDEN);
+      }
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status: OrderStatus.CANCELLED },
+        include: {
+          store: true,
+          customer: true,
+          items: { include: { product: true, options: true } },
+          delivery: true,
+          assignedChef: { include: { user: true } },
+        },
+      });
+
+      if (updatedOrder.delivery) {
+        await tx.deliveryEvent.create({
+          data: {
+            deliveryId: updatedOrder.delivery.id,
+            status: OrderStatus.CANCELLED,
+            note: `Đơn hàng đã bị hủy bởi ${user.staff?.role || user.name}`,
+          },
+        });
+      }
+
+      return updatedOrder;
+    });
   }
 
   async #getStaffInfoById(staffId) {

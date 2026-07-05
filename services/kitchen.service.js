@@ -47,7 +47,7 @@ class KitchenService {
         ],
         order: {
           status: {
-            in: [OrderStatus.CONFIRMED, OrderStatus.PREPARING],
+            in: [OrderStatus.NEW, OrderStatus.CONFIRMED, OrderStatus.PREPARING],
           },
         },
       },
@@ -111,6 +111,7 @@ class KitchenService {
       chef_list: chefNames,
       orders: formattedKitchenOrders,
       tardiness_weight: tardinessWeight,
+      makespan_weight: 200,
     };
 
     console.log(
@@ -149,8 +150,8 @@ class KitchenService {
       throw ERR.BadRequest("Failed to get kitchen schedule from solver. Check backend logs.");
     }
 
-    // 4. Get orders for Delivery Routing (READY)
-    console.log("[KitchenService] Phase 4: Fetching READY orders for routing...");
+    // 4. Get orders for Delivery Routing (READY / CONFIRMED / PREPARING with expectedReadyAt)
+    console.log("[KitchenService] Phase 4: Fetching orders for routing...");
     const deliveryOrdersForRouting = await prisma.deliveryOrder.findMany({
       where: {
         OR: [
@@ -158,7 +159,9 @@ class KitchenService {
           { storeId: null }
         ],
         order: {
-          status: OrderStatus.READY,
+          status: {
+            in: [OrderStatus.READY, OrderStatus.CONFIRMED, OrderStatus.PREPARING],
+          },
         },
       },
       include: {
@@ -346,7 +349,7 @@ class KitchenService {
       const vrpResponse = await axios.post(
         `${this.pythonBackendUrl}/vrp`,
         vrpPayload,
-        { timeout: 30000 } // 30s timeout
+        { timeout: 60000 } // 60s timeout for VRP
       );
       console.log(
         `[KitchenService] VRP returned ${vrpResponse.data.length} steps.`,
@@ -463,6 +466,7 @@ class KitchenService {
               OrderStatus.PREPARING,
               OrderStatus.READY,
               OrderStatus.DELIVERING,
+              OrderStatus.COMPLETED,
             ],
           },
         },
@@ -554,7 +558,15 @@ class KitchenService {
       }
     }
 
-    // 3. Persist full route JSON per shipper
+    // 3. Delete stale routes for shippers no longer in the new solution
+    const assignedShipperIds = Array.from(shipperRoutes.keys());
+    await prisma.deliveryRoute.deleteMany({
+      where: {
+        shipperId: { notIn: assignedShipperIds },
+      },
+    });
+
+    // 4. Persist full route JSON per shipper
     for (const [sId, routeSteps] of shipperRoutes.entries()) {
       await prisma.deliveryRoute.upsert({
         where: { shipperId: sId },
@@ -588,6 +600,7 @@ class KitchenService {
               OrderStatus.DELIVERING,
               OrderStatus.PREPARING,
               OrderStatus.CONFIRMED,
+              OrderStatus.COMPLETED,
             ],
           },
         },
@@ -667,12 +680,49 @@ class KitchenService {
           // 1. Try to use persisted route
           if (routeMap.has(sId)) {
             const savedRoute = routeMap.get(sId);
-            // Optional: Validate if savedRoute still matches current orders
+
+            const orderStatusMap = new Map();
+            for (const o of shipperOrders) {
+              orderStatusMap.set(o.orderId, {
+                orderStatus: o.order.status,
+                deliveryStatus: o.status,
+              });
+            }
+
+            const routes = savedRoute.map((node) => {
+              if (!node.orderId) return node;
+
+              const status = orderStatusMap.get(node.orderId);
+              if (!status) return { ...node, status: "PENDING" };
+
+              if (node.type === "STORE") {
+                return {
+                  ...node,
+                  status: status.deliveryStatus === "PICKED_UP" || status.deliveryStatus === "DELIVERED"
+                    ? "COMPLETED"
+                    : "PENDING",
+                };
+              }
+
+              if (node.type === "DELIVERY") {
+                return {
+                  ...node,
+                  status: status.deliveryStatus === "DELIVERED"
+                    ? "COMPLETED"
+                    : status.deliveryStatus === "PICKED_UP"
+                      ? "IN_PROGRESS"
+                      : "PENDING",
+                };
+              }
+
+              return node;
+            });
+
             shippersList.push({
               shipperId: sId,
               shipperName: shipperOrders[0].assignedShipper?.user.name || "Unknown Shipper",
-              routes: savedRoute,
-              isPersisted: true
+              routes,
+              isPersisted: true,
             });
             continue;
           }
@@ -759,7 +809,29 @@ class KitchenService {
 
     // If no data or forceRefresh, trigger full unified solve
     try {
-      // If we don't have storeIds here, we fetch all active stores as a fallback
+      // Guard: if this was a shipper-specific query and orders exist for other shippers,
+      // don't re-solve — just return empty for this shipper
+      if (shipperId) {
+        const anyOrder = await prisma.deliveryOrder.findFirst({
+          where: {
+            ...(storeIds ? { storeId: { in: storeIds } } : {}),
+            order: {
+              status: { in: [OrderStatus.READY, OrderStatus.DELIVERING, OrderStatus.PREPARING] },
+            },
+          },
+        });
+        if (anyOrder) {
+          console.log("[KitchenService] Orders exist but assigned elsewhere. Returning empty for this shipper.");
+          return {
+            storeIds,
+            numShippers: 0,
+            numOrders: 0,
+            shippers: [],
+            formattedOrders: [],
+          };
+        }
+      }
+
       const targetStoreIds = storeIds || await storeRepository.getAllActiveStoreIds();
       const result = await this.getSchedule(targetStoreIds);
       return result.delivery;

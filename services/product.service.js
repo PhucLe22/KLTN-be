@@ -6,6 +6,10 @@ import { ERR } from "../lib/httpExceptions.js";
 
 class ProductService  {
 
+    get repository() {
+        return productRepository;
+    }
+
     async findAll(query) {
         return await productRepository.findAll(query);
     }
@@ -17,7 +21,7 @@ class ProductService  {
     }
 
     async generateSlug(name) {
-        return await createSlug(productRepository, name);
+        return await createSlug(prisma.product, name);
     }
 
     async create(data) {
@@ -117,13 +121,49 @@ class ProductService  {
         
         // Update slug if name is changed
         if (updateData.name && !updateData.slug) {
-            updateData.slug = await createSlug(productRepository, updateData.name) 
+            updateData.slug = await createSlug(prisma.product, updateData.name) 
         }
 
         // Convert nested category object to categoryId for Prisma
         if (updateData.category && updateData.category.id) {
             updateData.categoryId = updateData.category.id;
             delete updateData.category;
+        }
+
+        // Handle optionGroups update
+        const optionGroups = updateData.optionGroups;
+        delete updateData.optionGroups;
+
+        if (optionGroups && optionGroups.length > 0) {
+            return await prisma.$transaction(async (tx) => {
+                const product = await productRepository.update(id, updateData, tx);
+
+                // Remove existing option group links
+                await tx.productOptionGroup.deleteMany({ where: { productId: id } });
+                await tx.productOptionValue.deleteMany({ where: { productId: id } });
+
+                // Create new option group links
+                const pogData = optionGroups.map(og => ({
+                    productId: id,
+                    optionGroupId: og.optionGroupId,
+                    sortOrder: og.sortOrder
+                }));
+                await tx.productOptionGroup.createMany({ data: pogData });
+
+                // Create new option values
+                const povData = optionGroups.flatMap(og =>
+                    (og.optionValues || []).map(ov => ({
+                        productId: id,
+                        optionId: ov.optionId,
+                        price: ov.price
+                    }))
+                );
+                if (povData.length > 0) {
+                    await tx.productOptionValue.createMany({ data: povData });
+                }
+
+                return product;
+            });
         }
         
         return await productRepository.update(id, updateData);

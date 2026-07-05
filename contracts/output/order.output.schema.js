@@ -79,9 +79,16 @@ export const OrderMap = {
     tax: item.tax,
     note: item.note,
     thumbnail: item.product?.thumbnail ?? null,
-    options: (item.options || []).map(opt => opt.name),
+    options: (item.options || []).map(opt => ({
+      id: opt.id,
+      name: opt.name,
+      price: Number(opt.price),
+    })),
   })),
-  estimatedArrival: (s) => s.expectedReadyAt ? new Date(s.expectedReadyAt).toISOString() : null,
+  estimatedArrival: (s) => {
+    if (s.etaFromRoute) return s.etaFromRoute;
+    return s.expectedReadyAt ? new Date(s.expectedReadyAt).toISOString() : null;
+  },
   driver: (s) => {
     const shipper = s.delivery?.assignedShipper;
     if (!shipper) return null;

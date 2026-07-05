@@ -16,24 +16,25 @@ async function seedAdmin() {
       return;
     }
 
-    // 1. Create System Store for Admin (optional, but staff requires storeId)
+    // 1. Create Store for Admin in HCMC
     const store = await prisma.store.create({
       data: {
-        code: "SYSTEM",
-        name: "System Store",
-        address: "Bitexco Financial Tower, 2 Hai Trieu, District 1, HCMC",
-        lat: 10.7715,
-        lng: 106.7042,
+        code: "HCM_ADMIN",
+        name: "Trà Sữa FoodApp - Quận 1",
+        address: "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
+        lat: 10.7757,
+        lng: 106.7009,
         hotline: "0900000000",
         isActive: true,
       },
     });
-    console.log("✅ System Store created:", store.name);
+    console.log("✅ Store created:", store.name);
 
     // 2. Create User with hashed password
     const hashedPassword = await bcrypt.hash("admin123", 10);
     const user = await prisma.user.create({
       data: {
+        name: "Quản Trị Viên",
         email: "admin@foodapp.com",
         password: hashedPassword,
         isActive: true,

@@ -2,9 +2,18 @@ import { optionGroupRepository } from "../repositories/option-group.repository.j
 
 class OptionGroupService {
 
-    // async create(data) {
-    //     return await this.repository.create(data);
-    // }
+    async findAll(query = {}) {
+        const { page = 1, limit = 20 } = query;
+        return await optionGroupRepository.findAll({
+            page: Number(page),
+            limit: Number(limit),
+            where: { isActive: true },
+            include: {
+                options: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } }
+            },
+            orderBy: { sortOrder: 'asc' },
+        });
+    }
 
     async create(data) {
     const { name, storeId, isRequired, isMultiple, sortOrder, options = [] } = data;

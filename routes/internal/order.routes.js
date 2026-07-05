@@ -65,12 +65,36 @@ orderRouter.patch(
 );
 
 /**
+ * @route   DELETE /internal/orders/:id
+ * @desc    Hủy đơn hàng (Manager/Admin only)
+ * @access  Private (MANAGER, ADMIN, OWNER)
+ */
+orderRouter.delete(
+  "/:id",
+  protect,
+  restrictTo(StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER),
+  orderController.remove,
+);
+
+/**
  * @route   PATCH /internal/orders/:id/complete
+ * @desc    Hoàn tất đơn DINE_IN / TAKEAWAY (kitchen/staff/manager/admin)
+ * @access  Private (Staff)
+ */
+orderRouter.patch(
+  "/:id/complete",
+  protect,
+  restrictTo(StaffRole.KITCHEN, StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER),
+  orderController.completeOrder,
+);
+
+/**
+ * @route   PATCH /internal/orders/:id/delivery/complete
  * @desc    Shipper xác nhận đã giao hàng thành công
  * @access  Private (SHIPPER only)
  */
 orderRouter.patch(
-  "/:id/complete",
+  "/:id/delivery/complete",
   protect,
   restrictTo(StaffRole.SHIPPER),
   orderController.completeDelivery,

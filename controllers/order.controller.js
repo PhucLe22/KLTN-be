@@ -41,7 +41,7 @@ class OrderController {
    */
   listForStaff = asyncHandler(async (req, res) => {
     const staffStoreId = req.user?.staff?.storeId;
-    const orders = await orderService.getOrdersForStaff(staffStoreId, req.query);
+    const orders = await orderService.getOrdersForStaff(staffStoreId, req.query, req.user);
     const result = mapper(orders.items, OrderMap);
 
     return res.ok(result, orders.meta);
@@ -78,6 +78,21 @@ class OrderController {
     const order = await orderService.completeDelivery(id, req.user);
     const result = mapper(order, OrderMap);
 
+    return res.ok(result);
+  });
+
+  completeOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.completeOrder(id, req.user);
+    const result = mapper(order, OrderMap);
+
+    return res.ok(result);
+  });
+
+  remove = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.remove(id, req.user);
+    const result = mapper(order, OrderMap);
     return res.ok(result);
   });
 

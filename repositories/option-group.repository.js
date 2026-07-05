@@ -1,5 +1,6 @@
 import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
+import { prisma } from "../lib/prisma.js";
 
 class OptionGroupRepository extends BaseRepository {
     constructor() {
@@ -40,7 +41,7 @@ class OptionGroupRepository extends BaseRepository {
     async updateProductOptionGroup(productId, optionGroupId, data) {
         const { sortOrder, optionValues } = data;
 
-        return await this.prisma.$transaction(async (tx) => {
+        return await prisma.$transaction(async (tx) => {
             // 1. Update sortOrder in ProductOptionGroup if provided
             if (sortOrder !== undefined) {
                 await tx.productOptionGroup.update({

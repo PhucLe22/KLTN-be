@@ -25,3 +25,16 @@ export const registerGuest = {
     name: f.name,
   }),
 };
+
+export const forgotPassword = {
+  body: z.object({
+    email: f.email,
+  }),
+};
+
+export const resetPassword = {
+  body: z.object({
+    token: z.string().min(1, "Token không được để trống"),
+    password: f.password,
+  }),
+};

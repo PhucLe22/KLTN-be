@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
 import { userRepository } from "../repositories/user.repository.js";
 import { customerRepository } from "../repositories/customer.repository.js";
@@ -8,6 +9,7 @@ import { tokenRepository } from "../repositories/token.repository.js";
 import { ERR } from "../lib/httpExceptions.js";
 import { prisma } from "../lib/prisma.js";
 import { JwtHelper } from "../lib/jwt.js";
+import { emailService } from "./email.service.js";
 import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import { UserType, StaffRole } from "../constants/enum.js";
 class AuthService {
@@ -239,6 +241,53 @@ class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + days);
     return expiresAt;
+  }
+
+  async forgotPassword(email) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      return { message: "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu." };
+    }
+
+    const resetToken = uuidv4();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await userRepository.update(user.id, {
+      resetPasswordToken: resetToken,
+      resetPasswordExpires: expiresAt,
+    });
+
+    await emailService.sendResetPasswordEmail(email, resetToken);
+
+    return { message: "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu." };
+  }
+
+  async resetPassword(token, newPassword) {
+    const user = await userRepository.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { gt: new Date() },
+    });
+
+    if (!user) {
+      throw ERR.BadRequest("Token không hợp lệ hoặc đã hết hạn.");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.$transaction(async (tx) => {
+      await userRepository.update(
+        user.id,
+        {
+          password: hashedPassword,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        },
+        tx,
+      );
+      await tokenRepository.revokeAllUserTokens(user.id, tx);
+    });
+
+    return { message: "Mật khẩu đã được đặt lại thành công." };
   }
 
   async getProfile(userId) {

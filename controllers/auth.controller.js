@@ -99,6 +99,26 @@ class AuthController {
 
     return res.ok(result);
   });
+
+  /**
+   * Quên mật khẩu - gửi email reset
+   */
+  forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+
+    return res.ok(result);
+  });
+
+  /**
+   * Đặt lại mật khẩu với token
+   */
+  resetPassword = asyncHandler(async (req, res) => {
+    const { token, password } = req.body;
+    const result = await authService.resetPassword(token, password);
+
+    return res.ok(result);
+  });
 }
 
 export const authController = new AuthController();

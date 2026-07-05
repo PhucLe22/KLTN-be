@@ -163,6 +163,9 @@ model User {
 
   isActive Boolean @default(true) // soft disable account (không xóa để giữ lịch sử)
 
+  resetPasswordToken  String?   @unique
+  resetPasswordExpires DateTime?
+
   staff         Staff?
   customer      Customer?
   refreshTokens RefreshToken[]

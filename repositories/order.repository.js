@@ -1,5 +1,6 @@
 import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
+import { prisma } from "../lib/prisma.js";
 
 class OrderRepository extends BaseRepository {
   constructor() {
@@ -7,7 +8,7 @@ class OrderRepository extends BaseRepository {
   }
 
   async findByIdWithRelations(id, tx = null) {
-    return await this.getModel(tx).findUnique({
+    const order = await this.getModel(tx).findUnique({
       where: { id },
       include: {
         store: true,
@@ -28,6 +29,21 @@ class OrderRepository extends BaseRepository {
         },
       },
     });
+
+    if (order?.delivery?.shipperId) {
+      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+        where: { shipperId: order.delivery.shipperId }
+      });
+      if (deliveryRoute?.route) {
+        const steps = Array.isArray(deliveryRoute.route) ? deliveryRoute.route : [];
+        const routeStep = steps.find(s => s.orderId === order.id && s.type === 'DELIVERY');
+        order.etaFromRoute = routeStep?.arrival_datetime
+          ? new Date(routeStep.arrival_datetime).toISOString()
+          : null;
+      }
+    }
+
+    return order;
   }
 
   async findByOrderCode(orderCode, tx = null) {
@@ -40,9 +56,32 @@ class OrderRepository extends BaseRepository {
       include: {
         store: true,
         customer: true,
-        items: true,
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } },
+          }
+        },
+        items: {
+          include: {
+            product: true,
+            options: true,
+          },
+        },
       },
     });
+
+    if (order?.delivery?.shipperId) {
+      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+        where: { shipperId: order.delivery.shipperId }
+      });
+      if (deliveryRoute?.route) {
+        const steps = Array.isArray(deliveryRoute.route) ? deliveryRoute.route : [];
+        const routeStep = steps.find(s => s.orderId === order.id && s.type === 'DELIVERY');
+        order.etaFromRoute = routeStep?.arrival_datetime
+          ? new Date(routeStep.arrival_datetime).toISOString()
+          : null;
+      }
+    }
 
     return order;
   }

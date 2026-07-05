@@ -2,6 +2,7 @@ import express from "express";
 import { storeController } from "../../../controllers/store.controller.js";
 import { validate } from "../../../middlewares/validate.middleware.js";
 import { 
+  getStores,
   createStores, 
   updateStores, 
   deleteStores 
@@ -19,7 +20,11 @@ router.use(restrictTo(StaffRole.ADMIN));
  * @route   GET /api/v1/internal/admin/stores
  * @desc    Lấy danh sách cửa hàng
  */
-router.get("/", storeController.list);
+router.get(
+  "/",
+  validate(getStores),
+  storeController.list
+);
 
 /**
  * @route   POST /api/v1/internal/admin/stores
