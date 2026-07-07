@@ -11,6 +11,7 @@ async function listProducts() {
         basePrice: true,
         isActive: true,
         categoryId: true,
+        preparationTime: true,
       },
     });
 

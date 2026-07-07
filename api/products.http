@@ -1,8 +1,7 @@
-@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5NzgwNzc5LCJleHAiOjE3Nzk3ODQzNzl9.NuVB4OXiQ8iyJAFwRtGzOE4tKmwXLpGiPoFg7Y3kfl8
-
 @category_id=96f64438-f16c-43e7-b68b-221704cf2018
 @option_group_id=4ee092fc-13fb-41ae-a75e-8832d9a957a0
 @option_id=b1c647cd-e317-4ef8-b841-b25654dbf641
+@access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YjBmMThlMy05OTc0LTQ3MDgtOTM2YS00Zjk4OWE2ZGE2MGMiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiJkMjAzYmFlOC1iMTUxLTRlNjktOGMxMy00MzJlOGQ3OWI5NjEiLCJzdG9yZUlkIjoiOTdkZTMzMGQtMThiMC00OGVhLThiNjctYjI4NmM0YzRkYTBkIiwiaWF0IjoxNzgxNzY4Njg0LCJleHAiOjE3ODIzNzM0ODR9.SHXlq5Hc4YJWT9rr34o0V-ooKpjY-IF4tCR0VDxp3kc
 ### Get All Products
 GET http://localhost:5001/api/v1/products
 Content-Type: application/json
@@ -26,7 +25,51 @@ GET http://localhost:5001/api/v1/products/yogurt-trai-cay
 Content-Type: application/json
 
 
-### Create a new product
+### Create a new product (with image upload)
+POST http://localhost:5001/api/v1/internal/products
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="sku"
+
+TIRA-005
+--boundary
+Content-Disposition: form-data; name="name"
+
+Flat White Image
+--boundary
+Content-Disposition: form-data; name="type"
+
+SIMPLE
+--boundary
+Content-Disposition: form-data; name="basePrice"
+
+135000
+--boundary
+Content-Disposition: form-data; name="taxRate"
+
+0.08
+--boundary
+Content-Disposition: form-data; name="category"
+
+{ "id": "{{category_id}}" }
+--boundary
+Content-Disposition: form-data; name="sortOrder"
+
+2
+--boundary
+Content-Disposition: form-data; name="optionGroups"
+
+[{"optionGroupId": "{{option_group_id}}", "sortOrder": 1, "optionValues": [{"optionId": "{{option_id}}", "price": 20000}]}]
+--boundary
+Content-Disposition: form-data; name="image"; filename="coffee.jpg"
+Content-Type: image/jpeg
+
+< ./coffee.jpg
+--boundary--
+
+### Create a new product (JSON - legacy/no image)
 POST http://localhost:5001/api/v1/internal/products
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
@@ -41,13 +84,13 @@ Authorization: Bearer {{access_token}}
         "id": "{{category_id}}"
     },
     "sortOrder": 1,
-    "optionGroups": [
+    "optionGroups": [  
         {
-            "optionGroupId": "{{option_group_id}}",
+            "optionGroupId": "{{option_group_id}}", //OptionGroup table
             "sortOrder": 1,
             "optionValues": [
                 {
-                    "optionId": "{{option_id}}",
+                    "optionId": "{{option_id}}", // ProductOption table
                     "price": 20000
                 }
             ]
@@ -84,7 +127,7 @@ Authorization: Bearer {{access_token}}
    
  {
     "sortOrder": 2,
-   "optionValues": [
+    "optionValues": [
         {
           "optionId": "{{option_id_1}}",
           "price": 15000
@@ -95,3 +138,53 @@ Authorization: Bearer {{access_token}}
         }
     ]
  }
+
+### Update product details
+PUT http://localhost:5001/api/v1/internal/products/9eb242d4-7db9-4329-87e8-9c56b4408ac3
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "name": "Updated Product Name",
+    "basePrice": 150000,
+    "description": "Updated description for the product"
+}
+
+### Update product image
+PUT http://localhost:5001/api/v1/internal/products/{{product_id}}
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Updated Product with Image
+--boundary
+Content-Disposition: form-data; name="image"; filename="new_coffee.jpg"
+Content-Type: image/jpeg
+
+< ./new_coffee.jpg
+--boundary--
+
+### Delete product
+DELETE http://localhost:5001/api/v1/internal/products/9eb242d4-7db9-4329-87e8-9c56b4408ac3
+Authorization: Bearer {{access_token}}
+
+
+### Get All Products (Admin) - no isActive filter, returns all
+GET http://localhost:5001/api/v1/internal/admin/products?page=1&limit=10
+Authorization: Bearer {{access_token}}
+
+### Get All Products (Admin) - with isActive filter explicitly
+GET http://localhost:5001/api/v1/internal/admin/products?isActive=true&page=1&limit=10
+Authorization: Bearer {{access_token}}
+
+### Toggle Product Active (Internal - Manager/Admin)
+PATCH http://localhost:5001/api/v1/internal/products/PRODUCT_ID_HERE/toggle-active
+Authorization: Bearer {{access_token}}
+
+### Toggle Product Active (Admin only)
+PATCH http://localhost:5001/api/v1/internal/admin/products/PRODUCT_ID_HERE/toggle-active
+Authorization: Bearer {{access_token}}
+
+

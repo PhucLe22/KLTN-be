@@ -1,12 +1,18 @@
 import { z } from "zod";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import * as f from "../common.schema.js";
 
-// POST /api/v1/payments/internal-transfer
-// (Ví dụ thanh toán bằng điểm hoặc ví nội bộ)
-export const internalPaymentSchema = {
+export const internalPayment = {
   body: z.object({
-    orderId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    orderId: f.id,
     amount: z.number().positive(),
-    pin: z.string().min(6, VALIDATION_MESSAGES.PIN_INVALID), // Giả sử có mã PIN xác thực
+    pin: z.string().min(6, VALIDATION_MESSAGES.PIN_INVALID),
+  }),
+};
+
+export const createVnpayPayment = {
+  body: z.object({
+    orderId: f.id,
+    returnUrl: z.string().url("returnUrl phải là URL hợp lệ"),
   }),
 };

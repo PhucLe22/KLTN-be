@@ -1,11 +1,11 @@
 import express from "express";
 import { orderController } from "../controllers/order.controller.js";
-import { validateData } from "../middlewares/validate.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import { protect } from "../middlewares/authentication.middleware.js";
 import {
-  createOrderSchema as inputCreateOrderSchema,
-  getOrderCodeSchema as inputGetOrderCodeSchema,
-  getOrdersSchema as inputGetOrdersSchema,
+  createOrder,
+  getOrderCode,
+  getOrders,
 } from "../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
@@ -20,8 +20,8 @@ const orderRouter = express.Router();
 orderRouter.post(
   "/",
   protect,
-  validateData({ body: inputCreateOrderSchema.body }),
-  orderController.createOrder,
+  validate(createOrder),
+  orderController.create,
 );
 
 /**
@@ -31,8 +31,8 @@ orderRouter.post(
  */
 orderRouter.get(
   "/code/:orderCode",
-  validateData({ params: inputGetOrderCodeSchema.params }),
-  orderController.getOrderCode,
+  validate(getOrderCode),
+  orderController.showByCode,
 );
 
 /**
@@ -43,8 +43,19 @@ orderRouter.get(
 orderRouter.get(
   "/",
   protect,
-  validateData({ query: inputGetOrdersSchema.query }),
-  orderController.getOrders,
+  validate(getOrders),
+  orderController.list,
+);
+
+/**
+ * @route   GET /api/v1/orders/:id/activities
+ * @desc    Lấy lịch sử hoạt động của đơn hàng (timeline)
+ * @access  Private (Customer authentication required)
+ */
+orderRouter.get(
+  "/:id/activities",
+  protect,
+  orderController.getActivities,
 );
 
 export default orderRouter;

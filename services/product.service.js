@@ -1,38 +1,67 @@
-import { BaseService } from "./base.service.js";
 import { productRepository } from "../repositories/product.repository.js";
 import { optionGroupRepository } from "../repositories/option-group.repository.js";
-import { convertToSlug } from "../lib/helpers.js";
+import { createSlug } from "../lib/helpers.js";
 import { prisma } from "../lib/prisma.js";
+import { ERR } from "../lib/httpExceptions.js";
 
-class ProductService extends BaseService {
-    constructor() {
-        super(productRepository);
+class ProductService  {
+
+    get repository() {
+        return productRepository;
     }
 
     async findAll(query) {
-        return await this.repository.findAll(query);
+        return await productRepository.findAll(query);
     }
 
     async findBySlug(slug) {
-        return await this.repository.findBySlug(slug);
+        const product = await productRepository.findBySlug(slug);
+        if (!product) throw ERR.NotFound(`Product ${slug} not found`)
+        return product;
+    }
+
+    async generateSlug(name) {
+        return await createSlug(prisma.product, name);
     }
 
     async create(data) {
-        const productData = { ...data };
+        const productData = { 
+            ...data,
+            basePrice: data.basePrice ? Number(data.basePrice) : undefined,
+            taxRate: data.taxRate ? Number(data.taxRate) : undefined,
+            sortOrder: data.sortOrder ? Number(data.sortOrder) : undefined
+        };
         
         // Generate slug from name if not provided
         if (productData.name && !productData.slug) {
-            productData.slug = convertToSlug(productData.name);
+            productData.slug = await this.generateSlug(productData.name);
         }
 
         // Convert nested category object to categoryId for Prisma
-        if (productData.category && productData.category.id) {
-            productData.categoryId = productData.category.id;
+        let category = productData.category;
+        if (typeof category === 'string') {
+            try {
+                category = JSON.parse(category);
+            } catch (e) {
+                category = null;
+            }
+        }
+        if (category && category.id) {
+            productData.categoryId = category.id;
+            delete productData.category;
+        } else {
             delete productData.category;
         }
         
         // Extract optionGroups
         let optionGroups = productData.optionGroups || [];
+        if (typeof optionGroups === 'string') {
+            try {
+                optionGroups = JSON.parse(optionGroups);
+            } catch (e) {
+                optionGroups = [];
+            }
+        }
         delete productData.optionGroups;
 
         // Ensure every product has default "Size" option group
@@ -57,12 +86,12 @@ class ProductService extends BaseService {
         
         // If no optionGroups (even after trying to add Size), just create normal product
         if (optionGroups.length === 0) {
-            return await this.repository.create(productData);
+            return await productRepository.create(productData);
         }
 
         // With optionGroups, need a transaction
         return await prisma.$transaction(async (tx) => {
-            const product = await this.repository.create(productData, tx);
+            const product = await productRepository.create(productData, tx);
 
             const optionGroupData = optionGroups.map(og => ({
                 productId: product.id,
@@ -92,7 +121,7 @@ class ProductService extends BaseService {
         
         // Update slug if name is changed
         if (updateData.name && !updateData.slug) {
-            updateData.slug = convertToSlug(updateData.name);
+            updateData.slug = await createSlug(prisma.product, updateData.name) 
         }
 
         // Convert nested category object to categoryId for Prisma
@@ -100,16 +129,58 @@ class ProductService extends BaseService {
             updateData.categoryId = updateData.category.id;
             delete updateData.category;
         }
+
+        // Handle optionGroups update
+        const optionGroups = updateData.optionGroups;
+        delete updateData.optionGroups;
+
+        if (optionGroups && optionGroups.length > 0) {
+            return await prisma.$transaction(async (tx) => {
+                const product = await productRepository.update(id, updateData, tx);
+
+                // Remove existing option group links
+                await tx.productOptionGroup.deleteMany({ where: { productId: id } });
+                await tx.productOptionValue.deleteMany({ where: { productId: id } });
+
+                // Create new option group links
+                const pogData = optionGroups.map(og => ({
+                    productId: id,
+                    optionGroupId: og.optionGroupId,
+                    sortOrder: og.sortOrder
+                }));
+                await tx.productOptionGroup.createMany({ data: pogData });
+
+                // Create new option values
+                const povData = optionGroups.flatMap(og =>
+                    (og.optionValues || []).map(ov => ({
+                        productId: id,
+                        optionId: ov.optionId,
+                        price: ov.price
+                    }))
+                );
+                if (povData.length > 0) {
+                    await tx.productOptionValue.createMany({ data: povData });
+                }
+
+                return product;
+            });
+        }
         
-        return await this.repository.update(id, updateData);
+        return await productRepository.update(id, updateData);
     }
 
     async updateProductOptionGroup(productId, optionGroupId, data) {
         return await optionGroupRepository.updateProductOptionGroup(productId, optionGroupId, data);
     }
 
+    async toggleActive(id) {
+        const product = await productRepository.findById(id);
+        if (!product) throw ERR.NotFound(`Product ${id} not found`);
+        return await productRepository.update(id, { isActive: !product.isActive });
+    }
+
     async delete(id) {
-        return await this.repository.update(id, { isActive: false });
+        return await productRepository.update(id, { isActive: false });
     }
 }
 

@@ -1,18 +1,27 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
+import { prisma } from "../lib/prisma.js";
 
 class OrderRepository extends BaseRepository {
   constructor() {
-    super("order");
+    super(MODELS.order);
   }
 
   async findByIdWithRelations(id, tx = null) {
-    return await this.getModel(tx).findUnique({
+    const order = await this.getModel(tx).findUnique({
       where: { id },
       include: {
         store: true,
         customer: true,
-        delivery: true,
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } },
+            events: { orderBy: { createdAt: 'asc' } },
+          }
+        },
+        assignedChef: { include: { user: true } },
         items: {
+
           include: {
             product: true,
             options: true,
@@ -20,6 +29,21 @@ class OrderRepository extends BaseRepository {
         },
       },
     });
+
+    if (order?.delivery?.shipperId) {
+      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+        where: { shipperId: order.delivery.shipperId }
+      });
+      if (deliveryRoute?.route) {
+        const steps = Array.isArray(deliveryRoute.route) ? deliveryRoute.route : [];
+        const routeStep = steps.find(s => s.orderId === order.id && s.type === 'DELIVERY');
+        order.etaFromRoute = routeStep?.arrival_datetime
+          ? new Date(routeStep.arrival_datetime).toISOString()
+          : null;
+      }
+    }
+
+    return order;
   }
 
   async findByOrderCode(orderCode, tx = null) {
@@ -32,9 +56,32 @@ class OrderRepository extends BaseRepository {
       include: {
         store: true,
         customer: true,
-        items: true,
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } },
+          }
+        },
+        items: {
+          include: {
+            product: true,
+            options: true,
+          },
+        },
       },
     });
+
+    if (order?.delivery?.shipperId) {
+      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+        where: { shipperId: order.delivery.shipperId }
+      });
+      if (deliveryRoute?.route) {
+        const steps = Array.isArray(deliveryRoute.route) ? deliveryRoute.route : [];
+        const routeStep = steps.find(s => s.orderId === order.id && s.type === 'DELIVERY');
+        order.etaFromRoute = routeStep?.arrival_datetime
+          ? new Date(routeStep.arrival_datetime).toISOString()
+          : null;
+      }
+    }
 
     return order;
   }
@@ -62,7 +109,7 @@ class OrderRepository extends BaseRepository {
         },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }],
       }),
       this.getModel(tx).count({ where }),
     ]);
@@ -92,6 +139,26 @@ class OrderRepository extends BaseRepository {
     return await this.getOrdersByFilters(filters);
   }
 
+  async getOrdersByStoreId(storeId, query = {}) {
+    const { page = 1, limit = 10, status } = query;
+    const where = { storeId };
+    if (status) where.status = status;
+
+    return await this.findAll({
+      page: Number(page),
+      limit: Number(limit),
+      where,
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
   /**
    * Generic method with pre-built filters from buildOrderFilters
    * @param {{ where: Object, page: number, limit: number }} filters
@@ -108,7 +175,40 @@ class OrderRepository extends BaseRepository {
         customer: true,
         delivery: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
+  async getOrdersByFiltersWithDetails(filters) {
+    const { where, page, limit } = filters;
+
+    return await this.findAll({
+      page,
+      limit,
+      where,
+      include: {
+        store: true,
+        customer: {
+          include: {
+            addresses: {
+              where: { isDefault: true },
+              take: 1,
+            },
+          },
+        },
+        delivery: {
+          include: {
+            assignedShipper: { include: { user: true } }
+          }
+        },
+        items: {
+          include: {
+            product: true,
+            options: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }],
     });
   }
 

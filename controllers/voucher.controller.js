@@ -1,51 +1,76 @@
-import { BaseController } from "./base.controller.js";
 import { voucherService } from "../services/voucher.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { VoucherMapper } from "../mappers/voucher.mapper.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
+import { mapper } from "../lib/mapper.js";
+import { VoucherMap } from "../contracts/output/promotions.output.schema.js";
 
-class VoucherController extends BaseController {
-  constructor() {
-    super(voucherService);
-  }
+class VoucherController {
+  listAvailable = asyncHandler(async (req, res) => {
+    const vouchers = await voucherService.getAvailableVouchers(req.query);
+    const result = mapper(vouchers.items, VoucherMap);
 
-  getAvailableVouchers = asyncHandler(async (req, res) => {
-    const result = await this.service.getAvailableVouchers(req.query);
-    const formatted = VoucherMapper.toAvailableVouchersResponse(result);
+    return res.ok(result, vouchers.meta);
+  });
 
-    return this.success(res, {
-      data: formatted,
+  validate = asyncHandler(async (req, res) => {
+    const { code, orderAmount, storeId, customerId } = req.body;
+    const voucher = await voucherService.validateVoucher(code, orderAmount, storeId, customerId);
+
+    // Calculate discount amount
+    let discountAmount;
+    if (voucher.discountType === 'PERCENT') {
+      discountAmount = (Number(orderAmount) * Number(voucher.discountValue)) / 100;
+      if (voucher.maxDiscount !== null) {
+        discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
+      }
+    } else {
+      discountAmount = Number(voucher.discountValue);
+    }
+    discountAmount = Math.min(discountAmount, Number(orderAmount));
+
+    // Return essential info for frontend display
+    return res.ok({
+      id: voucher.id,
+      code: voucher.code,
+      discountType: voucher.discountType,
+      discountValue: voucher.discountValue,
+      discountAmount,
+      maxDiscount: voucher.maxDiscount,
+      minOrderAmount: voucher.minOrderAmount,
     });
   });
 
-  createVoucher = asyncHandler(async (req, res) => {
-    const result = await this.service.createVoucher(req.body);
-    const formatted = VoucherMapper.toVoucherResponse(result);
+  listPublic = asyncHandler(async (req, res) => {
+    const result = await voucherService.getAllPublic(req.query);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: formatted,
-    });
+    return res.ok(result.items, result.meta);
   });
 
-  updateVoucher = asyncHandler(async (req, res) => {
+  list = asyncHandler(async (req, res) => {
+    const result = await voucherService.getAll(req.query);
+
+    return res.ok(result.items, result.meta);
+  });
+
+  create = asyncHandler(async (req, res) => {
+    const voucher = await voucherService.createVoucher(req.body);
+    const result = mapper(voucher, VoucherMap);
+
+    return res.ok(result);
+  });
+
+  update = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await this.service.updateVoucher(id, req.body);
-    const formatted = VoucherMapper.toVoucherResponse(result);
+    const voucher = await voucherService.updateVoucher(id, req.body);
+    const result = mapper(voucher, VoucherMap);
 
-    return this.success(res, {
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  deleteVoucher = asyncHandler(async (req, res) => {
+  remove = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    await this.service.deleteVoucher(id);
+    await voucherService.deleteVoucher(id);
 
-    return this.success(res, {
-      message: SUCCESS_MESSAGES.DELETE_SUCCESS || "Deleted successfully",
-    });
+    return res.ok();
   });
 }
 

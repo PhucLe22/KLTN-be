@@ -22,7 +22,7 @@ export const STORE_FILTERS = {
 
 // Query builder helpers
 export const buildStoreFilters = (query) => {
-  const { search, sortBy = STORE_FILTERS.SORT_BY.CREATED_AT, sortOrder = STORE_FILTERS.SORT_ORDER.DESC, isActive, isDeleted } = query;
+  const { search, sortBy = STORE_FILTERS.SORT_BY.CREATED_AT, sortOrder = STORE_FILTERS.SORT_ORDER.DESC, isActive, isDeleted = STORE_FILTERS.BOOLEAN.FALSE } = query;
   
   const where = {};
   

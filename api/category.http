@@ -2,4 +2,3 @@
 
 ### Get All Categories
 GET http://localhost:5001/api/v1/categories?page=1&limit=5
-

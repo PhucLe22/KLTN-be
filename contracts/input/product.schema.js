@@ -1,96 +1,124 @@
 import { z } from "zod";
+import * as f from "../common.schema.js";
 import { ProductType } from "../../constants/enum.js";
 
+const emptyStrToUndef = (val) => val === '' ? undefined : val;
+
 // GET /api/v1/products
-export const getProductsSchema = {
+export const getProducts = {
   query: z.object({
     search: z.string().optional(),
     limit: z.string().transform(Number).optional().default("10"),
     page: z.string().transform(Number).optional().default("1"),
     sortBy: z.enum(["name", "basePrice", "createdAt", "sortOrder"]).optional().default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
-    categoryId: z.string().uuid("Invalid category ID format").optional(),
+    categoryId: f.id.optional(),
     type: z.enum(Object.values(ProductType)).optional(),
     isActive: z.enum(["true", "false"]).optional().default("true"),
   }),
 };
 
 // POST /api/v1/products
-export const createProductSchema = {
+export const createProduct = {
   body: z.object({
-    sku: z.string().min(1, "SKU is required"),
-    name: z.string().min(1, "Name is required"),
+    sku: z.preprocess(emptyStrToUndef, z.string().min(1, "SKU is required")),
+    name: z.preprocess(emptyStrToUndef, z.string().min(1, "Name is required")),
     description: z.string().optional(),
+    slug: z.string().optional(),
     type: z.enum(Object.values(ProductType)).default("SIMPLE"),
-    basePrice: z.number().positive("Base price must be positive"),
-    costPrice: z.number().positive("Cost price must be positive").optional(),
-    taxRate: z.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").default(0),
-    thumbnail: z.string().url("Invalid thumbnail URL").optional(),
-    images: z.array(z.string().url("Invalid image URL")).optional(),
-    category: z.object({
-      id: z.string().uuid("Invalid category ID format"),
-    }).optional(),
-    sortOrder: z.number().int("Sort order must be integer").optional(),
-    preparationTime: z.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
-    optionGroups: z.array(z.object({
-      optionGroupId: z.string().uuid("Invalid optionGroupId format"),
-      sortOrder: z.number().int("Sort order must be integer").optional(),
+    basePrice: z.preprocess(emptyStrToUndef, z.coerce.number().positive("Base price must be positive")),
+    costPrice: z.preprocess(emptyStrToUndef, z.coerce.number().positive("Cost price must be positive").optional()),
+    taxRate: z.preprocess(emptyStrToUndef, z.coerce.number().min(0, "Tax rate must be non-negative").max(100, "Tax rate must be <= 100").default(0)),
+    thumbnail: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    category: z.preprocess((val) => {
+      if (val === '' || val === undefined) return undefined;
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.object({ id: f.id }).optional()),
+    sortOrder: z.preprocess(emptyStrToUndef, z.coerce.number().int("Sort order must be integer").optional()),
+    preparationTime: z.preprocess(emptyStrToUndef, z.coerce.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional()),
+    optionGroups: z.preprocess((val) => {
+      if (val === '' || val === undefined) return undefined;
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.array(z.object({
+      optionGroupId: f.id,
+      sortOrder: z.coerce.number().int("Sort order must be integer").optional(),
       optionValues: z.array(z.object({
-        optionId: z.string().uuid("Invalid optionId format"),
-        price: z.number().min(0, "Price must be non-negative")
+        optionId: f.id,
+        price: z.coerce.number().min(0, "Price must be non-negative")
       })).optional()
-    })).optional()
+    })).optional())
   }),
 };
 
 // PUT /api/v1/products/:id
-export const updateProductSchema = {
+export const updateProduct = {
   params: z.object({
-    id: z.string().uuid("Invalid product ID format"),
+    id: f.id,
   }),
   body: z.object({
     sku: z.string().min(1, "SKU is required").optional(),
     name: z.string().min(1, "Name is required").optional(),
     description: z.string().optional(),
+    slug: z.string().optional(),
     type: z.enum(Object.values(ProductType)).optional(),
-    basePrice: z.number().positive("Base price must be positive").optional(),
-    costPrice: z.number().positive("Cost price must be positive").optional(),
-    taxRate: z.number().min(0, "Tax rate must be non-negative").max(1, "Tax rate must be <= 1").optional(),
-    thumbnail: z.string().url("Invalid thumbnail URL").optional(),
-    images: z.array(z.string().url("Invalid image URL")).optional(),
-    category: z.object({
-      id: z.string().uuid("Invalid category ID format"),
-    }).optional(),
-    sortOrder: z.number().int("Sort order must be integer").optional(),
-    preparationTime: z.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional(),
-    isActive: z.boolean().optional(),
+    basePrice: z.preprocess(emptyStrToUndef, z.coerce.number().positive("Base price must be positive").optional()),
+    costPrice: z.preprocess(emptyStrToUndef, z.coerce.number().positive("Cost price must be positive").optional()),
+    taxRate: z.preprocess(emptyStrToUndef, z.coerce.number().min(0, "Tax rate must be non-negative").max(100, "Tax rate must be <= 100").optional()),
+    thumbnail: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    category: z.preprocess((val) => {
+      if (val === '' || val === undefined) return undefined;
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.object({ id: f.id }).optional()),
+    sortOrder: z.preprocess(emptyStrToUndef, z.coerce.number().int("Sort order must be integer").optional()),
+    preparationTime: z.preprocess(emptyStrToUndef, z.coerce.number().int("Preparation time must be integer").min(0, "Preparation time must be non-negative").optional()),
+    isActive: z.preprocess((val) => {
+      if (val === '' || val === undefined) return undefined;
+      return val === 'true' || val === true;
+    }, z.boolean().optional()),
+    optionGroups: z.preprocess((val) => {
+      if (val === '' || val === undefined) return undefined;
+      if (typeof val === 'string') return JSON.parse(val);
+      return val;
+    }, z.array(z.object({
+      optionGroupId: f.id,
+      sortOrder: z.coerce.number().int("Sort order must be integer").optional(),
+      optionValues: z.array(z.object({
+        optionId: f.id,
+        price: z.coerce.number().min(0, "Price must be non-negative")
+      })).optional()
+    })).optional())
   }),
 };
 
 // DELETE /api/v1/products/:id
-export const deleteProductSchema = {
+export const deleteProduct = {
   params: z.object({
-    id: z.string().uuid("Invalid product ID format"),
+    id: f.id,
   }),
 };
 
 // PUT /api/v1/products/:id/option-groups/:optionGroupId
-export const updateProductOptionGroupSchema = {
+export const updateProductOptionGroup = {
   params: z.object({
-    id: z.string().uuid("Invalid product ID format"),
-    optionGroupId: z.string().uuid("Invalid optionGroupId format"),
+    id: f.id,
+    optionGroupId: f.id,
   }),
   body: z.object({
     sortOrder: z.number().int("Sort order must be integer").optional(),
     optionValues: z.array(z.object({
-      optionId: z.string().uuid("Invalid optionId format"),
+      optionId: f.id,
       price: z.number().min(0, "Price must be non-negative")
     })).optional()
   }),
 };
 
 // GET /api/v1/products/:slug
-export const getProductBySlugSchema = {
+export const getProductBySlug = {
   params: z.object({
     slug: z.string().min(1, "Slug is required"),
   }),

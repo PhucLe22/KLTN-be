@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class CategoryRepository extends BaseRepository {
   constructor() {
-    super("category");
+    super(MODELS.category);
   }
 
   async findAll(query, tx = null) {
@@ -36,7 +37,7 @@ class CategoryRepository extends BaseRepository {
       limit,
       where,
       select,
-      orderBy: { [sortBy]: sortOrder }
+      orderBy: [{ [sortBy]: sortOrder }]
     }, tx);
   }
 

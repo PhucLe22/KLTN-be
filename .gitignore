@@ -106,3 +106,4 @@ temp/
 
 # # HTTP test files
 # /api
+.gitnexus

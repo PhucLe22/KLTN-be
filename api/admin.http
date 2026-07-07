@@ -6,7 +6,7 @@ GET http://localhost:5001/api/v1/internal/admin/stores
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
-### Create Store
+### Create Store (Coordinates will be automatically geocoded if lat/lng are omitted)
 POST http://localhost:5001/api/v1/internal/admin/stores
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -14,9 +14,7 @@ Authorization: Bearer {{accessToken}}
 {
   "code": "HCM011",
   "name": "Store 1",
-  "address": "123 Main St",
-  "lat": 10.7757,
-  "lng": 106.7009,
+  "address": "123 Nguyen Hue, District 1, Ho Chi Minh City",
   "hotline": "0123456789"
 }
 
@@ -90,7 +88,35 @@ Authorization: Bearer {{accessToken}}
 GET http://localhost:5001/api/v1/internal/admin/products?page=1&limit=5
 Authorization: Bearer {{accessToken}}
 
-### Create Product
+### Create Product (with image upload)
+POST http://localhost:5001/api/v1/internal/admin/products
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="sku"
+
+BURGER-IMG-01
+--boundary
+Content-Disposition: form-data; name="name"
+
+Burger With Real Image
+--boundary
+Content-Disposition: form-data; name="basePrice"
+
+19.99
+--boundary
+Content-Disposition: form-data; name="category"
+
+{ "id": "2ae911b9-d2a1-4b1f-b053-92cec0e00463" }
+--boundary
+Content-Disposition: form-data; name="image"; filename="burger.jpg"
+Content-Type: image/jpeg
+
+< ./burger.jpg
+--boundary--
+
+### Create Product (JSON)
 POST http://localhost:5001/api/v1/internal/admin/products
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -114,7 +140,23 @@ Authorization: Bearer {{accessToken}}
   "preparationTime": 15
 }
 
-### Update Product
+### Update Product (with image upload)
+PUT http://localhost:5001/api/v1/internal/admin/products/66950321-f406-4a86-a5cf-2db8bf4fa776
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="name"
+
+Updated Burger Name
+--boundary
+Content-Disposition: form-data; name="image"; filename="new-burger.jpg"
+Content-Type: image/jpeg
+
+< ./new-burger.jpg
+--boundary--
+
+### Update Product (JSON)
 PUT http://localhost:5001/api/v1/internal/admin/products/prod-123
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -158,4 +200,16 @@ Authorization: Bearer {{accessToken}}
 
 ### Delete Category
 DELETE http://localhost:5001/api/v1/internal/admin/categories/cat-123
+Authorization: Bearer {{accessToken}}
+
+### Get All Shipper Routes (Admin Dashboard)
+GET http://localhost:5001/api/v1/internal/admin/shipper-routes
+Authorization: Bearer {{accessToken}}
+
+### Get Shipper Routes by Shipper ID (filter by specific shipper)
+GET http://localhost:5001/api/v1/internal/admin/shipper-routes?shipperId=SHIPPER_STAFF_ID_HERE
+Authorization: Bearer {{accessToken}}
+
+### Force Refresh All Shipper Routes (Admin Dashboard - triggers solver)
+POST http://localhost:5001/api/v1/internal/admin/shipper-routes
 Authorization: Bearer {{accessToken}}

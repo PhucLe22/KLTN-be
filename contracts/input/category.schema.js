@@ -1,7 +1,8 @@
 import { z } from "zod";
+import * as f from "../common.schema.js";
 
 // GET /api/v1/categories
-export const getCategoriesSchema = {
+export const getCategories = {
   query: z.object({
     search: z.string().optional(),
     limit: z.string().transform(Number).optional().default("10"),
@@ -13,14 +14,14 @@ export const getCategoriesSchema = {
 };
 
 // GET /api/v1/categories/:slug
-export const getCategoryBySlugSchema = {
+export const getCategoryBySlug = {
   params: z.object({
     slug: z.string(),
   }),
 };
 
 // POST /api/v1/categories
-export const createCategorySchema = {
+export const createCategory = {
   body: z.object({
     name: z.string().min(1, "Name is required"),
     slug: z.string().optional(),
@@ -29,9 +30,9 @@ export const createCategorySchema = {
 };
 
 // PUT /api/v1/categories/:id
-export const updateCategorySchema = {
+export const updateCategory = {
   params: z.object({
-    id: z.string().uuid("Invalid category ID format"),
+    id: f.id,
   }),
   body: z.object({
     name: z.string().min(1, "Name is required").optional(),
@@ -42,8 +43,8 @@ export const updateCategorySchema = {
 };
 
 // DELETE /api/v1/categories/:id
-export const deleteCategorySchema = {
+export const deleteCategory = {
   params: z.object({
-    id: z.string().uuid("Invalid category ID format"),
+    id: f.id,
   }),
 };

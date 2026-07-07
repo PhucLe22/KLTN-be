@@ -1,52 +1,47 @@
-import { z } from "zod";
-import { VALIDATION_MESSAGES } from "../../constants/errors.js";
-
-// 1. GET /api/v1/ship/matrix
-export const getDistanceMatrixSchema = {
-  query: z.object({
-    // Danh sách các tọa độ điểm giao hàng, cách nhau bằng dấu phẩy
-    // Ví dụ: "10.1,106.1|10.2,106.2"
-    locations: z.string().min(1, VALIDATION_MESSAGES.LOCATIONS_REQUIRED),
-    mode: z.enum(["driving", "walking", "cycling"]).default("driving"),
-  }),
+export const ShipMap = {
+  id: true,
+  orderId: true,
+  status: true,
+  driverId: true,
+  estimatedTime: true,
+  actualTime: true,
+  distance: true,
+  cost: true,
+  createdAt: true,
+  updatedAt: true,
 };
 
-// 2. POST /api/v1/ship/optimize-route
-export const optimizeRouteSchema = {
-  body: z.object({
-    orderIds: z
-      .array(z.string().uuid())
-      .min(1, VALIDATION_MESSAGES.ORDERS_REQUIRED),
-
-    // Năng suất của nhân viên (ví dụ: tối đa 5 đơn/chuyến)
-    staffCapacity: z.number().int().positive().default(5),
-
-    // Cửa sổ thời gian (Time Windows) cho việc giao hàng
-    timeWindows: z.object({
-      startTime: z.string().datetime(), // ISO string
-      endTime: z.string().datetime(),
-      maxServiceTime: z
-        .number()
-        .describe("Thời gian xử lý tại mỗi điểm (phút)"),
-    }),
-
-    // Tọa độ kho (Store) bắt đầu xuất phát
-    depotLocation: z.object({
-      lat: z.number(),
-      lng: z.number(),
-    }),
-  }),
+export const RouteOptimizationMap = {
+  routes: [{
+    staffId: true,
+    orders: [{
+      orderId: true,
+      sequence: true,
+      estimatedArrival: true,
+    }],
+    totalDistance: true,
+    totalDuration: true,
+  }],
+  unassignedOrders: [true],
 };
 
-// 3. GET /api/v1/ship/schedule/:staff_id
-export const getStaffScheduleSchema = {
-  params: z.object({
-    staff_id: z.string().uuid(),
-  }),
-  query: z.object({
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, VALIDATION_MESSAGES.DATE_FORMAT_INVALID)
-      .optional(),
-  }),
+export const InternalDeliveryQueueMap = {
+  id: 'order.orderCode',
+  customer: (s) => s.order.customer?.name || "Khách hàng",
+  customerPhone: (s) => s.order.customer?.phone || "Không có SĐT",
+  status: (s) => {
+    const statusMap = {
+      NEW: "MỚI",
+      CONFIRMED: "ĐÃ XÁC NHẬN",
+      PREPARING: "ĐANG CHUẨN BỊ",
+      READY: "SẴN SÀNG",
+      DELIVERING: "ĐANG GIAO",
+    };
+    return statusMap[s.order.status] || s.order.status;
+  },
+  address: 'addressLine',
+  items: (s) => s.order.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+  location: (s) => ({ lng: s.lng, lat: s.lat }),
+  isFocused: (s, ctx) => ctx.firstId === s.id,
 };
+

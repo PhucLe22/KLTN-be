@@ -1,7 +1,7 @@
 import express from "express";
 import { storeController } from "../controllers/store.controller.js";
-import { validateData } from "../middlewares/validate.middleware.js";
-import { getStoresSchema as inputGetStoresSchema } from "../contracts/input/store.schema.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { getStores } from "../contracts/input/store.schema.js";
 
 const storeRouter = express.Router();
 
@@ -12,8 +12,8 @@ const storeRouter = express.Router();
  */
 storeRouter.get(
   "/",
-  validateData({ query: inputGetStoresSchema.query }),
-  storeController.getAllStores,
+  validate(getStores),
+  storeController.list,
 );
 
 export default storeRouter;
