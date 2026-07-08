@@ -6,6 +6,10 @@ import orderRouter from "./order.routes.js";
 import internalRouter from "./internal/index.js";
 import categoryRouter from "./category.routes.js";
 import promotionRouter from "./promotion.routes.js";
+import addressRouter from "./address.routes.js";
+import aiRouter from "./ai.routes.js";
+import paymentRouter from "./payment.routes.js";
+
 const mainRouter = express.Router();
 
 /**
@@ -30,4 +34,8 @@ mainRouter.use("/orders", orderRouter);
 mainRouter.use("/internal", internalRouter);
 mainRouter.use("/categories", categoryRouter);
 mainRouter.use("/promotions", promotionRouter);
+mainRouter.use("/ai", aiRouter);
+mainRouter.use("/addresses", addressRouter);
+mainRouter.use("/payments", paymentRouter);
+
 export default mainRouter;

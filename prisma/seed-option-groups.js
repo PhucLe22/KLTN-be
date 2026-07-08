@@ -56,11 +56,11 @@ async function seedOptionGroups() {
     });
 
     const sugarOptions = [
-      { id: "550e8400-e29b-41d4-a716-446655440201", name: "0%" },
-      { id: "550e8400-e29b-41d4-a716-446655440202", name: "30%" },
-      { id: "550e8400-e29b-41d4-a716-446655440203", name: "50%" },
-      { id: "550e8400-e29b-41d4-a716-446655440204", name: "70%" },
-      { id: "550e8400-e29b-41d4-a716-446655440205", name: "100%" },
+      { id: "550e8400-e29b-41d4-a716-446655440201", name: "0% (Không Đường)" },
+      { id: "550e8400-e29b-41d4-a716-446655440202", name: "30% (Ít Ngọt)" },
+      { id: "550e8400-e29b-41d4-a716-446655440203", name: "50% (Nửa Ngọt)" },
+      { id: "550e8400-e29b-41d4-a716-446655440204", name: "70% (Ngọt)" },
+      { id: "550e8400-e29b-41d4-a716-446655440205", name: "100% (Rất Ngọt)" },
     ];
 
     for (let i = 0; i < sugarOptions.length; i++) {
@@ -94,9 +94,9 @@ async function seedOptionGroups() {
     });
 
     const iceOptions = [
-      { id: "550e8400-e29b-41d4-a716-446655440301", name: "No Ice" },
-      { id: "550e8400-e29b-41d4-a716-446655440302", name: "Less Ice" },
-      { id: "550e8400-e29b-41d4-a716-446655440303", name: "Regular Ice" },
+      { id: "550e8400-e29b-41d4-a716-446655440301", name: "Không Đá" },
+      { id: "550e8400-e29b-41d4-a716-446655440302", name: "Ít Đá" },
+      { id: "550e8400-e29b-41d4-a716-446655440303", name: "Đá Thường" },
     ];
 
     for (let i = 0; i < iceOptions.length; i++) {
@@ -130,11 +130,11 @@ async function seedOptionGroups() {
     });
 
     const toppings = [
-      { id: "550e8400-e29b-41d4-a716-446655440401", name: "Black Pearl", price: 5000 },
-      { id: "550e8400-e29b-41d4-a716-446655440402", name: "White Pearl", price: 7000 },
-      { id: "550e8400-e29b-41d4-a716-446655440403", name: "Grass Jelly", price: 5000 },
-      { id: "550e8400-e29b-41d4-a716-446655440404", name: "Aloe Vera", price: 8000 },
-      { id: "550e8400-e29b-41d4-a716-446655440405", name: "Pudding", price: 10000 },
+      { id: "550e8400-e29b-41d4-a716-446655440401", name: "Trân Châu Đen", price: 5000 },
+      { id: "550e8400-e29b-41d4-a716-446655440402", name: "Trân Châu Trắng", price: 7000 },
+      { id: "550e8400-e29b-41d4-a716-446655440403", name: "Thạch Lá Dứa", price: 5000 },
+      { id: "550e8400-e29b-41d4-a716-446655440404", name: "Nha Đam", price: 8000 },
+      { id: "550e8400-e29b-41d4-a716-446655440405", name: "Bánh Flan", price: 10000 },
     ];
 
     for (let i = 0; i < toppings.length; i++) {

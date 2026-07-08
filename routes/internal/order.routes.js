@@ -1,12 +1,12 @@
 import express from "express";
 import { orderController } from "../../controllers/order.controller.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
 import {
-  createStaffOrderSchema,
-  updateOrderStatusSchema,
+  createStaffOrder,
+  updateOrderStatus,
 } from "../../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
@@ -19,12 +19,19 @@ const orderRouter = express.Router();
 orderRouter.post(
   "/",
   protect,
-  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER),
-  validateData({ body: createStaffOrderSchema.body }),
-  orderController.createOrderForStaff,
+  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.KITCHEN),
+  validate(createStaffOrder),
+  orderController.createForStaff,
 );
 
-orderRouter.get("/", protect, orderController.getOrderForStaff);
+orderRouter.get("/", protect, orderController.listForStaff);
+
+/**
+ * @route   GET /internal/orders/store/:storeId
+ * @desc    Lấy danh sách đơn hàng theo storeId (cho staff/manager/admin)
+ * @access  Private (Staff authentication required)
+ */
+orderRouter.get("/store/:storeId", protect, orderController.listByStoreId);
 
 /**
  * @route   PATCH /internal/orders/:id/status
@@ -41,32 +48,56 @@ orderRouter.patch(
     StaffRole.OWNER,
     StaffRole.KITCHEN,
   ),
-  validateData(updateOrderStatusSchema),
+  validate(updateOrderStatus),
   orderController.updateStatus,
 );
 
 /**
- * @route   POST /internal/orders/:id/confirm
- * @desc    Xác nhận đơn hàng (staff/manager)
- * @access  Private (Internal only)
+ * @route   PATCH /internal/orders/:id/pickup
+ * @desc    Shipper xác nhận đã lấy hàng
+ * @access  Private (SHIPPER only)
  */
-orderRouter.post(
-  "/:id/confirm",
+orderRouter.patch(
+  "/:id/pickup",
   protect,
-  restrictTo(StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.ADMIN),
-  orderController.confirmOrder,
+  restrictTo(StaffRole.SHIPPER),
+  orderController.confirmPickup,
 );
 
 /**
- * @route   POST /internal/orders/:id/prepare
- * @desc    Bắt đầu chế biến (kitchen/staff)
- * @access  Private (Internal only)
+ * @route   DELETE /internal/orders/:id
+ * @desc    Hủy đơn hàng (Manager/Admin only)
+ * @access  Private (MANAGER, ADMIN, OWNER)
  */
-orderRouter.post(
-  "/:id/prepare",
+orderRouter.delete(
+  "/:id",
   protect,
-  restrictTo(StaffRole.KITCHEN, StaffRole.MANAGER, StaffRole.ADMIN),
-  orderController.startPreparing,
+  restrictTo(StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER),
+  orderController.remove,
+);
+
+/**
+ * @route   PATCH /internal/orders/:id/complete
+ * @desc    Hoàn tất đơn DINE_IN / TAKEAWAY (kitchen/staff/manager/admin)
+ * @access  Private (Staff)
+ */
+orderRouter.patch(
+  "/:id/complete",
+  protect,
+  restrictTo(StaffRole.KITCHEN, StaffRole.CASHIER, StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER),
+  orderController.completeOrder,
+);
+
+/**
+ * @route   PATCH /internal/orders/:id/delivery/complete
+ * @desc    Shipper xác nhận đã giao hàng thành công
+ * @access  Private (SHIPPER only)
+ */
+orderRouter.patch(
+  "/:id/delivery/complete",
+  protect,
+  restrictTo(StaffRole.SHIPPER),
+  orderController.completeDelivery,
 );
 
 export default orderRouter;

@@ -14,8 +14,48 @@ const kitchenRouter = express.Router();
 kitchenRouter.post(
   "/schedule",
   protect,
-  restrictTo(StaffRole.KITCHEN, StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER),
-  kitchenController.getSchedule
+  restrictTo(
+    StaffRole.KITCHEN,
+    StaffRole.MANAGER,
+    StaffRole.ADMIN,
+    StaffRole.OWNER,
+  ),
+  kitchenController.getSchedule,
+);
+
+/**
+ * @route   POST /api/v1/internal/kitchen/delivery-schedule
+ * @desc    Lấy lịch trình giao hàng tối ưu từ solver (VRP)
+ * @access  Private (MANAGER, ADMIN, OWNER)
+ */
+kitchenRouter
+  .route("/delivery-schedule")
+  .get(
+    protect,
+    restrictTo(
+      StaffRole.MANAGER,
+      StaffRole.ADMIN,
+      StaffRole.OWNER,
+      StaffRole.SHIPPER,
+    ),
+    kitchenController.getDeliverySchedule,
+  )
+  .post(
+    protect,
+    restrictTo(StaffRole.MANAGER, StaffRole.ADMIN, StaffRole.OWNER, StaffRole.SHIPPER),
+    kitchenController.getDeliverySchedule
+  );
+
+/**
+ * @route   POST /api/v1/internal/kitchen/solve-network
+ * @desc    Trigger network-wide optimization for ALL active stores
+ * @access  Private (ADMIN, OWNER, MANAGER)
+ */
+kitchenRouter.post(
+  "/solve-network",
+  protect,
+  restrictTo(StaffRole.ADMIN, StaffRole.OWNER, StaffRole.MANAGER),
+  kitchenController.solveNetwork
 );
 
 export default kitchenRouter;

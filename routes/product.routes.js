@@ -1,9 +1,9 @@
 import express from "express";
 import { productController } from "../controllers/product.controller.js";
-import { validateData } from "../middlewares/validate.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import { 
-  getProductsSchema as inputGetProductsSchema,
-  getProductBySlugSchema as inputGetProductBySlugSchema
+  getProducts,
+  getProductBySlug
 } from "../contracts/input/product.schema.js";
 
 const productRouter = express.Router();
@@ -16,8 +16,8 @@ const productRouter = express.Router();
  */
 productRouter.get(
   "/",
-  validateData({ query: inputGetProductsSchema.query }),
-  productController.getAllProducts,
+  validate(getProducts),
+  productController.list,
 );
 
 /**
@@ -27,8 +27,8 @@ productRouter.get(
  */
 productRouter.get(
   "/:slug",
-  validateData({ params: inputGetProductBySlugSchema.params }),
-  productController.getProductBySlug,
+  validate(getProductBySlug),
+  productController.show,
 );
 
 export default productRouter;

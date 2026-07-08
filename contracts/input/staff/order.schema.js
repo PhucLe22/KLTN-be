@@ -1,17 +1,18 @@
 import { z } from "zod";
 import { OrderType, OrderStatus } from "../../constants/enum.js";
 import { VALIDATION_MESSAGES } from "../../constants/errors.js";
+import * as f from "../../common.schema.js";
 
-export const staffCreateOrderSchema = {
+export const staffCreateOrder = {
   body: z.object({
     // StoreId sẽ lấy từ JWT, không cần client gửi
-    customerId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID).optional(),
+    customerId: f.id.optional(),
     type: z.enum(Object.values(OrderType)),
     note: z.string().optional(),
     items: z
       .array(
         z.object({
-          productId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+          productId: f.id,
           quantity: z.number().int().min(1),
           options: z
             .array(
@@ -28,15 +29,16 @@ export const staffCreateOrderSchema = {
   }),
 };
 
-export const updateOrderStatusSchema = {
+export const updateOrderStatus = {
   params: z.object({
-    id: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
+    id: f.id,
   }),
   body: z.object({
     status: z.enum([
       OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
       OrderStatus.READY,
+      OrderStatus.DELIVERING,
       OrderStatus.COMPLETED,
       OrderStatus.CANCELLED,
     ]),

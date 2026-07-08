@@ -1,7 +1,13 @@
-// GET /api/v1/promotions/available
-export const getAvailableVouchersSchema = {
-  query: z.object({
-    storeId: z.string().uuid().optional(),
-    orderAmount: z.string().transform(Number).optional(),
-  }),
+export const VoucherMap = {
+  id: true,
+  code: true,
+  name: true,
+  description: true,
+  type: true,
+  value: true,
+  minOrderValue: true,
+  maxDiscountValue: true,
+  startDate: true,
+  endDate: true,
+  isActive: true,
 };

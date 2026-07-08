@@ -1,22 +1,11 @@
-import { z } from "zod";
-
-// Cập nhật tồn kho nhanh (Bật/Tắt sản phẩm tại chi nhánh)
-export const updateProductStockSchema = {
-  params: z.object({
-    id: z.string().uuid(),
-  }),
-  body: z.object({
-    isActive: z.boolean(),
-  }),
+export const ProductStockMap = {
+  id: true,
+  isActive: true,
 };
 
-// Cập nhật vị trí Shipper
-export const updateDeliveryLocationSchema = {
-  params: z.object({
-    id: z.string().uuid(),
-  }),
-  body: z.object({
-    lat: z.number(),
-    lng: z.number(),
-  }),
+export const DeliveryLocationMap = {
+  id: true,
+  lat: true,
+  lng: true,
+  updatedAt: true,
 };

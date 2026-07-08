@@ -29,6 +29,7 @@ enum OrderStatus {
   CONFIRMED
   PREPARING
   READY
+  DELIVERING
   COMPLETED
   CANCELLED
   REFUNDED
@@ -61,6 +62,7 @@ enum StaffRole {
   MANAGER
   CASHIER
   KITCHEN
+  SHIPPER
   OWNER
 
   @@schema("public")
@@ -154,11 +156,15 @@ model AuditLog {
 model User {
   id String @id @default(uuid())
 
+  name     String?
   email    String? @unique // login bằng email (optional)
   phone    String? @unique // login bằng phone
   password String // password đã hash (bcrypt/argon2)
 
   isActive Boolean @default(true) // soft disable account (không xóa để giữ lịch sử)
+
+  resetPasswordToken  String?   @unique
+  resetPasswordExpires DateTime?
 
   staff         Staff?
   customer      Customer?
@@ -210,12 +216,15 @@ model Staff {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   store Store @relation(fields: [storeId], references: [id], onDelete: Restrict)
 
-  deliveryRoutes DeliveryRoute[]
+  chefOrders    Order[] @relation("ChefOrders")
+  shipperOrders DeliveryOrder[] @relation("ShipperOrders")
+  deliveryRoute DeliveryRoute? @relation("ShipperRoute")
 
   createdAt DateTime @default(now())
 
   @@schema("iam")
 }
+
 
 model Customer {
   id     String  @id @default(uuid())
@@ -239,7 +248,8 @@ model Customer {
   pointTransactions PointTransaction[]
   vouchers          CustomerVoucher[]
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  addresses Address[]
 
   @@schema("iam")
 }
@@ -387,6 +397,7 @@ model Store {
   orders         Order[]
   deliveryOrders DeliveryOrder[]
   vouchers       Voucher[]
+  addresses      Address[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -396,10 +407,9 @@ model Store {
 
 model Order {
   id         String  @id @default(uuid())
-  orderCode  String  @unique // Format: VD-{DI|DE|TA}-{TIMESTAMP}
-  storeId    String
+  storeId    String?
   customerId String?
-
+  orderCode String @unique
   type   OrderType
   status OrderStatus @default(NEW)
 
@@ -409,14 +419,20 @@ model Order {
   serviceFee Decimal @default(0) @db.Decimal(14, 2)
   total      Decimal @db.Decimal(14, 2) // total = subtotal - discount + tax + serviceFee
 
-  note        String?
+  note String?
   tableNumber String?
-  createdBy   String? // Simple string field to store creator info
+  createdBy String? // Simple string field to store creator info
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  store    Store     @relation(fields: [storeId], references: [id])
+  chefId          String?
+  expectedReadyAt DateTime?
+
+  assignedChef Staff? @relation("ChefOrders", fields: [chefId], references: [id])
+
+  store    Store?     @relation(fields: [storeId], references: [id])
+
   customer Customer? @relation(fields: [customerId], references: [id])
 
   items             OrderItem[]
@@ -512,7 +528,7 @@ model DeliveryOrder {
   id String @id @default(uuid())
 
   orderId       String         @unique // 1-1 với Order (mỗi order tối đa 1 delivery)
-  storeId       String // Chi nhánh xử lý
+  storeId       String? // Chi nhánh xử lý
   status        DeliveryStatus @default(PENDING) // Flow: PENDING → SHIPPER_ASSIGNED → PICKED_UP → DELIVERED (FAILED / CANCELLED)
   // Snapshot 
   receiverName  String
@@ -523,10 +539,20 @@ model DeliveryOrder {
   estimatedFee  Decimal?       @db.Decimal(14, 2) // Phí dự kiến
   actualFee     Decimal?       @db.Decimal(14, 2) // Phí thực tế (dùng khi report)
 
+  // Tracking coords
+  lat Float?
+  lng Float?
+
   // Thông tin shipper (để mở rộng tích hợp API giao hàng sau)
+  shipperId    String?
   shipperName  String?
   shipperPhone String?
   trackingCode String? // Mã tracking từ đơn vị vận chuyển
+
+  deliverySequence Int?
+
+  assignedShipper Staff? @relation("ShipperOrders", fields: [shipperId], references: [id])
+
 
   // Timeline
   requestedAt DateTime  @default(now())
@@ -534,11 +560,26 @@ model DeliveryOrder {
   deliveredAt DateTime? // set khi DELIVERED
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  store Store @relation(fields: [storeId], references: [id])
+  store Store? @relation(fields: [storeId], references: [id])
 
   events DeliveryEvent[] // Log status
+  route  DeliveryRoute?
 
   @@index([storeId, requestedAt])
+  @@schema("delivery")
+}
+
+model DeliveryRoute {
+  id        String   @id @default(uuid())
+  shipperId String   @unique
+  deliveryOrderId String? @unique
+  
+  route     Json     // Stores the full array of optimized steps
+  updatedAt DateTime @updatedAt
+
+  shipper Staff @relation("ShipperRoute", fields: [shipperId], references: [id], onDelete: Cascade)
+  deliveryOrder DeliveryOrder? @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+
   @@schema("delivery")
 }
 
@@ -551,20 +592,6 @@ model DeliveryEvent {
   createdAt DateTime @default(now())
 
   delivery DeliveryOrder @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
-
-  @@schema("delivery")
-}
-
-model DeliveryRoute {
-  id                   String    @id @default(uuid())
-  staffId              String
-  orderSequence        String[] // Array of Order IDs
-  estimatedArrivalTime DateTime?
-
-  staff Staff @relation(fields: [staffId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@schema("delivery")
 }
@@ -649,4 +676,31 @@ model VoucherRedemption {
 
   @@index([voucherId])
   @@schema("loyalty")
+}
+
+model Address {
+  id String @id @default(uuid())
+
+  customerId String?
+  storeId    String?
+
+  receiverName  String?
+  receiverPhone String?
+
+  addressLine String
+  lat         Float?
+  lng         Float?
+
+  isDefault Boolean @default(false)
+  label     String? // e.g., Home, Work, Store
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  store    Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([storeId])
+  @@schema("public")
 }

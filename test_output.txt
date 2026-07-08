@@ -1,0 +1,17 @@
+🚦 Starting Solver Assignment Test (15 Seeded Orders)...
+📡 Triggering solver API...
+❌ Solver API Error Response: {
+  "status": "error",
+  "message": "Request failed with status code 400",
+  "errors": null,
+  "stack": "HttpException: Request failed with status code 400\n    at Object.InternalServerError (file:///Users/admin/Desktop/KLTN/KLTN-be/lib/httpExceptions.js:23:5)\n    at errorHandler (file:///Users/admin/Desktop/KLTN/KLTN-be/middlewares/error.middleware.js:21:17)\n    at Layer.handleError (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:116:17)\n    at trimPrefix (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:340:13)\n    at /Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9\n    at processParams (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)\n    at next (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)\n    at Layer.handleError (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:111:12)\n    at trimPrefix (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:340:13)\n    at /Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9"
+}
+❌ Solver API Error Status: 500
+
+❌ Test Failed! Request failed with status code 500
+{
+  "status": "error",
+  "message": "Request failed with status code 400",
+  "errors": null,
+  "stack": "HttpException: Request failed with status code 400\n    at Object.InternalServerError (file:///Users/admin/Desktop/KLTN/KLTN-be/lib/httpExceptions.js:23:5)\n    at errorHandler (file:///Users/admin/Desktop/KLTN/KLTN-be/middlewares/error.middleware.js:21:17)\n    at Layer.handleError (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:116:17)\n    at trimPrefix (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:340:13)\n    at /Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9\n    at processParams (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)\n    at next (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)\n    at Layer.handleError (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:111:12)\n    at trimPrefix (/Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:340:13)\n    at /Users/admin/Desktop/KLTN/KLTN-be/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9"
+}

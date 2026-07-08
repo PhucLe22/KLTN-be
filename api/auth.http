@@ -1,6 +1,4 @@
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZmU3NjllNy1lNjlmLTQ4NjMtOTU3NS1iOTZmZDQ0ZDUzOGQiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiI1MDY4MmM2OC05YzAyLTRhNmItOTdhMi0zMzAxMDc5MmI3ZTYiLCJpYXQiOjE3ODAzMTAxODAsImV4cCI6MTc4MDMxMzc4MH0.qYuf5nWP7mJ4L0xA0Zt1cmbOQJs8lNNieyehlVd9Fiw
-@refreshToken = 0c7f9b48-14c9-4244-8db7-0c72df73e020
-
+@accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxYWQxZmM2ZS05YTQ4LTQ0MTItOTVmNS0wMTk3YjMwOGI0NmMiLCJ0eXBlIjoiQ1VTVE9NRVIiLCJjaWQiOiIyYWUwZWJmYy03NmQ1LTRlNjQtOTU2ZC02MDdiMWY5ZmM2MzYiLCJpYXQiOjE3ODI1NTgzNjEsImV4cCI6MTc4MzE2MzE2MX0.yc6oWV9P7Cgiy8a0CEV0bQTKZI8jO97HBpmoIKhB0yA
 ###
 /*
 tạo user + customer 
@@ -73,8 +71,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "0917630445",
-  "password": "123456"
+  "identifier": "giabao23479@gmail.com",
+  "password": "noufo123"
 }
 
 ###
@@ -85,8 +83,8 @@ POST http://localhost:5001/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "cashier2.hcm01@trasua.com",
-  "password": "StaffPassword789"
+  "identifier": "admin@foodapp.com",
+  "password": "admin123"
 }
 
 ###
@@ -111,6 +109,30 @@ Content-Type: application/json
 {
   "identifier": "admin@foodapp.com",
   "password": "admin123"
+}
+
+###
+/*
+login as kitchen staff
+*/
+POST http://localhost:5001/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "kitchen1@foodapp.com",
+  "password": "password123"
+}
+
+###
+/*
+login as shipper
+*/
+POST http://localhost:5001/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "shipper1@foodapp.com",
+  "password": "password123"
 }
 
 ###

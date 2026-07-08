@@ -1,12 +1,10 @@
-import { z } from "zod";
-import { VALIDATION_MESSAGES } from "../../constants/errors.js";
-
-// POST /api/v1/payments/internal-transfer
-// (Ví dụ thanh toán bằng điểm hoặc ví nội bộ)
-export const internalPaymentSchema = {
-  body: z.object({
-    orderId: z.string().uuid(VALIDATION_MESSAGES.ID_INVALID),
-    amount: z.number().positive(),
-    pin: z.string().min(6, VALIDATION_MESSAGES.PIN_INVALID), // Giả sử có mã PIN xác thực
-  }),
+export const PaymentMap = {
+  id: true,
+  orderId: true,
+  amount: true,
+  status: true,
+  method: true,
+  providerRef: true,
+  paidAt: true,
+  createdAt: true,
 };

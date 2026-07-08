@@ -15,6 +15,8 @@ async function main() {
     "seed-products.js",
     "seed-admin.js",
     "seed-manager.js",
+    "seed-staff.js",
+    "seed-vouchers.js",
     "update-preparation-time.js"
   ];
 

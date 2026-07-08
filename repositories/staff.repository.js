@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class StaffRepository extends BaseRepository {
   constructor() {
-    super("staff");
+    super(MODELS.staff);
   }
 
   //Lấy danh sách nhân viên của một chi nhánh cụ thể
@@ -10,6 +11,25 @@ class StaffRepository extends BaseRepository {
     return await this.getModel(tx).findMany({
       where: {
         storeId,
+        isActive: true,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Lấy danh sách nhân viên của nhiều chi nhánh
+  async findByStores(storeIds, tx = null) {
+    return await this.getModel(tx).findMany({
+      where: {
+        storeId: { in: storeIds },
         isActive: true,
       },
       include: {

@@ -1,25 +1,22 @@
-import { BaseController } from "./base.controller.js";
 import { optionGroupService } from "../services/option-group.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { OptionMapper } from "../mappers/option.mapper.js";
+import { mapper } from "../lib/mapper.js";
+import { OptionGroupMap } from "../contracts/output/option.output.schema.js";
 
-class OptionGroupController extends BaseController {
-    constructor() {
-        super(optionGroupService);
-    }
+class OptionGroupController {
+    list = asyncHandler(async (req, res) => {
+        const result = await optionGroupService.findAll(req.query);
+        const data = mapper(result.items, OptionGroupMap);
+
+        return res.ok(data, result.meta);
+    });
 
     createOptionGroup = asyncHandler(async (req, res) => {
         const body = req.body;
-        console.log(body);
-        const result = await this.service.create(body);
-        const formatted = OptionMapper.toCreateOptionGroupResponse(result);
+        const optionGroup = await optionGroupService.create(body);
+        const result = mapper(optionGroup, OptionGroupMap);
 
-        return this.success(res, {
-            statusCode: SUCCESS_STATUS_CODE.CREATED,
-            message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-            data: formatted
-        });
+        return res.ok(result);
     });
 }
 

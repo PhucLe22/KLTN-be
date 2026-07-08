@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class CustomerRepository extends BaseRepository {
   constructor() {
-    super("customer"); // Tên model trong prisma schema
+    super(MODELS.customer); // Tên model trong prisma schema
   }
 
   // Tìm khách kèm theo lịch sử ví điểm (Loyalty)
@@ -11,7 +12,7 @@ class CustomerRepository extends BaseRepository {
       where: { id: customerId },
       include: {
         pointTransactions: {
-          orderBy: { createdAt: "desc" },
+          orderBy: [{ createdAt: "desc" }],
           take: 10,
         },
       },
@@ -55,6 +56,23 @@ class CustomerRepository extends BaseRepository {
       include: {
         user: true,
       },
+    });
+  }
+
+  // Tìm kiếm khách hàng theo tên hoặc điện thoại
+  async search(query, tx = null) {
+    return await this.getModel(tx).findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { phone: { contains: query } }
+        ]
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+      }
     });
   }
 

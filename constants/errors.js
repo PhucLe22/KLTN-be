@@ -25,6 +25,10 @@ export const ERROR_MESSAGES = {
   AUTH_TOKEN_INVALID: "Token không hợp lệ hoặc đã bị thu hồi.",
   AUTH_TOKEN_EXPIRED: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.",
   VALIDATION_ERROR: "Dữ liệu không đúng định dạng Schema.",
+  ORDER_NOT_FOUND: "Không tìm thấy đơn hàng.",
+  ORDER_STATUS_INVALID: "Trạng thái đơn hàng không hợp lệ cho hành động này.",
+  ORDER_NOT_ASSIGNED_TO_SHIPPER: "Đơn hàng này không được gán cho bạn.",
+  DELIVERY_ORDER_NOT_FOUND: "Không tìm thấy thông tin giao hàng cho đơn hàng này.",
 };
 
 export const VALIDATION_MESSAGES = {

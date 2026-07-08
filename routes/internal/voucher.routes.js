@@ -1,13 +1,14 @@
 import express from "express";
 import { voucherController } from "../../controllers/voucher.controller.js";
-import { validateData } from "../../middlewares/validate.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
 import { protect } from "../../middlewares/authentication.middleware.js";
 import { restrictTo } from "../../middlewares/authorize.middleware.js";
 import { StaffRole } from "../../constants/enum.js";
 import {
-  createVoucherSchema,
-  updateVoucherSchema,
-  deleteVoucherSchema,
+  createVoucher,
+  updateVoucher,
+  deleteVoucher,
+  listVouchers,
 } from "../../contracts/input/promotions.schema.js";
 
 const voucherRouter = express.Router();
@@ -17,13 +18,23 @@ voucherRouter.use(protect);
 voucherRouter.use(restrictTo(StaffRole.ADMIN, StaffRole.OWNER, StaffRole.MANAGER));
 
 /**
+ * @route   GET /api/v1/internal/vouchers
+ * @desc    Danh sách voucher (có phân trang, lọc theo store, trạng thái, loại)
+ */
+voucherRouter.get(
+  "/",
+  validate(listVouchers),
+  voucherController.list,
+);
+
+/**
  * @route   POST /api/v1/internal/vouchers
  * @desc    Tạo voucher mới
  */
 voucherRouter.post(
   "/",
-  validateData(createVoucherSchema),
-  voucherController.createVoucher,
+  validate(createVoucher),
+  voucherController.create,
 );
 
 /**
@@ -32,8 +43,8 @@ voucherRouter.post(
  */
 voucherRouter.patch(
   "/:id",
-  validateData(updateVoucherSchema),
-  voucherController.updateVoucher,
+  validate(updateVoucher),
+  voucherController.update,
 );
 
 /**
@@ -42,8 +53,8 @@ voucherRouter.patch(
  */
 voucherRouter.delete(
   "/:id",
-  validateData(deleteVoucherSchema),
-  voucherController.deleteVoucher,
+  validate(deleteVoucher),
+  voucherController.remove,
 );
 
 export default voucherRouter;

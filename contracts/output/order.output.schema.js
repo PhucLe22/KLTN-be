@@ -1,107 +1,120 @@
-import { z } from "zod";
+export const OrderMap = {
+  id: true,
+  orderCode: true,
+  status: true,
+  type: true,
+  subtotal: true,
+  discount: true,
+  tax: true,
+  serviceFee: true,
+  total: true,
+  note: (s) => {
+    if (s.status === 'COMPLETED') {
+      return s.delivery?.deliveredAt ?? null;
+    }
+    return s.note ?? null;
+  },
+  tableNumber: true,
+  createdAt: true,
+  updatedAt: true,
+  expectedReadyAt: true,
+  totalItems: (s) => (s.items || []).reduce((sum, item) => sum + item.quantity, 0),
+  assignedChef: {
+    id: true,
+    user: {
+      name: true,
+      email: true,
+    },
+  },
+  delivery: {
+    id: true,
+    status: true,
+    addressLine: true,
+    lat: true,
+    lng: true,
+    shipperId: true,
+    deliverySequence: true,
+    deliveredAt: true,
+    assignedShipper: {
+      id: true,
+      user: {
+        name: true,
+        email: true,
+      },
+    },
+  },
+  store: {
 
-// POST /api/v1/orders - Response format
-export const createOrderSchema = {
-  response: z.object({
-    store: z.object({
-      name: z.string(),
-      address: z.string()
-    }),
-    customer: z.object({
-      name: z.string().nullable(),
-      phone: z.string().nullable(),
-      address: z.string().nullable()
-    }).nullable(),
-    status: z.string(),
-    type: z.string(),
-    subtotal: z.number(),
-    serviceFee: z.number(),
-    tax: z.number(),
-    discount: z.number(),
-    total: z.number(),
-    note: z.string().nullable(),
-    tableNumber: z.string().nullable(),
-    createdBy: z.object({
-      staff_id: z.string()
-    }).nullable(),
-    createdAt: z.date(),
-    orderCode: z.string().regex(/^VD-(DI|DE|TA)-[0-9]+$/)
-  })
+    id: true,
+    name: true,
+    address: true,
+  },
+  customer: {
+    id: true,
+    name: true,
+    phone: true,
+    tier: true,
+    address: (s) => {
+      const addr = s.addresses?.[0];
+      return addr ? {
+        addressLine: addr.addressLine,
+        lat: addr.lat,
+        lng: addr.lng,
+        label: addr.label,
+      } : null;
+    },
+  },
+  address: (s) => s.delivery?.addressLine ?? null,
+  createdBy: (s) => s.createdBy ? {
+    id: s.createdBy.id,
+    name: s.createdBy.name
+  } : null,
+  orderItems: (s) => (s.items || []).map(item => ({
+    id: item.id,
+    productId: item.productId,
+    name: item.name,
+    price: Number(item.price),
+    quantity: item.quantity,
+    discount: item.discount,
+    tax: item.tax,
+    note: item.note,
+    thumbnail: item.product?.thumbnail ?? null,
+    options: (item.options || []).map(opt => ({
+      id: opt.id,
+      name: opt.name,
+      price: Number(opt.price),
+    })),
+  })),
+  estimatedArrival: (s) => {
+    if (s.etaFromRoute) return s.etaFromRoute;
+    return s.expectedReadyAt ? new Date(s.expectedReadyAt).toISOString() : null;
+  },
+  driver: (s) => {
+    const shipper = s.delivery?.assignedShipper;
+    if (!shipper) return null;
+    return { name: shipper.user?.name ?? 'Shipper' };
+  },
 };
 
-// GET /api/v1/orders/code/:orderCode - Response format
-export const getOrderCodeSchema = {
-  response: z.object({
-    id: z.string(),
-    store: z.object({
-      name: z.string(),
-      address: z.string()
-    }),
-    customer: z.object({
-      name: z.string().nullable(),
-      phone: z.string().nullable(),
-      address: z.string().nullable()
-    }).nullable(),
-    status: z.string(),
-    type: z.string(),
-    subtotal: z.number(),
-    serviceFee: z.number(),
-    tax: z.number(),
-    discount: z.number(),
-    total: z.number(),
-    note: z.string().nullable(),
-    tableNumber: z.string().nullable(),
-    createdBy: z.object({
-      staff_id: z.string()
-    }).nullable(),
-    createdAt: z.date(),
-    orderCode: z.string().regex(/^VD-(DI|DE|TA)-[0-9]+$/),
-    orderItems: z.array(z.object({
-      name: z.string(),
-      price: z.number(),
-      quantity: z.number(),
-      discount: z.number(),
-      tax: z.number(),
-      note: z.string().nullable(),
-      options: z.array(z.object({
-        name: z.string(),
-        price: z.number()
-      })).optional()
-    }))
-  })
+export const StaffOrderSummaryMap = {
+  orderCode: true,
+  status: true,
+  total: true,
+  items: [{
+    quantity: true,
+    product: {
+      name: true,
+      thumbnail: true,
+      sku: true,
+    }
+  }]
 };
 
-// GET /api/v1/orders - Response format
-export const getOrderSchema = {
-  response: z.object({
-    id: z.string(),
-    orderCode: z.string().regex(/^VD-(DI|DE|TA)-[0-9]+$/),
-    status: z.string(),
-    type: z.string(),
-    subtotal: z.number(),
-    discount: z.number(),
-    tax: z.number(),
-    serviceFee: z.number(),
-    total: z.number(),
-    note: z.string().nullable(),
-    address: z.string().nullable(),
-    tableNumber: z.string().nullable(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-    store: z.object({
-      id: z.string(),
-      name: z.string(),
-      address: z.string(),
-    }),
-    customer: z.object({
-      id: z.string(),
-      name: z.string().nullable(),
-      phone: z.string().nullable(),
-      tier: z.string(),
-    }).nullable(),
-    createdBy: z.object({
-      id: z.string(),
-      name: z.string()
-    }).nullable(),
-  })
+export const OrderActivityMap = {
+  status: true,
+  label: true,
+  time: true,
+  isPast: true,
+  isEstimate: true,
+  description: true,
 };

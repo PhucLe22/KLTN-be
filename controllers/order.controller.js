@@ -1,114 +1,107 @@
-import { BaseController } from "./base.controller.js";
 import { orderService } from "../services/order.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { OrderMapper } from "../mappers/order.mapper.js";
-class OrderController extends BaseController {
-  constructor() {
-    super(orderService);
-  }
-  createOrder = asyncHandler(async (req, res) => {
-    const result = await this.service.createOrder(req.body, req.user);
-    console.log("Result", result);
-    const formatted = OrderMapper.toCreateResponse(result);
+import { mapper } from "../lib/mapper.js";
+import { OrderMap, StaffOrderSummaryMap, OrderActivityMap } from "../contracts/output/order.output.schema.js";
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: formatted,
-    });
+class OrderController {
+  create = asyncHandler(async (req, res) => {
+    const order = await orderService.createOrder(req.body, req.user);
+    const result = mapper(order, OrderMap);
+
+    return res.ok(result);
   });
 
-  createOrderForStaff = asyncHandler(async (req, res) => {
+  createForStaff = asyncHandler(async (req, res) => {
     const staffStoreId = req.user?.staff?.storeId;
-    const result = await this.service.createOrderForStaff(staffStoreId, req.body, req.user);
-    const formatted = OrderMapper.toCreateResponse(result);
+    const order = await orderService.createOrderForStaff(staffStoreId, req.body, req.user);
+    const result = mapper(order, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  getOrderCode = asyncHandler(async (req, res) => {
+  showByCode = asyncHandler(async (req, res) => {
     const { orderCode } = req.params;
-    const result = await this.service.findByOrderCode(orderCode);
-    const formatted = OrderMapper.toGetOrderCodeResponse(result);
+    const order = await orderService.findByOrderCode(orderCode);
+    const result = mapper(order, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  getOrders = asyncHandler(async (req, res) => {
-    const userId = req.user?.id;
-    const result = await this.service.getOrders(userId, req.query);
-    const formatted = OrderMapper.toGetOrderResponse(result);
+  list = asyncHandler(async (req, res) => {
+    const userId = req.user?.id; // không có user thì bị đá ra từ vòng validate 
+    const orders = await orderService.getOrders(userId, req.query);
+    const result = mapper(orders.items, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-      data: formatted.items,
-      meta: formatted.meta,
-    });
+    return res.ok(result, orders.meta);
   });
 
   /**
    * Get orders for staff (filter by store)
    * Query params: status, type, page, limit
    */
-  getOrderForStaff = asyncHandler(async (req, res) => {
+  listForStaff = asyncHandler(async (req, res) => {
     const staffStoreId = req.user?.staff?.storeId;
-    const result = await this.service.getOrdersForStaff(staffStoreId, req.query);
-    const formatted = OrderMapper.toGetOrderResponse(result);
+    const orders = await orderService.getOrdersForStaff(staffStoreId, req.query, req.user);
+    const result = mapper(orders.items, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-      data: formatted.items,
-      meta: formatted.meta,
-    });
+    return res.ok(result, orders.meta);
+  });
+
+  listByStoreId = asyncHandler(async (req, res) => {
+    const { storeId } = req.params;
+    const orders = await orderService.getOrdersByStoreId(storeId, req.query, req.user);
+    const result = mapper(orders.items, StaffOrderSummaryMap);
+
+    return res.ok(result, orders.meta);
   });
 
   updateStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const result = await this.service.updateStatus(id, status, req.user);
-    const formatted = OrderMapper.toCreateResponse(result); // Using toCreateResponse as it includes relations
+    const order = await orderService.updateStatus(id, status, req.user);
+    const result = mapper(order, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.OK],
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  confirmOrder = asyncHandler(async (req, res) => {
+  confirmPickup = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await this.service.updateStatus(id, "CONFIRMED", req.user);
-    const formatted = OrderMapper.toCreateResponse(result);
+    const order = await orderService.confirmPickup(id, req.user);
+    const result = mapper(order, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: "Order confirmed successfully",
-      data: formatted,
-    });
+    return res.ok(result);
   });
 
-  startPreparing = asyncHandler(async (req, res) => {
+  completeDelivery = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const result = await this.service.updateStatus(id, "PREPARING", req.user);
-    const formatted = OrderMapper.toCreateResponse(result);
+    const order = await orderService.completeDelivery(id, req.user);
+    const result = mapper(order, OrderMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.OK,
-      message: "Order is now being prepared",
-      data: formatted,
-    });
+    return res.ok(result);
+  });
+
+  completeOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.completeOrder(id, req.user);
+    const result = mapper(order, OrderMap);
+
+    return res.ok(result);
+  });
+
+  remove = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const order = await orderService.remove(id, req.user);
+    const result = mapper(order, OrderMap);
+    return res.ok(result);
+  });
+
+  getActivities = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const activities = await orderService.getOrderActivities(id, req.user);
+    const result = mapper(activities, OrderActivityMap);
+
+    return res.ok(result);
   });
 }
 

@@ -1,9 +1,10 @@
 import { z } from "zod";
+import * as f from "../../common.schema.js";
 
 // Cập nhật tồn kho nhanh (Bật/Tắt sản phẩm tại chi nhánh)
-export const updateProductStockSchema = {
+export const updateProductStock = {
   params: z.object({
-    id: z.string().uuid(),
+    id: f.id,
   }),
   body: z.object({
     isActive: z.boolean(),
@@ -11,9 +12,9 @@ export const updateProductStockSchema = {
 };
 
 // Cập nhật vị trí Shipper
-export const updateDeliveryLocationSchema = {
+export const updateDeliveryLocation = {
   params: z.object({
-    id: z.string().uuid(),
+    id: f.id,
   }),
   body: z.object({
     lat: z.number(),

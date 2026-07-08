@@ -1,5 +1,10 @@
+@accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNGQ3YzIyMS1mZmRlLTQ4NmMtOWYzNC1hMzZiZWE0YzUxZmUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiS0lUQ0hFTiIsInNpZCI6ImM0MWNmN2ZhLTJiODktNDJjMi1iMWFlLTg2YzM2YzM1ZDI4MiIsInN0b3JlSWQiOiIyOWQxMDZhZC1lNWNmLTQwNWItYThkYi1jZDJlODQzOGRhOGQiLCJpYXQiOjE3ODE0MTEwMjksImV4cCI6MTc4MjAxNTgyOX0.eCEnxQHCkxzTGD7_K0W2zHu48U-3LHyZDzntR2h_ZjI
 ### Get All Users (Admin)
 GET http://localhost:5001/api/v1/internal/admin/users?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### Search Customers
+GET http://localhost:5001/api/v1/internal/customers/search?query=09337104446
 Authorization: Bearer {{accessToken}}
 
 ### Get User by ID
@@ -19,4 +24,3 @@ Content-Type: application/json
   "phone": "0909123456",
   "email": "updated@gmail.com"
 }
-

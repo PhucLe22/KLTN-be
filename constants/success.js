@@ -26,4 +26,6 @@ export const SUCCESS_MESSAGES = {
   LOUGOUT: "Đăng xuất thành công",
   RENEW_TOKEN: "Làm mới token thành công",
   STORE_DELETED: "Cửa hàng đã được xóa thành công",
+  FORGOT_PASSWORD: "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.",
+  RESET_PASSWORD: "Mật khẩu đã được đặt lại thành công.",
 };

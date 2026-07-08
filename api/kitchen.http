@@ -1,10 +1,44 @@
-@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzkyMjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
-
+@accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNDY0YjllOC05MGNmLTRlYTQtOTMxMy0wNWJiZDNjMTkxZDUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6IjZkYzAyNTQ5LTVhZmMtNGJhMS04YWM0LWFhYjFkNGUzZWFiYSIsInN0b3JlSWQiOiI4MjRlNzQ5Yi0xNGM5LTQyOGYtYjQwZC1kNjMzZGRiZWFlMzMiLCJpYXQiOjE3ODMwOTY1MjcsImV4cCI6MTc4MzcwMTMyN30.b9KDw8BX7OZxu6rG7bZYh1G4QibgN2pB_cDfyYkmVt0
+@managerToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNDY0YjllOC05MGNmLTRlYTQtOTMxMy0wNWJiZDNjMTkxZDUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiTUFOQUdFUiIsInNpZCI6IjZkYzAyNTQ5LTVhZmMtNGJhMS04YWM0LWFhYjFkNGUzZWFiYSIsInN0b3JlSWQiOiI4MjRlNzQ5Yi0xNGM5LTQyOGYtYjQwZC1kNjMzZGRiZWFlMzMiLCJpYXQiOjE3ODMwOTY1MjcsImV4cCI6MTc4MzcwMTMyN30.b9KDw8BX7OZxu6rG7bZYh1G4QibgN2pB_cDfyYkmVt0
+@shipperToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MzNjMGQ5NC1kYWMwLTQ3MzQtOWM4Yi1hYmY3OGVlNDYwYmYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiU0hJUFBFUiIsInNpZCI6ImM0ZWNiMjljLTMwZGItNGNjYS1hYjI1LWYwZWQ3YjE1ZDUxYyIsInN0b3JlSWQiOiJlNTQzNDQ4Yy0xYzJmLTQ1ZTMtOTY0NC05NmEzYjllMDkxZGMiLCJsYXQiOjEwLjc3NTcsImxuZyI6MTA2LjcwMDksImlhdCI6MTc4MTQzNjM3OSwiZXhwIjoxNzgyMDQxMTc5fQ.F6yAz3AS1hn3tu7YETwJb3YZoFqtPMcV518glMrinOQ
+@adminToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGI3ZGEzOC0wMzFmLTQyYTgtYmE2Ni1iZGY2MDc3ZGVjNGUiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI0MWJkMmE5Ny1iYjc4LTQ5YmMtYjdiNC1hZmM3NGYxYjM0YmIiLCJzdG9yZUlkIjoiYjQxYjllNmEtNTMzOS00MmY0LThmOWEtMDU1NTllYjVkMGU4IiwiaWF0IjoxNzgwODIwNDM0LCJleHAiOjE3ODA4MjQwMzR9.vPjQVKjPbAhQH91JvnnEJR0RDHaZ1wrCzD0kscIzyCs
 ### Get Kitchen Schedule (Internal)
+# Solver now filters and processes only Delivery Orders (CONFIRMED/PREPARING status)
+# This trigger updates 'chefId' and 'expectedReadyAt' in the Order root.
 POST http://localhost:5001/api/v1/internal/kitchen/schedule
 Content-Type: application/json
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{managerToken}}
 
 {
   "tardiness_weight": 1000
 }
+
+
+### Get Delivery Schedule (VRP Solver) - GET
+# Returns the current delivery schedule from the database for the assigned shipper.
+# Data is fetched from DeliveryOrder joined with Order and Store.
+GET http://localhost:5001/api/v1/internal/kitchen/delivery-schedule
+Authorization: Bearer {{shipperToken}}
+
+############
+### Solve Network Optimization (Global)
+# Triggers a unified solve for ALL active stores in the network.
+# Assigns chefs (store-specific) and shippers (network-wide).
+POST http://localhost:5001/api/v1/internal/kitchen/solve-network
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "tardiness_weight": 2000
+}
+
+
+
+### Get Delivery Schedule (VRP Solver) - POST
+# Triggers a full solve (Kitchen + VRP) and returns the delivery schedule.
+# This updates 'shipperId' and 'deliverySequence' inside the DeliveryOrder record.
+POST http://localhost:5001/api/v1/internal/kitchen/delivery-schedule
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{}

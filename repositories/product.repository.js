@@ -1,8 +1,9 @@
+import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
 
 class ProductRepository extends BaseRepository {
     constructor() {
-        super("product");
+        super(MODELS.product);
     }
 
     async findAll(query, tx = null) {
@@ -17,7 +18,8 @@ class ProductRepository extends BaseRepository {
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" } },
-                { sku: { contains: search, mode: "insensitive" } }
+                { sku: { contains: search, mode: "insensitive" } },
+                { category: { name: { contains: search, mode: "insensitive" } } }
             ];
         }
 
@@ -61,7 +63,7 @@ class ProductRepository extends BaseRepository {
             limit,
             where,
             select,
-            orderBy: { [sortBy]: sortOrder }
+            orderBy: [{ [sortBy]: sortOrder }]
         }, tx);
     }
 
@@ -76,7 +78,8 @@ class ProductRepository extends BaseRepository {
                 description: true,
                 basePrice: true,
                 sku: true,
-                thumbnail: true
+                thumbnail: true,
+                isActive: true
             }
         });
     }

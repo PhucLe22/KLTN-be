@@ -1,26 +1,27 @@
 import { z } from "zod";
 import { CustomerTier, StaffRole } from "../../constants/enum.js";
 import { USER_FILTERS } from "../../constants/userFilters.js";
+import * as f from "../common.schema.js";
 
 const baseUserInfo = z.object({
   name: z.string(),
-  phone: z.string(),
-  email: z.email().nullable(),
+  phone: f.phone,
+  email: f.email.optional().nullable(),
   role: z.enum(StaffRole).or(z.string()),
 });
 
 const customerSchema = z.object({
   name: z.string().nullable(),
-  phone: z.string(),
-  email: z.string().nullable(),
-  tier: z.enum(CustomerTier),
-  points: z.number(),
+  phone: f.phone,
+  email: f.email.optional().nullable(),
+  tier: f.tier,
+  points: f.points,
 });
 
 const storeInfoSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  address: z.string(),
+  id: f.id,
+  name: f.name,
+  address: f.address,
 });
 
 const staffSchema = z.object({
@@ -28,10 +29,10 @@ const staffSchema = z.object({
   userInfo: baseUserInfo,
   managerInfo: z
     .object({
-      id: z.string(),
-      name: z.string(),
-      email: z.string().nullable(),
-      phone: z.string(),
+      id: f.id,
+      name: f.name,
+      email: f.email.optional().nullable(),
+      phone: f.phone,
     })
     .nullable(),
 });
@@ -45,7 +46,7 @@ const adminSchema = z.object({
   userInfo: baseUserInfo,
 });
 
-export const userInfoSchema = z.union([
+export const userInfo = z.union([
   customerSchema,
   staffSchema,
   managerSchema,
@@ -53,7 +54,7 @@ export const userInfoSchema = z.union([
 ]);
 
 // GET /api/v1/users
-export const getUsersSchema = {
+export const getUsers = {
   query: z.object({
     search: z.string().optional(),
     limit: z.string().transform(Number).optional().default("10"),
@@ -67,20 +68,20 @@ export const getUsersSchema = {
 };
 
 // PUT /api/v1/users/:id
-export const updateUserSchema = {
+export const updateUser = {
   params: z.object({
-    id: z.string().uuid("Invalid user ID format"),
+    id: f.id,
   }),
   body: z.object({
     isActive: z.boolean().optional(),
     role: z.enum(Object.values(USER_FILTERS.ROLES)).optional(),
-    store_id: z.string().uuid("Invalid store ID format").optional(),
+    store_id: f.id.optional(),
   }),
 };
 
 // DELETE /api/v1/users/:id
-export const deleteUserSchema = {
+export const deleteUser = {
   params: z.object({
-    id: z.string().uuid("Invalid user ID format"),
+    id: f.id,
   }),
 };

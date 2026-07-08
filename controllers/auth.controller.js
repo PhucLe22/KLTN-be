@@ -1,28 +1,20 @@
-import { BaseController } from "./base.controller.js";
 import { authService } from "../services/auth.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { AuthMapper } from "../mappers/auth.mapper.js";
+import { mapper } from "../lib/mapper.js";
+import { AuthMap, GuestMap, LoginMap, ProfileMap } from "../contracts/output/auth.output.schema.js";
 import { CookieHelper } from "../lib/cookieHelper.js";
-import { SUCCESS_MESSAGES, SUCCESS_STATUS_CODE } from "../constants/success.js";
-import { UserType } from "../constants/enum.js";
+import { SUCCESS_MESSAGES } from "../constants/success.js";
 
-class AuthController extends BaseController {
-  constructor() {
-    super(authService);
-  }
-
+class AuthController {
   /**
    * Đăng ký khách hàng
    */
   registerCustomer = asyncHandler(async (req, res) => {
     const data = req.body;
-    const result = await this.service.registerCustomer(data);
+    const auth = await authService.registerCustomer(data);
+    const result = mapper(auth.user, AuthMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: AuthMapper.toAccountResponse(result.user),
-    });
+    return res.ok(result);
   });
 
   /**
@@ -30,13 +22,10 @@ class AuthController extends BaseController {
    */
   registerStaff = asyncHandler(async (req, res) => {
     const data = req.body;
-    const result = await this.service.registerStaff(data);
+    const auth = await authService.registerStaff(data);
+    const result = mapper(auth.user, AuthMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: AuthMapper.toAccountResponse(result.user),
-    });
+    return res.ok(result);
   });
 
   /**
@@ -44,13 +33,10 @@ class AuthController extends BaseController {
    */
   registerGuest = asyncHandler(async (req, res) => {
     const data = req.body;
-    const result = await this.service.registerGuest(data);
+    const customer = await authService.registerGuest(data);
+    const result = mapper(customer.customer, GuestMap);
 
-    return this.success(res, {
-      statusCode: SUCCESS_STATUS_CODE.CREATED,
-      message: SUCCESS_MESSAGES[SUCCESS_STATUS_CODE.CREATED],
-      data: AuthMapper.toGuestResponse(result.customer),
-    });
+    return res.ok(result);
   });
 
   /**
@@ -63,28 +49,25 @@ class AuthController extends BaseController {
       ipAddress: req.ip || req.headers["x-forwarded-for"],
     };
 
-    const result = await this.service.login({ identifier, password }, reqInfo);
-    console.log("result", result);
+    const auth = await authService.login({ identifier, password }, reqInfo);
+    
+    CookieHelper.setRefreshToken(res, auth.tokens.refreshToken);
 
-    CookieHelper.setRefreshToken(res, result.tokens.refreshToken);
+    const result = mapper(auth, LoginMap, { tokens: auth.tokens });
 
-    return this.success(res, {
-      message: SUCCESS_MESSAGES.LOGIN_SUCCES,
-      data: AuthMapper.toAccountWithTokensResponse(result.user, result.tokens),
-    });
+    return res.ok(result, null, SUCCESS_MESSAGES.LOGIN_SUCCES);
   });
 
   /**
    * Đăng xuất
    */
   logout = asyncHandler(async (req, res) => {
-    console.log("Cookies:", req.cookies);
     const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-    await this.service.logout(refreshToken);
+    await authService.logout(refreshToken);
     CookieHelper.clearRefreshToken(res);
 
-    return this.success(res, { message: SUCCESS_MESSAGES.LOUGOUT });
+    return res.ok({}, null, SUCCESS_MESSAGES.LOUGOUT);
   });
 
   /**
@@ -98,27 +81,43 @@ class AuthController extends BaseController {
       ipAddress: req.ip || req.headers["x-forwarded-for"],
     };
 
-    const result = await this.service.refreshToken(oldRefreshToken, reqInfo);
+    const auth = await authService.refreshToken(oldRefreshToken, reqInfo);
 
-    CookieHelper.setRefreshToken(res, result.tokens.refreshToken);
+    CookieHelper.setRefreshToken(res, auth.tokens.refreshToken);
 
-    return this.success(res, {
-      message: SUCCESS_MESSAGES.RENEW_TOKEN,
-      data: AuthMapper.toAccountWithTokensResponse(result.user, result.tokens),
-    });
+    const result = mapper(auth, LoginMap, { tokens: auth.tokens });
+
+    return res.ok(result, null, SUCCESS_MESSAGES.RENEW_TOKEN);
   });
 
   /**
    * Lấy profile của user đang đăng nhập
    */
   getProfile = asyncHandler(async (req, res) => {
-    const user = await this.service.getProfile(req.user.id);
+    const user = await authService.getProfile(req.user.id);
+    const result = mapper(user, ProfileMap);
 
-    const profileData = AuthMapper.toProfileResponse(user);
+    return res.ok(result);
+  });
 
-    return this.success(res, {
-      data: profileData,
-    });
+  /**
+   * Quên mật khẩu - gửi email reset
+   */
+  forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+
+    return res.ok(result);
+  });
+
+  /**
+   * Đặt lại mật khẩu với token
+   */
+  resetPassword = asyncHandler(async (req, res) => {
+    const { token, password } = req.body;
+    const result = await authService.resetPassword(token, password);
+
+    return res.ok(result);
   });
 }
 

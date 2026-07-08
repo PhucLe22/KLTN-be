@@ -1,7 +1,20 @@
 @accessToken= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NGRmNWE0Mi0yYTc4LTRkMDMtYjFiYi0wNDFkZDQ1OGUwZDYiLCJ0eXBlIjoiU1RBRkYiLCJyb2xlIjoiQURNSU4iLCJzaWQiOiI5ZWJiMDdjNS03NTUzLTQzYmQtOGJkZC0xMGE0Nzk3MWFjZjQiLCJzdG9yZUlkIjoiZmQxMDI5NDktNjc3Yi00ODQzLWFkYTEtOGE5NDBjNzM4NDM4IiwiaWF0IjoxNzc5MjU4NzEwLCJleHAiOjE3NzkyNjIzMTB9.uMIVigBX38FVKZz1NsFUaKFc5-hocmPcKz7pApx8dN4
 
-### Get Available Vouchers (Public)
+### Get All Vouchers (Public — customer browsing)
+GET http://localhost:5001/api/v1/promotions?page=1&limit=10
+
+### Get All Vouchers (Public — filter by store)
+GET http://localhost:5001/api/v1/promotions?storeId=fd102949-677b-4843-ada1-8a940c738438
+
+### Get All Vouchers (Public — filter by discount type)
+GET http://localhost:5001/api/v1/promotions?discountType=PERCENT
+
+### Get Available Vouchers (Public — checkout filtering)
 GET http://localhost:5001/api/v1/promotions/available?storeId=fd102949-677b-4843-ada1-8a940c738438&orderAmount=100000
+
+### List Vouchers (Internal — admin panel with filters)
+GET http://localhost:5001/api/v1/internal/vouchers?page=1&limit=20&storeId=fd102949-677b-4843-ada1-8a940c738438&isActive=true&discountType=PERCENT
+Authorization: Bearer {{accessToken}}
 
 ### Create Voucher (Internal)
 POST http://localhost:5001/api/v1/internal/vouchers
@@ -18,12 +31,26 @@ Authorization: Bearer {{accessToken}}
   "isActive": true
 }
 
+### Create Voucher (Internal — store-specific)
+POST http://localhost:5001/api/v1/internal/vouchers
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "code": "STORE10",
+  "discountType": "PERCENT",
+  "discountValue": 10,
+  "storeId": "fd102949-677b-4843-ada1-8a940c738438",
+  "expiresAt": "2026-12-31T23:59:59.000Z"
+}
+
 ### Update Voucher (Internal)
 PATCH http://localhost:5001/api/v1/internal/vouchers/voucher-uuid-here
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
+  "discountValue": 15,
   "isActive": false
 }
 
