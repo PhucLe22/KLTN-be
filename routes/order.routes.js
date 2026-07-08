@@ -48,6 +48,17 @@ orderRouter.get(
 );
 
 /**
+ * @route   GET /api/v1/orders/phone/:phone
+ * @desc    Tìm đơn hàng theo số điện thoại
+ * @access  Private
+ */
+orderRouter.get(
+  "/phone/:phone",
+  protect,
+  orderController.searchByPhone,
+);
+
+/**
  * @route   GET /api/v1/orders/:id/activities
  * @desc    Lấy lịch sử hoạt động của đơn hàng (timeline)
  * @access  Private (Customer authentication required)

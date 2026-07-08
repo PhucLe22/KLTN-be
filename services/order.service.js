@@ -288,6 +288,13 @@ class OrderService  {
     });
   }
 
+  async findByPhone(phone, user, query) {
+    const customer = await customerRepository.findCustomerByUserId(user.id);
+    if (!customer) throw ERR.NotFound("Không tìm thấy thông tin khách hàng.");
+
+    return await orderRepository.findByPhone(phone, customer.id, query);
+  }
+
   async findByOrderCode(orderCode) {
     const order = await orderRepository.findByOrderCode(orderCode);
 

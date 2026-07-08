@@ -86,6 +86,14 @@ class AddressController {
     return res.ok(result, addresses.meta);
   });
 
+  autocomplete = asyncHandler(async (req, res) => {
+    const { text, type, limit, lang } = req.query;
+    if (!text || !text.trim()) return res.ok([]);
+    const results = await addressService.autocomplete(text.trim(), { type, limit, lang });
+
+    return res.ok(results);
+  });
+
   remove = asyncHandler(async (req, res) => {
     const { id } = req.params;
 

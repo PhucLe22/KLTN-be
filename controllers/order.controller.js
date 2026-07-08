@@ -27,6 +27,14 @@ class OrderController {
     return res.ok(result);
   });
 
+  searchByPhone = asyncHandler(async (req, res) => {
+    const { phone } = req.params;
+    const orders = await orderService.findByPhone(phone, req.user, req.query);
+    const result = mapper(orders.items, OrderMap);
+
+    return res.ok(result, orders.meta);
+  });
+
   list = asyncHandler(async (req, res) => {
     const userId = req.user?.id; // không có user thì bị đá ra từ vòng validate 
     const orders = await orderService.getOrders(userId, req.query);

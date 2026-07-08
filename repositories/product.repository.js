@@ -1,5 +1,6 @@
 import { MODELS } from "../constants/models.js";
 import { BaseRepository } from "./base.repository.js";
+import { prisma } from "../lib/prisma.js";
 
 class ProductRepository extends BaseRepository {
     constructor() {
@@ -65,6 +66,125 @@ class ProductRepository extends BaseRepository {
             select,
             orderBy: [{ [sortBy]: sortOrder }]
         }, tx);
+    }
+
+    async findNew(limit = 10, tx = null) {
+        const model = this.getModel(tx);
+
+        return await model.findMany({
+            where: { isActive: true },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            select: {
+                id: true,
+                sku: true,
+                name: true,
+                slug: true,
+                description: true,
+                type: true,
+                basePrice: true,
+                costPrice: true,
+                taxRate: true,
+                thumbnail: true,
+                images: true,
+                categoryId: true,
+                category: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                },
+                sortOrder: true,
+                preparationTime: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+    }
+
+    async findHot(limit = 10, tx = null) {
+        const model = this.getModel(tx);
+
+        const topProducts = await prisma.orderItem.groupBy({
+            by: ["productId"],
+            _sum: { quantity: true },
+            orderBy: { _sum: { quantity: "desc" } },
+            take: limit,
+            where: {
+                order: {
+                    status: { notIn: ["CANCELLED", "REFUNDED"] }
+                }
+            }
+        });
+
+        const productIds = topProducts.map(r => r.productId);
+        if (productIds.length === 0) return [];
+
+        const products = await model.findMany({
+            where: { id: { in: productIds }, isActive: true },
+            select: {
+                id: true,
+                sku: true,
+                name: true,
+                slug: true,
+                description: true,
+                type: true,
+                basePrice: true,
+                costPrice: true,
+                taxRate: true,
+                thumbnail: true,
+                images: true,
+                categoryId: true,
+                category: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                },
+                sortOrder: true,
+                preparationTime: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+
+        return productIds.map(id => products.find(p => p.id === id)).filter(Boolean);
+    }
+
+    async searchByName(keyword, limit = 10, tx = null) {
+        const model = this.getModel(tx);
+
+        return await model.findMany({
+            where: {
+                isActive: true,
+                OR: [
+                    { name: { contains: keyword, mode: "insensitive" } },
+                    { sku: { contains: keyword, mode: "insensitive" } },
+                ]
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                sku: true,
+                basePrice: true,
+                thumbnail: true,
+                categoryId: true,
+                category: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                }
+            },
+            take: limit,
+            orderBy: { sortOrder: "asc" }
+        });
     }
 
     async findById(id, tx = null) {

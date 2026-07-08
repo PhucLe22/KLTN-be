@@ -12,6 +12,7 @@ import { StaffRole, UserType } from "../constants/enum.js";
 
 const addressRouter = express.Router();
 
+addressRouter.get("/autocomplete", protect, addressController.autocomplete);
 addressRouter.get("/", protect, addressController.listMine);
 addressRouter.post("/", protect, validate(createAddressSchema), addressController.create);
 addressRouter.get("/mine", protect, restrictTo(UserType.CUSTOMER), addressController.listMine);

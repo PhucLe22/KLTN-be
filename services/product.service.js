@@ -14,10 +14,22 @@ class ProductService  {
         return await productRepository.findAll(query);
     }
 
+    async findNew(limit) {
+        return await productRepository.findNew(limit);
+    }
+
+    async findHot(limit) {
+        return await productRepository.findHot(limit);
+    }
+
     async findBySlug(slug) {
         const product = await productRepository.findBySlug(slug);
         if (!product) throw ERR.NotFound(`Product ${slug} not found`)
         return product;
+    }
+
+    async searchByName(keyword, limit) {
+        return await productRepository.searchByName(keyword, limit);
     }
 
     async generateSlug(name) {
