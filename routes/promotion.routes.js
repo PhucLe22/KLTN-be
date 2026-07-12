@@ -5,9 +5,21 @@ import {
   getAvailableVouchers,
   listPublicVouchers,
   validateVoucherInput,
+  suggestVouchers,
 } from "../contracts/input/promotions.schema.js";
 
 const promotionRouter = express.Router();
+
+/**
+ * @route   GET /api/v1/promotions/suggest
+ * @desc    Gợi ý voucher phù hợp nhất
+ * @access  Public
+ */
+promotionRouter.get(
+  "/suggest",
+  validate(suggestVouchers),
+  voucherController.suggest,
+);
 
 /**
  * @route   GET /api/v1/promotions

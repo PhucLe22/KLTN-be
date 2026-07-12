@@ -11,6 +11,12 @@ class VoucherController {
     return res.ok(result, vouchers.meta);
   });
 
+  suggest = asyncHandler(async (req, res) => {
+    const vouchers = await voucherService.suggestVouchers(req.query);
+
+    return res.ok(vouchers);
+  });
+
   validate = asyncHandler(async (req, res) => {
     const { code, orderAmount, storeId, customerId } = req.body;
     const voucher = await voucherService.validateVoucher(code, orderAmount, storeId, customerId);
