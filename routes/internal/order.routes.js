@@ -7,6 +7,7 @@ import { StaffRole } from "../../constants/enum.js";
 import {
   createStaffOrder,
   updateOrderStatus,
+  returnDelivery,
 } from "../../contracts/input/order.schema.js";
 
 const orderRouter = express.Router();
@@ -98,6 +99,19 @@ orderRouter.patch(
   protect,
   restrictTo(StaffRole.SHIPPER),
   orderController.completeDelivery,
+);
+
+/**
+ * @route   PATCH /internal/orders/:id/delivery/return
+ * @desc    Shipper trả đơn không thể giao (hỏng xe, kẹt xe,...) về solver để xử lý lại
+ * @access  Private (SHIPPER only)
+ */
+orderRouter.patch(
+  "/:id/delivery/return",
+  protect,
+  restrictTo(StaffRole.SHIPPER),
+  validate(returnDelivery),
+  orderController.returnDelivery,
 );
 
 export default orderRouter;

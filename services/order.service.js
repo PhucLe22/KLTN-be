@@ -11,6 +11,7 @@ import { ERROR_MESSAGES, VALIDATION_MESSAGES } from "../constants/errors.js";
 import { OrderType, OrderStatus, StaffRole, DeliveryStatus, ROOT_USER_ID } from "../constants/enum.js";
 import { buildOrderFilters } from "../lib/buildOrderFilters.js";
 import { geocodeAddress } from "../lib/geocoding.js";
+import { kitchenService } from "./kitchen.service.js";
 
 class OrderService  {
 
@@ -56,7 +57,7 @@ class OrderService  {
       const orderData = {
         orderCode: this.#generateOrderCode(type),
         storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + 90 * 60 * 1000) : null,
+        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -189,7 +190,7 @@ class OrderService  {
       const orderData = {
         orderCode: this.#generateOrderCode(type),
         storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + 90 * 60 * 1000) : null,
+        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -468,6 +469,7 @@ class OrderService  {
       OrderStatus.CONFIRMED,
       OrderStatus.PREPARING,
       OrderStatus.READY,
+      "RETURNED",
       OrderStatus.DELIVERING,
       OrderStatus.COMPLETED,
     ];
@@ -513,6 +515,10 @@ class OrderService  {
           item.description ??= order.type === OrderType.DELIVERY
             ? 'Your order is ready for the courier.'
             : 'Your order is ready to be served.';
+          break;
+        case "RETURNED":
+          item.label = 'Returned';
+          item.description ??= 'The courier returned the order. It will be reassigned.';
           break;
         case OrderStatus.DELIVERING:
           item.label = 'Out for delivery';
@@ -830,6 +836,76 @@ class OrderService  {
     const typeCode = typeMapping[type] || "OR";
     const timestamp = Date.now();
     return `${prefix}-${typeCode}-${timestamp}`;
+  }
+
+  async returnDelivery(id, user, reason = "") {
+    return await prisma.$transaction(async (tx) => {
+      const order = await orderRepository.findByIdWithRelations(id, tx);
+
+      if (!order) throw ERR.NotFound(ERROR_MESSAGES.ORDER_NOT_FOUND);
+      if (order.type !== OrderType.DELIVERY)
+        throw ERR.BadRequest(ERROR_MESSAGES.DELIVERY_ORDER_NOT_FOUND);
+      if (!order.delivery)
+        throw ERR.BadRequest(ERROR_MESSAGES.DELIVERY_ORDER_NOT_FOUND);
+      if (order.delivery.shipperId !== user.staff?.id)
+        throw ERR.Forbidden(ERROR_MESSAGES.ORDER_NOT_ASSIGNED_TO_SHIPPER);
+      if (
+        ![DeliveryStatus.SHIPPER_ASSIGNED, DeliveryStatus.PICKED_UP].includes(
+          order.delivery.status,
+        )
+      )
+        throw ERR.BadRequest(ERROR_MESSAGES.DELIVERY_RETURN_INVALID);
+
+      const deliveryUpdate = {
+        shipperId: null,
+        deliverySequence: null,
+        status: DeliveryStatus.PENDING,
+        pickedAt: null,
+      };
+
+      const orderUpdate = {};
+      if (order.delivery.status === DeliveryStatus.PICKED_UP) {
+        orderUpdate.status = OrderStatus.READY;
+      }
+
+      await tx.deliveryOrder.update({
+        where: { id: order.delivery.id },
+        data: deliveryUpdate,
+      });
+
+      if (Object.keys(orderUpdate).length > 0) {
+        await tx.order.update({
+          where: { id },
+          data: orderUpdate,
+        });
+      }
+
+      const deliveryRoute = await tx.deliveryRoute.findUnique({
+        where: { shipperId: user.staff.id },
+      });
+      if (deliveryRoute) {
+        const filteredRoute = deliveryRoute.route
+          .filter((step) => step.orderId !== id)
+          .map((step, idx) => ({ ...step, node: idx }));
+        await tx.deliveryRoute.update({
+          where: { shipperId: user.staff.id },
+          data: { route: filteredRoute },
+        });
+      }
+
+      const eventNote = reason
+        ? `Shipper trả đơn: ${reason}`
+        : `Shipper ${user.name || user.id} đã trả đơn hàng`;
+      await tx.deliveryEvent.create({
+        data: {
+          deliveryId: order.delivery.id,
+          status: "RETURNED",
+          note: eventNote,
+        },
+      });
+
+      return await orderRepository.findByIdWithRelations(id, tx);
+    });
   }
 
   async remove(id, user) {

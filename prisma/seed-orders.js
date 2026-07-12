@@ -42,21 +42,22 @@ async function main() {
   }
   console.log(`Using Product: ${product.name}`);
 
-  // 2.5 Get a customer
-  const customer = await prisma.customer.findFirst({
-    where: { isActive: true }
+  // 2.5 Get customer
+  const user = await prisma.user.findUnique({
+    where: { email: "lapduy@gmail.com" }
   });
-  if (!customer) {
-    console.error("❌ No customers found. Please run main seed first.");
+  if (!user) {
+    console.error("❌ User lapduy@gmail.com not found.");
     return;
   }
-  
-  // Ensure customer has name/phone
-  const updatedCustomer = await prisma.customer.update({
-      where: { id: customer.id },
-      data: { name: "Khách Hàng Test", phone: "0900000000" }
+  const customer = await prisma.customer.findFirst({
+    where: { userId: user.id }
   });
-  console.log(`Using Customer: ${updatedCustomer.name} (${updatedCustomer.id})`);
+  if (!customer) {
+    console.error("❌ Customer for Gia Bảo not found.");
+    return;
+  }
+  console.log(`Using Customer: ${customer.name || user.name} (${customer.id})`);
 
   // 3. Create Orders
   console.log(`Creating ${locations.length} orders...`);
@@ -89,7 +90,7 @@ async function main() {
           create: {
             storeId: null, // <--- TESTED CONDITION: Null Store for Solver Assignment
             receiverName: `Customer ${loc.name}`,
-            receiverPhone: "0900000000",
+            receiverPhone: "0975875654",
             addressLine: loc.address,
             lat: loc.lat,
             lng: loc.lng

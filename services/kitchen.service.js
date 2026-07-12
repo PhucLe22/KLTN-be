@@ -14,7 +14,7 @@ class KitchenService {
       process.env.LOGISTIC_SOLVER_URL || "http://localhost:8000";
   }
 
-  async getSchedule(storeIds, tardinessWeight = 1000) {
+  async getSchedule(storeIds, tardinessWeight = 1000, excludeShipperId = null) {
     if (!Array.isArray(storeIds)) {
       storeIds = [storeIds];
     }
@@ -28,7 +28,7 @@ class KitchenService {
       throw ERR.BadRequest("No staff available in these stores");
     }
 
-    const shippers = allStaff.filter((s) => s.role === StaffRole.SHIPPER);
+    const shippers = allStaff.filter((s) => s.role === StaffRole.SHIPPER && s.id !== excludeShipperId);
     const chefs = allStaff.filter((s) => s.role === StaffRole.KITCHEN);
 
     // For kitchen scheduling, we keep it store-specific by grouping chefs
@@ -36,7 +36,12 @@ class KitchenService {
     const chefNames = targetChefs.map(
       (s) => s.user.email || s.user.phone || s.id,
     );
-    const targetShippers = shippers.length > 0 ? shippers : allStaff;
+
+    if (shippers.length === 0) {
+      console.log("[KitchenService] No shippers available. Skipping VRP.");
+      return { kitchen: { schedule: [] }, delivery: { schedule: [], shippers: [] } };
+    }
+    const targetShippers = shippers;
 
     // 2. Get orders for Kitchen Schedule (CONFIRMED & PREPARING)
     const deliveryOrders = await prisma.deliveryOrder.findMany({
