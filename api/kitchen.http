@@ -20,6 +20,7 @@ Authorization: Bearer {{managerToken}}
 GET http://localhost:5001/api/v1/internal/kitchen/delivery-schedule
 Authorization: Bearer {{shipperToken}}
 
+
 ############
 ### Solve Network Optimization (Global)
 # Triggers a unified solve for ALL active stores in the network.
