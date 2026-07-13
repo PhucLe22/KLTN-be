@@ -31,7 +31,7 @@ class OrderRepository extends BaseRepository {
     });
 
     if (order?.delivery?.shipperId) {
-      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+      const deliveryRoute = await (tx || prisma).deliveryRoute.findUnique({
         where: { shipperId: order.delivery.shipperId }
       });
       if (deliveryRoute?.route) {
@@ -71,7 +71,7 @@ class OrderRepository extends BaseRepository {
     });
 
     if (order?.delivery?.shipperId) {
-      const deliveryRoute = await prisma.deliveryRoute.findUnique({
+      const deliveryRoute = await (tx || prisma).deliveryRoute.findUnique({
         where: { shipperId: order.delivery.shipperId }
       });
       if (deliveryRoute?.route) {
