@@ -82,46 +82,65 @@ class OrderService  {
     return await prisma.$transaction(async (tx) => {
       const totals = this.#calculateTotals(subtotal, type, discountAmount);
 
-      const orderData = {
-        orderCode: this.#generateOrderCode(type),
-        storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
-        type,
-        subtotal,
-        ...totals,
-        note,
-        tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
-        customerId,
-        items: { create: orderItems },
-        createdBy: user.id,
-      };
+      // Step A: Create order with delivery (delivery is shallow, safe to nest)
+      const order = await tx.order.create({
+        data: {
+          orderCode: this.#generateOrderCode(type),
+          storeId: type === OrderType.DELIVERY ? null : storeId,
+          expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
+          type,
+          subtotal,
+          ...totals,
+          note,
+          tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
+          customerId,
+          createdBy: user.id,
+          ...(type === OrderType.DELIVERY && deliveryInfo ? {
+            delivery: {
+              create: {
+                storeId: null,
+                receiverName: deliveryInfo.receiverName,
+                receiverPhone: deliveryInfo.receiverPhone,
+                addressLine: deliveryInfo.addressLine,
+                lat: geocodedLat,
+                lng: geocodedLng,
+              }
+            }
+          } : {}),
+        },
+      });
 
+      // Step B: Create items sequentially
+      for (const item of orderItems) {
+        const { options, ...itemData } = item;
+        const createdItem = await tx.orderItem.create({
+          data: {
+            ...itemData,
+            orderId: order.id,
+          },
+        });
+
+        if (options?.create?.length > 0) {
+          await tx.orderItemOption.createMany({
+            data: options.create.map(opt => ({
+              name: opt.name,
+              price: opt.price,
+              orderItemId: createdItem.id,
+            })),
+          });
+        }
+      }
+
+      // Step C: Create voucher redemptions
       if (voucher) {
-        orderData.vouchers = {
-          create: [{
+        await tx.voucherRedemption.create({
+          data: {
             voucherId: voucher.id,
-            discount: discountAmount
-          }]
-        };
-      }
+            discount: discountAmount,
+            orderId: order.id,
+          },
+        });
 
-      if (type === OrderType.DELIVERY && deliveryInfo) {
-        orderData.delivery = {
-          create: {
-            storeId: null,
-            receiverName: deliveryInfo.receiverName,
-            receiverPhone: deliveryInfo.receiverPhone,
-            addressLine: deliveryInfo.addressLine,
-            lat: geocodedLat,
-            lng: geocodedLng,
-          }
-        };
-      }
-
-      console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
-      const order = await orderRepository.create(orderData, tx);
-
-      if (voucher) {
         await tx.voucher.update({
           where: { id: voucher.id },
           data: { usedCount: { increment: 1 } }
@@ -137,6 +156,7 @@ class OrderService  {
         }
       }
 
+      // Step D: Create delivery event
       if (type === OrderType.DELIVERY) {
         const delivery = await tx.deliveryOrder.findUnique({
           where: { orderId: order.id }
@@ -153,7 +173,7 @@ class OrderService  {
       }
 
       return await orderRepository.findByIdWithRelations(order.id, tx);
-    });
+    }, { maxWait: 20000, timeout: 30000 });
   }
 
   async createOrderForStaff(storeId, body, user) {
@@ -211,46 +231,65 @@ class OrderService  {
     return await prisma.$transaction(async (tx) => {
       const totals = this.#calculateTotals(subtotal, type, discountAmount);
 
-      const orderData = {
-        orderCode: this.#generateOrderCode(type),
-        storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
-        type,
-        subtotal,
-        ...totals,
-        note,
-        tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
-        customerId,
-        items: { create: orderItems },
-        createdBy: user?.id,
-      };
+      // Step A: Create order with delivery (delivery is shallow, safe to nest)
+      const order = await tx.order.create({
+        data: {
+          orderCode: this.#generateOrderCode(type),
+          storeId: type === OrderType.DELIVERY ? null : storeId,
+          expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
+          type,
+          subtotal,
+          ...totals,
+          note,
+          tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
+          customerId,
+          createdBy: user?.id,
+          ...(type === OrderType.DELIVERY && deliveryInfo ? {
+            delivery: {
+              create: {
+                storeId: null,
+                receiverName: deliveryInfo.receiverName,
+                receiverPhone: deliveryInfo.receiverPhone,
+                addressLine: deliveryInfo.addressLine,
+                lat: geocodedLat,
+                lng: geocodedLng,
+              }
+            }
+          } : {}),
+        },
+      });
 
+      // Step B: Create items sequentially
+      for (const item of orderItems) {
+        const { options, ...itemData } = item;
+        const createdItem = await tx.orderItem.create({
+          data: {
+            ...itemData,
+            orderId: order.id,
+          },
+        });
+
+        if (options?.create?.length > 0) {
+          await tx.orderItemOption.createMany({
+            data: options.create.map(opt => ({
+              name: opt.name,
+              price: opt.price,
+              orderItemId: createdItem.id,
+            })),
+          });
+        }
+      }
+
+      // Step C: Create voucher redemptions
       if (voucher) {
-        orderData.vouchers = {
-          create: [{
+        await tx.voucherRedemption.create({
+          data: {
             voucherId: voucher.id,
-            discount: discountAmount
-          }]
-        };
-      }
+            discount: discountAmount,
+            orderId: order.id,
+          },
+        });
 
-      if (type === OrderType.DELIVERY && deliveryInfo) {
-        orderData.delivery = {
-          create: {
-            storeId: null,
-            receiverName: deliveryInfo.receiverName,
-            receiverPhone: deliveryInfo.receiverPhone,
-            addressLine: deliveryInfo.addressLine,
-            lat: geocodedLat,
-            lng: geocodedLng,
-          }
-        };
-      }
-
-      console.log("[OrderService] Final orderData object:", JSON.stringify(orderData, null, 2));
-      const order = await orderRepository.create(orderData, tx);
-
-      if (voucher) {
         await tx.voucher.update({
           where: { id: voucher.id },
           data: { usedCount: { increment: 1 } }
@@ -266,6 +305,7 @@ class OrderService  {
         }
       }
 
+      // Step D: Create delivery event
       if (type === OrderType.DELIVERY) {
         const delivery = await tx.deliveryOrder.findUnique({
           where: { orderId: order.id }
@@ -282,7 +322,7 @@ class OrderService  {
       }
 
       return await orderRepository.findByIdWithRelations(order.id, tx);
-    });
+    }, { maxWait: 20000, timeout: 30000 });
   }
 
   async findByPhone(phone, user, query) {
