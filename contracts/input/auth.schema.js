@@ -11,6 +11,7 @@ export const registerCustomer = {
 
 export const registerStaff = {
   body: z.object({
+    name: f.name,
     email: f.email,
     phone: f.phone,
     password: f.password,
