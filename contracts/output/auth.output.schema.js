@@ -3,6 +3,7 @@ import { DEFAULT_NAMES, TOKEN_CONSTANTS } from "../../constants/errors.js";
 
 export const AuthMap = {
   id: true,
+  name: true,
   email: true,
   phone: true,
 };
