@@ -1,7 +1,10 @@
-import { ERR } from "../lib/httpExceptions.js";
 import cors from "cors";
 
-const whitelist = ["http://localhost:3000", "http://192.168.0.121:3000"];
+const whitelist = [
+  "http://localhost:3000",
+  "http://192.168.0.121:3000",
+  "https://kltn-fe-ten.vercel.app",
+];
 
 const corsOptions = {
   origin: (origin, callback) => {

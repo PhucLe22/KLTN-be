@@ -29,6 +29,7 @@ export const ERROR_MESSAGES = {
   ORDER_STATUS_INVALID: "Trạng thái đơn hàng không hợp lệ cho hành động này.",
   ORDER_NOT_ASSIGNED_TO_SHIPPER: "Đơn hàng này không được gán cho bạn.",
   DELIVERY_ORDER_NOT_FOUND: "Không tìm thấy thông tin giao hàng cho đơn hàng này.",
+  DELIVERY_RETURN_INVALID: "Không thể trả đơn hàng này vì trạng thái không hợp lệ.",
 };
 
 export const VALIDATION_MESSAGES = {

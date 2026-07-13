@@ -1,4 +1,5 @@
 import { orderService } from "../services/order.service.js";
+import { kitchenService } from "../services/kitchen.service.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { mapper } from "../lib/mapper.js";
 import { OrderMap, StaffOrderSummaryMap, OrderActivityMap } from "../contracts/output/order.output.schema.js";
@@ -25,6 +26,14 @@ class OrderController {
     const result = mapper(order, OrderMap);
 
     return res.ok(result);
+  });
+
+  searchByPhone = asyncHandler(async (req, res) => {
+    const { phone } = req.params;
+    const orders = await orderService.findByPhone(phone, req.user, req.query);
+    const result = mapper(orders.items, OrderMap);
+
+    return res.ok(result, orders.meta);
   });
 
   list = asyncHandler(async (req, res) => {
@@ -78,6 +87,23 @@ class OrderController {
     const order = await orderService.completeDelivery(id, req.user);
     const result = mapper(order, OrderMap);
 
+    return res.ok(result);
+  });
+
+  returnDelivery = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const order = await orderService.returnDelivery(id, req.user, reason);
+
+    const storeId = order.storeId;
+    if (storeId) {
+      kitchenService.getSchedule([storeId], 1000, req.user.staff.id).catch((err) => {
+        console.error("[returnDelivery] Re-solve failed:", err.message);
+      });
+    }
+
+    const result = mapper(order, OrderMap);
     return res.ok(result);
   });
 

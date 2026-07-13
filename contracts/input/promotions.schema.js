@@ -20,6 +20,15 @@ export const validateVoucherInput = {
   }),
 };
 
+// GET /api/v1/promotions/suggest
+export const suggestVouchers = {
+  query: z.object({
+    storeId: f.id.optional(),
+    orderAmount: z.string().transform(Number).optional(),
+    customerId: f.id.optional(),
+  }),
+};
+
 // GET /api/v1/promotions (public)
 export const listPublicVouchers = {
   query: z.object({

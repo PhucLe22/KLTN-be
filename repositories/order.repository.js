@@ -212,6 +212,35 @@ class OrderRepository extends BaseRepository {
     });
   }
 
+  async findByPhone(phone, customerId, query = {}) {
+    const { page = 1, limit = 10 } = query;
+
+    const where = {
+      customerId,
+      customer: {
+        phone: { contains: phone }
+      }
+    };
+
+    return await this.findAll({
+      page,
+      limit,
+      where,
+      include: {
+        store: true,
+        customer: true,
+        delivery: true,
+        items: {
+          include: {
+            product: true,
+            options: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
   async updateStatus(id, status, tx = null) {
     return await this.getModel(tx).update({
       where: { id },

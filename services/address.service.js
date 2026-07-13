@@ -1,23 +1,10 @@
 import { addressRepository } from "../repositories/address.repository.js";
 import { geocodeAddress } from "../lib/geocoding.js";
 import { prisma } from "../lib/prisma.js";
+import axios from "axios";
 
 class AddressService {
   async create(data) {
-    if (data.addressLine && (data.lat === undefined || data.lat === null || data.lng === undefined || data.lng === null)) {
-      try {
-        console.log(`[AddressService] Geocoding new address: ${data.addressLine}`);
-        const result = await geocodeAddress(data.addressLine);
-        if (result) {
-          data.lat = result.lat;
-          data.lng = result.lng;
-          console.log(`[AddressService] Geocoding success: lat=${data.lat}, lng=${data.lng}`);
-        }
-      } catch (error) {
-        console.error("Geocoding failed during address creation:", error.message);
-      }
-    }
-    
     return await prisma.$transaction(async (tx) => {
       // Logic for intelligent isDefault
       if (data.customerId) {
@@ -42,24 +29,6 @@ class AddressService {
   async update(id, data) {
     const existingAddress = await addressRepository.findById(id);
     if (!existingAddress) throw new Error("Address not found");
-
-    // Only geocode if addressLine changed and coordinates are not provided
-    const addressChanged = data.addressLine && data.addressLine !== existingAddress.addressLine;
-    const coordsMissing = data.lat === undefined || data.lat === null || data.lng === undefined || data.lng === null;
-
-    if (addressChanged && coordsMissing) {
-      try {
-        console.log(`[AddressService] Address changed from "${existingAddress.addressLine}" to "${data.addressLine}". Geocoding...`);
-        const result = await geocodeAddress(data.addressLine);
-        if (result) {
-          data.lat = result.lat;
-          data.lng = result.lng;
-          console.log(`[AddressService] Geocoding success: lat=${data.lat}, lng=${data.lng}`);
-        }
-      } catch (error) {
-        console.error("Geocoding failed during address update:", error.message);
-      }
-    }
 
     return await prisma.$transaction(async (tx) => {
       if (data.isDefault) {
@@ -106,6 +75,45 @@ class AddressService {
 
   async findById(id) {
     return await addressRepository.findById(id);
+  }
+
+  async autocomplete(text, { type, limit = 5, lang } = {}) {
+    const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
+    if (!apiKey) {
+      throw new Error("GEOAPIFY_API_KEY is not defined");
+    }
+
+    const params = {
+      text,
+      format: "json",
+      filter: "countrycode:vn",
+      limit,
+      apiKey,
+    };
+    if (type) params.type = type;
+    if (lang) params.lang = lang;
+
+    const response = await axios.get(
+      "https://api.geoapify.com/v1/geocode/autocomplete",
+      { params }
+    );
+
+    const results = response.data?.results || [];
+    return results.map((r) => ({
+      formatted: r.formatted,
+      address_line1: r.address_line1,
+      address_line2: r.address_line2,
+      street: r.street,
+      housenumber: r.housenumber,
+      city: r.city,
+      state: r.state,
+      postcode: r.postcode,
+      country: r.country,
+      lat: r.lat,
+      lon: r.lon,
+      result_type: r.result_type,
+      rank: r.rank,
+    }));
   }
 }
 

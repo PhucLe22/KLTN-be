@@ -10,6 +10,60 @@ class VoucherService  {
     return vouchers.filter(v => v.maxUsage === null || v.usedCount < v.maxUsage);
   }
 
+  async suggestVouchers({ storeId, orderAmount, customerId }) {
+    const now = new Date();
+
+    const where = {
+      isActive: true,
+      OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: now } }
+      ],
+    };
+
+    const include = {
+      store: { select: { id: true, name: true } },
+    };
+    if (customerId) {
+      include.customerVouchers = { where: { customerId, isUsed: false } };
+    }
+
+    const all = await voucherRepository.findAll({
+      page: 1,
+      limit: 999999,
+      where,
+      include,
+      orderBy: [{ code: "desc" }],
+    });
+
+    let eligible = all.items.filter(v => {
+      if (v.maxUsage && v.usedCount >= v.maxUsage) return false;
+      if (storeId && v.storeId && v.storeId !== storeId) return false;
+      if (orderAmount && v.minOrderAmount && Number(orderAmount) < Number(v.minOrderAmount)) return false;
+      if (v.scope === 'CUSTOMER') {
+        if (!customerId) return false;
+        if (!v.customerVouchers || v.customerVouchers.length === 0) return false;
+      }
+      return true;
+    });
+
+    const ranked = eligible.map(v => {
+      let estimatedDiscount;
+      if (v.discountType === 'PERCENT') {
+        estimatedDiscount = (Number(orderAmount || 0) * Number(v.discountValue)) / 100;
+        if (v.maxDiscount) estimatedDiscount = Math.min(estimatedDiscount, Number(v.maxDiscount));
+      } else {
+        estimatedDiscount = Number(v.discountValue);
+      }
+      if (orderAmount) estimatedDiscount = Math.min(estimatedDiscount, Number(orderAmount));
+      return { ...v, estimatedDiscount };
+    });
+
+    ranked.sort((a, b) => b.estimatedDiscount - a.estimatedDiscount);
+
+    return ranked.slice(0, 5);
+  }
+
   async validateVoucher(code, orderAmount, storeId, customerId = null) {
     const voucher = await voucherRepository.findByCode(code);
     if (!voucher || !voucher.isActive) {

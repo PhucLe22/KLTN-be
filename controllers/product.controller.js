@@ -5,11 +5,32 @@ import { ProductMap } from "../contracts/output/product.output.schema.js";
 import { uploadFromBuffer } from "../lib/cloudinary.js";
 
 class ProductController {
+    search = asyncHandler(async (req, res) => {
+        const { q, limit } = req.query;
+        if (!q || !q.trim()) return res.ok([]);
+        const products = await productService.searchByName(q.trim(), Number(limit) || 10);
+        return res.ok(products);
+    });
+
     list = asyncHandler(async (req, res) => {
         const products = await productService.findAll(req.query);
         const result = mapper(products.items, ProductMap);
 
         return res.ok(result, products.meta);
+    });
+
+    listNew = asyncHandler(async (req, res) => {
+        const products = await productService.findNew(Number(req.query.limit) || 10);
+        const result = mapper(products, ProductMap);
+
+        return res.ok(result);
+    });
+
+    listHot = asyncHandler(async (req, res) => {
+        const products = await productService.findHot(Number(req.query.limit) || 10);
+        const result = mapper(products, ProductMap);
+
+        return res.ok(result);
     });
 
     show = asyncHandler(async (req, res) => {

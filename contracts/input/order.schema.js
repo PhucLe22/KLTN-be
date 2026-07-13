@@ -210,6 +210,14 @@ export const updateOrderStatus = {
   }),
 };
 
+// PATCH /internal/orders/:id/delivery/return
+export const returnDelivery = {
+  params: z.object({ id: f.id }),
+  body: z.object({
+    reason: z.string().max(500).optional(),
+  }),
+};
+
 // GET /api/v1/orders/code/:orderCode
 export const getOrderCode = {
   params: z.object({
