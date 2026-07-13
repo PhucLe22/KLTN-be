@@ -96,7 +96,7 @@ class AuthService {
   async #createUserIdentity(data, tx) {
     const { email, phone, password, name } = data;
 
-    const isTaken = await userRepository.isIdentityTaken(email, phone);
+    const isTaken = await userRepository.isIdentityTaken(email, phone, tx);
     if (isTaken) {
       throw ERR.BadRequest("Email hoặc Số điện thoại đã được sử dụng");
     }

@@ -57,8 +57,8 @@ class OptionGroupRepository extends BaseRepository {
 
             // 2. Update or Create ProductOptionValues
             if (optionValues && optionValues.length > 0) {
-                const upsertPromises = optionValues.map(ov => 
-                    tx.productOptionValue.upsert({
+                for (const ov of optionValues) {
+                    await tx.productOptionValue.upsert({
                         where: {
                             productId_optionId: {
                                 productId,
@@ -71,9 +71,8 @@ class OptionGroupRepository extends BaseRepository {
                             optionId: ov.optionId,
                             price: ov.price
                         }
-                    })
-                );
-                await Promise.all(upsertPromises);
+                    });
+                }
             }
 
             return { productId, optionGroupId, status: "updated" };
