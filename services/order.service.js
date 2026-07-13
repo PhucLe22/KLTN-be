@@ -24,9 +24,33 @@ class OrderService  {
   // else return error (add enum for error message)
 
   async createOrder(body, user) {
-    return await prisma.$transaction(async (tx) => {
-      const { storeId, type, items, note, tableNumber, deliveryInfo, voucherCode } = body;
+    const { storeId, type, items, note, tableNumber, deliveryInfo, voucherCode } = body;
 
+    // Geocode delivery address BEFORE the transaction to avoid holding a DB connection during HTTP call
+    let geocodedLat = null;
+    let geocodedLng = null;
+    if (type === OrderType.DELIVERY && deliveryInfo) {
+      console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
+
+      geocodedLat = deliveryInfo.lat;
+      geocodedLng = deliveryInfo.lng;
+
+      if (deliveryInfo.addressLine && (geocodedLat === undefined || geocodedLat === null || geocodedLng === undefined || geocodedLng === null)) {
+        try {
+          console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
+          const geocoded = await geocodeAddress(deliveryInfo.addressLine);
+          if (geocoded) {
+            geocodedLat = geocoded.lat;
+            geocodedLng = geocoded.lng;
+            console.log(`[OrderService] Geocoding success: lat=${geocodedLat}, lng=${geocodedLng}`);
+          }
+        } catch (error) {
+          console.error("Geocoding failed during order delivery creation:", error.message);
+        }
+      }
+    }
+
+    return await prisma.$transaction(async (tx) => {
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
 
       const customer = await customerRepository.findCustomerByUserId(user.id, tx);
@@ -79,33 +103,14 @@ class OrderService  {
 
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
-        console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
-        
-        let lat = deliveryInfo.lat;
-        let lng = deliveryInfo.lng;
-
-        if (deliveryInfo.addressLine && (lat === undefined || lat === null || lng === undefined || lng === null)) {
-          try {
-            console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
-            const geocoded = await geocodeAddress(deliveryInfo.addressLine);
-            if (geocoded) {
-              lat = geocoded.lat;
-              lng = geocoded.lng;
-              console.log(`[OrderService] Geocoding success: lat=${lat}, lng=${lng}`);
-            }
-          } catch (error) {
-            console.error("Geocoding failed during order delivery creation:", error.message);
-          }
-        }
-
         orderData.delivery = {
           create: {
             storeId: null, // Delivery storeId is assigned by solver
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
-            lat: lat,
-            lng: lng,
+            lat: geocodedLat,
+            lng: geocodedLng,
           }
         };
       }
@@ -157,9 +162,33 @@ class OrderService  {
   }
 
   async createOrderForStaff(storeId, body, user) {
-    return await prisma.$transaction(async (tx) => {
-      const { type, items, note, tableNumber, phone, deliveryInfo, voucherCode } = body;
+    const { type, items, note, tableNumber, phone, deliveryInfo, voucherCode } = body;
 
+    // Geocode delivery address BEFORE the transaction
+    let geocodedLat = null;
+    let geocodedLng = null;
+    if (type === OrderType.DELIVERY && deliveryInfo) {
+      console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
+
+      geocodedLat = deliveryInfo.lat;
+      geocodedLng = deliveryInfo.lng;
+
+      if (deliveryInfo.addressLine && (geocodedLat === undefined || geocodedLat === null || geocodedLng === undefined || geocodedLng === null)) {
+        try {
+          console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
+          const geocoded = await geocodeAddress(deliveryInfo.addressLine);
+          if (geocoded) {
+            geocodedLat = geocoded.lat;
+            geocodedLng = geocoded.lng;
+            console.log(`[OrderService] Geocoding success: lat=${geocodedLat}, lng=${geocodedLng}`);
+          }
+        } catch (error) {
+          console.error("Geocoding failed during order delivery creation:", error.message);
+        }
+      }
+    }
+
+    return await prisma.$transaction(async (tx) => {
       const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
 
       const customer = await customerRepository.findByPhone(phone, tx);
@@ -212,33 +241,14 @@ class OrderService  {
 
       // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
-        console.log("[OrderService] Creating nested delivery order with data:", deliveryInfo);
-        
-        let lat = deliveryInfo.lat;
-        let lng = deliveryInfo.lng;
-
-        if (deliveryInfo.addressLine && (lat === undefined || lat === null || lng === undefined || lng === null)) {
-          try {
-            console.log(`[OrderService] Geocoding delivery address: ${deliveryInfo.addressLine}`);
-            const geocoded = await geocodeAddress(deliveryInfo.addressLine);
-            if (geocoded) {
-              lat = geocoded.lat;
-              lng = geocoded.lng;
-              console.log(`[OrderService] Geocoding success: lat=${lat}, lng=${lng}`);
-            }
-          } catch (error) {
-            console.error("Geocoding failed during order delivery creation:", error.message);
-          }
-        }
-
         orderData.delivery = {
           create: {
             storeId: null, // Delivery storeId is assigned by solver
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
-            lat: lat,
-            lng: lng,
+            lat: geocodedLat,
+            lng: geocodedLng,
           }
         };
       }
