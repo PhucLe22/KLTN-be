@@ -26,7 +26,9 @@ class OrderService  {
   async createOrder(body, user) {
     const { storeId, type, items, note, tableNumber, deliveryInfo, voucherCode } = body;
 
-    // Geocode delivery address BEFORE the transaction to avoid holding a DB connection during HTTP call
+    // --- Pre-transaction: read-only operations ---
+
+    // 1. Geocode delivery address HTTP call
     let geocodedLat = null;
     let geocodedLng = null;
     if (type === OrderType.DELIVERY && deliveryInfo) {
@@ -50,38 +52,40 @@ class OrderService  {
       }
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
+    // 2. Build order items and subtotal (read-only DB queries)
+    const { orderItems, subtotal } = await this.#buildOrderItems(items);
 
-      const customer = await customerRepository.findCustomerByUserId(user.id, tx);
-      if (!customer) {
-        throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
-      }
-      const customerId = customer.id;
+    // 3. Lookup customer (read-only)
+    const customer = await customerRepository.findCustomerByUserId(user.id);
+    if (!customer) {
+      throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    const customerId = customer.id;
 
-      let discountAmount = 0;
-      let voucher = null;
-      if (voucherCode) {
-        voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
-        // Calculate discount
-        if (voucher.discountType === 'PERCENT') {
-          discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
-          if (voucher.maxDiscount !== null) {
-            discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
-          }
-        } else {
-          discountAmount = Number(voucher.discountValue);
+    // 4. Validate voucher (read-only)
+    let discountAmount = 0;
+    let voucher = null;
+    if (voucherCode) {
+      voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
+      if (voucher.discountType === 'PERCENT') {
+        discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
+        if (voucher.maxDiscount !== null) {
+          discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
         }
-        // Cap discount at subtotal
-        discountAmount = Math.min(discountAmount, Number(subtotal));
+      } else {
+        discountAmount = Number(voucher.discountValue);
       }
+      discountAmount = Math.min(discountAmount, Number(subtotal));
+    }
 
+    // --- Transaction: writes only ---
+    return await prisma.$transaction(async (tx) => {
       const totals = this.#calculateTotals(subtotal, type, discountAmount);
 
       const orderData = {
         orderCode: this.#generateOrderCode(type),
         storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
+        expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -89,7 +93,7 @@ class OrderService  {
         tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
         customerId,
         items: { create: orderItems },
-        createdBy: user.id, // Set createdBy to the user ID (Customer)
+        createdBy: user.id,
       };
 
       if (voucher) {
@@ -101,11 +105,10 @@ class OrderService  {
         };
       }
 
-      // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
         orderData.delivery = {
           create: {
-            storeId: null, // Delivery storeId is assigned by solver
+            storeId: null,
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
@@ -119,29 +122,21 @@ class OrderService  {
       const order = await orderRepository.create(orderData, tx);
 
       if (voucher) {
-        // Increment usedCount
         await tx.voucher.update({
           where: { id: voucher.id },
-          data: {
-            usedCount: { increment: 1 }
-          }
+          data: { usedCount: { increment: 1 } }
         });
 
-        // If customer-scoped, mark as used
         if (voucher.scope === 'CUSTOMER') {
           await tx.customerVoucher.update({
             where: {
-              customerId_voucherId: {
-                customerId,
-                voucherId: voucher.id
-              }
+              customerId_voucherId: { customerId, voucherId: voucher.id }
             },
             data: { isUsed: true }
           });
         }
       }
 
-      // Record initial event for delivery order
       if (type === OrderType.DELIVERY) {
         const delivery = await tx.deliveryOrder.findUnique({
           where: { orderId: order.id }
@@ -164,7 +159,8 @@ class OrderService  {
   async createOrderForStaff(storeId, body, user) {
     const { type, items, note, tableNumber, phone, deliveryInfo, voucherCode } = body;
 
-    // Geocode delivery address BEFORE the transaction
+    // --- Pre-transaction: read-only operations ---
+
     let geocodedLat = null;
     let geocodedLng = null;
     if (type === OrderType.DELIVERY && deliveryInfo) {
@@ -188,38 +184,37 @@ class OrderService  {
       }
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const { orderItems, subtotal } = await this.#buildOrderItems(items, tx);
+    const { orderItems, subtotal } = await this.#buildOrderItems(items);
 
-      const customer = await customerRepository.findByPhone(phone, tx);
-      if (!customer) {
-        throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
-      }
-      const customerId = customer.id;
-      
-      let discountAmount = 0;
-      let voucher = null;
-      if (voucherCode) {
-        voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
-        // Calculate discount
-        if (voucher.discountType === 'PERCENT') {
-          discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
-          if (voucher.maxDiscount !== null) {
-            discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
-          }
-        } else {
-          discountAmount = Number(voucher.discountValue);
+    const customer = await customerRepository.findByPhone(phone);
+    if (!customer) {
+      throw ERR.NotFound(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    const customerId = customer.id;
+
+    let discountAmount = 0;
+    let voucher = null;
+    if (voucherCode) {
+      voucher = await voucherService.validateVoucher(voucherCode, subtotal, storeId, customerId);
+      if (voucher.discountType === 'PERCENT') {
+        discountAmount = (Number(subtotal) * Number(voucher.discountValue)) / 100;
+        if (voucher.maxDiscount !== null) {
+          discountAmount = Math.min(discountAmount, Number(voucher.maxDiscount));
         }
-        // Cap discount at subtotal
-        discountAmount = Math.min(discountAmount, Number(subtotal));
+      } else {
+        discountAmount = Number(voucher.discountValue);
       }
-      
+      discountAmount = Math.min(discountAmount, Number(subtotal));
+    }
+
+    // --- Transaction: writes only ---
+    return await prisma.$transaction(async (tx) => {
       const totals = this.#calculateTotals(subtotal, type, discountAmount);
 
       const orderData = {
         orderCode: this.#generateOrderCode(type),
         storeId: type === OrderType.DELIVERY ? null : storeId,
-        expectedReadyAt: type === OrderType.DELIVERY ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
+        expectedReadyAt: type !== OrderType.DINE_IN ? new Date(Date.now() + (parseInt(process.env.DELIVERY_EXPECTED_TIME_MINUTES || "30")) * 60 * 1000) : null,
         type,
         subtotal,
         ...totals,
@@ -227,7 +222,7 @@ class OrderService  {
         tableNumber: type === OrderType.DINE_IN ? tableNumber : null,
         customerId,
         items: { create: orderItems },
-        createdBy: user?.id, // Set createdBy to the user ID (Staff)
+        createdBy: user?.id,
       };
 
       if (voucher) {
@@ -239,11 +234,10 @@ class OrderService  {
         };
       }
 
-      // Handle Delivery info if applicable
       if (type === OrderType.DELIVERY && deliveryInfo) {
         orderData.delivery = {
           create: {
-            storeId: null, // Delivery storeId is assigned by solver
+            storeId: null,
             receiverName: deliveryInfo.receiverName,
             receiverPhone: deliveryInfo.receiverPhone,
             addressLine: deliveryInfo.addressLine,
@@ -257,29 +251,21 @@ class OrderService  {
       const order = await orderRepository.create(orderData, tx);
 
       if (voucher) {
-        // Increment usedCount
         await tx.voucher.update({
           where: { id: voucher.id },
-          data: {
-            usedCount: { increment: 1 }
-          }
+          data: { usedCount: { increment: 1 } }
         });
 
-        // If customer-scoped, mark as used
         if (voucher.scope === 'CUSTOMER') {
           await tx.customerVoucher.update({
             where: {
-              customerId_voucherId: {
-                customerId,
-                voucherId: voucher.id
-              }
+              customerId_voucherId: { customerId, voucherId: voucher.id }
             },
             data: { isUsed: true }
           });
         }
       }
 
-      // Record initial event for delivery order
       if (type === OrderType.DELIVERY) {
         const delivery = await tx.deliveryOrder.findUnique({
           where: { orderId: order.id }
@@ -474,15 +460,25 @@ class OrderService  {
   }
 
   #buildTimeline(order, routeData = null) {
-    const statusFlow = [
-      OrderStatus.NEW,
-      OrderStatus.CONFIRMED,
-      OrderStatus.PREPARING,
-      OrderStatus.READY,
-      "RETURNED",
-      OrderStatus.DELIVERING,
-      OrderStatus.COMPLETED,
-    ];
+    const isDelivery = order.type === OrderType.DELIVERY;
+
+    const statusFlow = isDelivery
+      ? [
+          OrderStatus.NEW,
+          OrderStatus.CONFIRMED,
+          OrderStatus.PREPARING,
+          OrderStatus.READY,
+          "RETURNED",
+          OrderStatus.DELIVERING,
+          OrderStatus.COMPLETED,
+        ]
+      : [
+          OrderStatus.NEW,
+          OrderStatus.CONFIRMED,
+          OrderStatus.PREPARING,
+          OrderStatus.READY,
+          OrderStatus.COMPLETED,
+        ];
 
     const eventMap = {};
     for (const evt of (order.delivery?.events || [])) {
@@ -493,8 +489,6 @@ class OrderService  {
     const timeline = [];
 
     for (const status of statusFlow) {
-      if (status === OrderStatus.DELIVERING && order.type !== OrderType.DELIVERY) continue;
-
       const event = eventMap[status];
       const reached = statusFlow.indexOf(status) <= currentIdx;
 
@@ -509,41 +503,43 @@ class OrderService  {
 
       switch (status) {
         case OrderStatus.NEW:
-          item.label = 'Order Placed';
-          item.description ??= 'Your order has been acknowledged by the collective.';
+          item.label = 'Đã đặt hàng';
+          item.description ??= 'Đơn hàng của bạn đã được tiếp nhận.';
           break;
         case OrderStatus.CONFIRMED:
-          item.label = 'Confirmed';
-          item.description ??= 'Your order has been confirmed.';
+          item.label = 'Đã xác nhận';
+          item.description ??= 'Đơn hàng của bạn đã được xác nhận.';
           break;
         case OrderStatus.PREPARING:
-          item.label = 'Preparing';
-          item.description ??= 'Our artisans are meticulously crafting your ritual.';
+          item.label = 'Đang chuẩn bị';
+          item.description ??= 'Đơn hàng đang được chuẩn bị.';
           break;
         case OrderStatus.READY:
-          item.label = order.type === OrderType.DELIVERY ? 'Ready for pickup' : 'Ready';
-          item.description ??= order.type === OrderType.DELIVERY
-            ? 'Your order is ready for the courier.'
-            : 'Your order is ready to be served.';
+          item.label = isDelivery ? 'Sẵn sàng giao' : 'Sẵn sàng';
+          item.description ??= isDelivery
+            ? 'Đơn hàng đã sẵn sàng để giao.'
+            : 'Đơn hàng đã sẵn sàng.';
           break;
         case "RETURNED":
-          item.label = 'Returned';
-          item.description ??= 'The courier returned the order. It will be reassigned.';
+          item.label = 'Đã trả lại';
+          item.description ??= 'Đơn hàng đã được trả lại và sẽ được phân công lại.';
           break;
         case OrderStatus.DELIVERING:
-          item.label = 'Out for delivery';
-          item.description ??= 'Your courier is navigating the city to your doorstep.';
+          item.label = 'Đang giao hàng';
+          item.description ??= 'Đơn hàng đang được giao đến bạn.';
           break;
         case OrderStatus.COMPLETED:
-          item.label = 'Delivered';
-          item.description ??= 'The warmth has arrived.';
+          item.label = 'Đã hoàn thành';
+          item.description ??= isDelivery
+            ? 'Đơn hàng đã được giao thành công.'
+            : 'Đơn hàng đã hoàn tất.';
           break;
       }
 
       timeline.push(item);
     }
 
-    // Estimated delivery ETA from route data or fallback to expectedReadyAt
+    // Estimated ETA
     if (order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED) {
       let eta = order.expectedReadyAt;
 
@@ -559,11 +555,11 @@ class OrderService  {
       if (eta) {
         timeline.push({
           status: 'ESTIMATED',
-          label: 'Delivered',
+          label: isDelivery ? 'Giao hàng dự kiến' : 'Sẵn sàng dự kiến',
           time: eta,
           isPast: false,
           isEstimate: true,
-          description: 'Estimated delivery time.',
+          description: isDelivery ? 'Thời gian giao hàng dự kiến.' : 'Thời gian sẵn sàng dự kiến.',
         });
       }
     }
@@ -760,7 +756,7 @@ class OrderService  {
     });
   }
 
-  async #buildOrderItems(items, tx) {
+  async #buildOrderItems(items, tx = null) {
     const orderItems = [];
     let subtotal = 0;
 
@@ -776,8 +772,7 @@ class OrderService  {
 
       if (item.options && item.options.length > 0) {
         for (const opt of item.options) {
-          // Find the option value for this specific product
-          const optionValue = await tx.productOptionValue.findUnique({
+          const optionValue = await (tx || prisma).productOptionValue.findUnique({
             where: {
               productId_optionId: {
                 productId: item.productId,
