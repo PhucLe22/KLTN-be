@@ -57,6 +57,11 @@ const prismaErrorMap = {
     ERR.BadRequest(
       "Dữ liệu liên quan không tồn tại.",
     ),
+
+  P2028: () =>
+    ERR.InternalServerError(
+      "Giao dịch không thành công, vui lòng thử lại.",
+    ),
 };
 
 export const normalizeError = (err) => {
